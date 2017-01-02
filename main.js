@@ -50,7 +50,6 @@ module.exports.loop = function ()
     }
     else
     {
-        let cpuStamp = Game.cpu.getUsed();
         objectStore.rewind();
 
         logger.coreBoot(cpuStamp, recycleCount++);
