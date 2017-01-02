@@ -438,7 +438,7 @@ module.exports = function(objectStore)
         let energy = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
 
         let body = new CreepBodyFactory()
-            .addPattern([CARRY, WORK, MOVE])
+            .addPattern([CARRY, WORK, MOVE], 1)
             .addPattern([WORK], 9)
             .setSort([MOVE, WORK, CARRY])
             .setMaxCost(energy)
@@ -553,7 +553,7 @@ module.exports = function(objectStore)
             .setMaxCost(energy)
             .fabricate();
 
-        let targetPos = [targetRoomPos.x, targetRoomPos.y, targetRoomPos.name];
+        let targetPos = [targetRoomPos.x, targetRoomPos.y, targetRoomPos.roomName];
 
 
         this.createProceduralCreep("soloDismantler", {},

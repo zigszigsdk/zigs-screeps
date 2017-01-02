@@ -367,9 +367,9 @@ module.exports = function(objectStore)
                     if(!creep)
                         break;
 
-                    targetPos = new RoomPosition(   currentInstruction[1].x,
-                                                    currentInstruction[1].y,
-                                                    currentInstruction[1].roomName);
+                    targetPos = new RoomPosition(   currentInstruction[1][0],
+                                                    currentInstruction[1][1],
+                                                    currentInstruction[1][2]);
 
                     if(creep.pos.roomName !== targetPos.roomName)
                     {
@@ -439,7 +439,7 @@ module.exports = function(objectStore)
 
                     if(flags.length !== 0)
                         flags[0].remove();
-                    
+
                     break;
 
                 default:
