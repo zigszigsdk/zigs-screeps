@@ -438,6 +438,9 @@ module.exports = function(objectStore)
 
                 case INSTRUCTION.REMOVE_FLAG_AT:
 
+                    if(! Game.rooms[currentInstruction[1][2] ] )
+                        break;
+
                     pos = new RoomPosition(currentInstruction[1][0], currentInstruction[1][1], currentInstruction[1][2]);
 
                     let flags = pos.lookFor(LOOK_FLAGS);
