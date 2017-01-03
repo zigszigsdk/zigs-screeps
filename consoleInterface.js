@@ -77,7 +77,7 @@ module.exports = {
         this.replaceMemory('"printBoot":true', '"printBoot":false');
     },
 
-    enableAllConsoleOutput: function()
+    enableAll: function()
     {
         this.enableWarnings();
         this.enableErrors();
@@ -87,7 +87,7 @@ module.exports = {
         this.enableBoots();
     },
 
-    disableAllConsoleOutput: function()
+    disableAll: function()
     {
         this.disableWarnings();
         this.disableErrors();
