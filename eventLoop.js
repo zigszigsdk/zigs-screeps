@@ -29,9 +29,17 @@ module.exports =
 
     run: function()
     {
-        let event;
-        while(event = eventQueue.next())
+        let stop = false;
+
+        while(!stop)
         {
+            let event = eventQueue.next();
+            if(event === null)
+            {
+                stop = true;
+                break;
+            }
+
             let subscribers = subscriptions.getSubscribersForEvent(event);
 
             if(subscribers === null || subscribers === undefined)
@@ -67,6 +75,7 @@ module.exports =
                 {
                     logger.warning("aborted eventLoop due to low CPU. " + Game.cpu.getUsed() + " > " +
                         Game.cpu.tickLimit + " * " + CPU_SAFETY_RATIO);
+                    stop = true;
                     break;
 
                 }
