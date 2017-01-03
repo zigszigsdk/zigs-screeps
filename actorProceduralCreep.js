@@ -95,7 +95,7 @@ module.exports = function(objectStore)
 
                     let spawn = Game.getObjectById(currentInstruction[1][0]); //should accept multiple spawns
 
-                    if(spawn.canCreateCreep(currentInstruction[2], this.memoryObject.creepName) !== OK) 
+                    if(spawn.canCreateCreep(currentInstruction[2], this.memoryObject.creepName) !== OK)
                     {
                         stop = true;
                         break;
@@ -106,7 +106,11 @@ module.exports = function(objectStore)
 
                 case INSTRUCTION.CALLBACK:
                     let callbackActor = this.actors.getFromId(currentInstruction[1]);
-                    callbackActor[currentInstruction[2]](this.memoryObject.callbackStamp);
+                    if(callbackActor && callbackActor[currentInstruction[2]])
+                        callbackActor[currentInstruction[2]](this.memoryObject.callbackStamp);
+                    else
+                        this.logger.warning("actorProcedualCreep: callback did not exist. ID: " +
+                            currentInstruction[1] + " function: " + currentInstruction[2]);
                     break;
 
                 case INSTRUCTION.MINE_UNTIL_FULL:
