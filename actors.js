@@ -92,10 +92,10 @@ module.exports =
             }
             catch(error)
             {
-                this.logger.error("error requiring script " + scriptName, error);    
+                this.logger.error("error requiring script " + scriptName, error);
             }
         }
-        
+
         if(!localCache.scripts[scriptName])
             return;
 

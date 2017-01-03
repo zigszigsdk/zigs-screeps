@@ -379,6 +379,7 @@ module.exports = function(objectStore)
                     }
 
                     let targets = targetPos.lookFor(LOOK_STRUCTURES);
+
                     if(targets.length === 0)
                         break;
 
