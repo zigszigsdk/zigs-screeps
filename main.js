@@ -11,16 +11,6 @@ let resetter;
 let memoryObject;
 let recycleCount = 0;
 
-let stringifyError = function(err, filter, space)
-{
-    let plainObject = {};
-    Object.getOwnPropertyNames(err).forEach(function(key)
-    {
-        plainObject[key] = err[key];
-    });
-    return JSON.stringify(plainObject, filter, space);
-};
-
 module.exports.loop = function ()
 {
     let cpuStamp = Game.cpu.getUsed();
