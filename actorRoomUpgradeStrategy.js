@@ -34,6 +34,7 @@ let INSTRUCTION =
     , FIX_AT: "fixAt"
     , GOTO_IF_NOT_FIXED: "gotoIfNotFixed"
     , REMOVE_FLAG_AT: "removeFlagAt"
+    , GOTO_IF_DEAD: "gotoIfDead"
     };
 
 module.exports = function(objectStore)
@@ -594,14 +595,15 @@ module.exports = function(objectStore)
 
         let targetPos = [targetRoomPos.x, targetRoomPos.y, targetRoomPos.roomName];
 
-
         this.createProceduralCreep("soloDismantler", {},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], body ] //0
-            , [INSTRUCTION.CALLBACK, this.actorId, "strategize"] //1
-            , [INSTRUCTION.DISMANTLE_AT, targetPos ] //2
-            , [INSTRUCTION.REMOVE_FLAG_AT, targetPos] //3
-            , [INSTRUCTION.RECYCLE_CREEP ] //4
-            , [INSTRUCTION.DESTROY_SCRIPT ] ] //5
+            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId],   body        ] //0
+            , [INSTRUCTION.CALLBACK,            this.actorId,                       "strategize"] //1
+            , [INSTRUCTION.DISMANTLE_AT,        targetPos                                       ] //2
+            , [INSTRUCTION.GOTO_IF_DEAD,        6                                               ] //3
+            , [INSTRUCTION.REMOVE_FLAG_AT,      targetPos                                       ] //4
+            , [INSTRUCTION.CALLBACK,            this.actorId,                       "strategize"] //5
+            , [INSTRUCTION.RECYCLE_CREEP                                                        ] //6
+            , [INSTRUCTION.DESTROY_SCRIPT                                                     ] ] //7
         );
     };
 

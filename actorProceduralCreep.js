@@ -22,6 +22,7 @@ let INSTRUCTION =
     , FIX_AT: "fixAt"
     , GOTO_IF_NOT_FIXED: "gotoIfNotFixed"
     , REMOVE_FLAG_AT: "removeFlagAt"
+    , GOTO_IF_DEAD: "gotoIfDead"
     };
 
 let FILTER_CONTAINER = {filter: (x)=>x.structureType === STRUCTURE_CONTAINER};
@@ -146,6 +147,17 @@ module.exports = function(objectStore)
                     creep = Game.creeps[this.memoryObject.creepName];
 
                     if(!creep)
+                        break;
+
+                    //easier to subtract 1 than set a flag to not increase by 1 at end of loop
+                    this.memoryObject.pointer = currentInstruction[1]-1;
+
+                    break;
+
+                case INSTRUCTION.GOTO_IF_DEAD:
+                    creep = Game.creeps[this.memoryObject.creepName];
+
+                    if(creep)
                         break;
 
                     //easier to subtract 1 than set a flag to not increase by 1 at end of loop
