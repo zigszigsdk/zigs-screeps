@@ -5,38 +5,6 @@ const MAX_STEPS_REPEAT_FOR_EXTENSION_POS_CALC = 100;
 
 let CreepBodyFactory = require('CreepBodyFactory');
 
-
-let FILTER_CONTAINER = {filter: (x)=>x.structureType === STRUCTURE_CONTAINER};
-let FILTER_EXTENSIONS = {filter: (x)=>x.structureType === STRUCTURE_EXTENSION};
-let FILTER_TOWERS = {filter: (x)=>x.structureType === STRUCTURE_TOWER};
-
-//  room level                    0,   1,   2,   3,   4,   5,   6,   7,   8
-let maxExtensionsByLevel =     [  0,   0,   5,  10,  20,  30,  40,  50,  60];
-let extensionCapacityByLevel = [  0,   0,  50,  50,  50,  50,  50, 100, 200];
-let maxTowersByLevel =         [  0,   0,   0,   1,   1,   2,   2,   3,   6];
-
-let INSTRUCTION =
-    { SPAWN_UNTIL_SUCCESS: "spawnUntilSucess"
-    , CALLBACK: "callback"
-    , MINE_UNTIL_FULL: "mineUntilFull"
-    , UPGRADE_UNTIL_EMPTY: "upgradeUntilEmpty"
-    , GOTO_IF_ALIVE: "gotoIfAlive"
-    , DESTROY_SCRIPT: "destroyScript"
-    , PICKUP_AT_POS: "pickupAtPos"
-    , BUILD_UNTIL_EMPTY: "buildUntilEmpty"
-    , GOTO_IF_STRUCTURE_AT: "gotoIfStructureAt"
-    , RECYCLE_CREEP: "recycleCreep"
-    , MOVE_TO_POSITION: "moveToPosition"
-    , MINE_UNTIL_DEATH: "mineUntilDeath"
-    , FILL_NEAREST_UNTIL_EMPTY: "fillNearestUntilEmpty"
-    , DEPOSIT_AT: "depositAt"
-    , DISMANTLE_AT: "dismantleAt"
-    , FIX_AT: "fixAt"
-    , GOTO_IF_NOT_FIXED: "gotoIfNotFixed"
-    , REMOVE_FLAG_AT: "removeFlagAt"
-    , GOTO_IF_DEAD: "gotoIfDead"
-    };
-
 module.exports = function(objectStore)
 {
     this.memoryBank = objectStore.memoryBank;
@@ -230,7 +198,7 @@ module.exports = function(objectStore)
             return this.createMiner(this.memoryObject.sourceIdNearestFirstSpawn);
 
         let scp = spawnSource.containerPos;
-        let spawnContainerList = new RoomPosition(scp[0], scp[1], scp[2]).lookFor(LOOK_STRUCTURES, FILTER_CONTAINER);
+        let spawnContainerList = new RoomPosition(scp[0], scp[1], scp[2]).lookFor(LOOK_STRUCTURES, FILTERS.CONTAINERS);
 
         if(spawnContainerList.length === 0 && spawnSource.containerBuilders < 1)
             return this.createMiningContainerBuilder(spawnSource.containerPos, this.memoryObject.sourceIdNearestFirstSpawn);
@@ -278,14 +246,14 @@ module.exports = function(objectStore)
         {
             let room = Game.rooms[this.memoryObject.roomName];
 
-            let towers = room.find(FIND_MY_STRUCTURES, FILTER_TOWERS);
+            let towers = room.find(FIND_MY_STRUCTURES, FILTERS.TOWERS);
 
-            if(maxTowersByLevel[room.controller.level] > towers.length)
+            if(LEVEL_INDEX.MAX_TOWERS[room.controller.level] > towers.length)
                 return this.createTowerBuilder();
 
-            let extensions = room.find(FIND_MY_STRUCTURES, FILTER_EXTENSIONS);
+            let extensions = room.find(FIND_MY_STRUCTURES, FILTERS.EXTENSIONS);
 
-            if(maxExtensionsByLevel[room.controller.level] > extensions.length)
+            if(LEVEL_INDEX.MAX_EXTENSIONS[room.controller.level] > extensions.length)
                 return this.createExtensionBuilder();
         }
 
@@ -332,12 +300,12 @@ module.exports = function(objectStore)
         let pos = this.memoryObject.sourcesInfo[sourceId].containerPos;
 
         this.createProceduralCreep( "miner", {sourceId: sourceId},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [this.memoryObject.firstSpawnId],   body            ] //0
-            , [INSTRUCTION.CALLBACK,                this.actorId,                       "minerSpawning" ] //1
-            , [INSTRUCTION.MOVE_TO_POSITION,        pos                                                 ] //2
-            , [INSTRUCTION.MINE_UNTIL_DEATH,        sourceId                                            ] //3
-            , [INSTRUCTION.CALLBACK,                this.actorId,                       "minerDied"     ] //4
-            , [INSTRUCTION.DESTROY_SCRIPT                                                             ] ] //5
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [this.memoryObject.firstSpawnId],   body            ] //0
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "minerSpawning" ] //1
+            , [CREEP_INSTRUCTION.MOVE_TO_POSITION,        pos                                                 ] //2
+            , [CREEP_INSTRUCTION.MINE_UNTIL_DEATH,        sourceId                                            ] //3
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "minerDied"     ] //4
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                             ] ] //5
         );
     };
 
@@ -365,12 +333,12 @@ module.exports = function(objectStore)
         let pos = this.memoryObject.sourcesInfo[sourceId].containerPos;
 
         this.createProceduralCreep( "rMiner", {sourceId: sourceId},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [this.memoryObject.firstSpawnId],   body                    ] //0
-            , [INSTRUCTION.CALLBACK,                this.actorId,                       "recoveryMinerSpawning" ] //1
-            , [INSTRUCTION.MOVE_TO_POSITION,        pos                                                         ] //2
-            , [INSTRUCTION.MINE_UNTIL_DEATH,        sourceId                                                    ] //3
-            , [INSTRUCTION.CALLBACK,                this.actorId,                       "recoveryMinerDied"     ] //4
-            , [INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //5
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [this.memoryObject.firstSpawnId],   body                    ] //0
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "recoveryMinerSpawning" ] //1
+            , [CREEP_INSTRUCTION.MOVE_TO_POSITION,        pos                                                         ] //2
+            , [CREEP_INSTRUCTION.MINE_UNTIL_DEATH,        sourceId                                                    ] //3
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "recoveryMinerDied"     ] //4
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //5
         );
     };
 
@@ -389,15 +357,15 @@ module.exports = function(objectStore)
     this.createMiningContainerBuilder = function(pos, sourceId)
     {
         this.createProceduralCreep("containerBuilder", {sourceId: sourceId},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
-            , [INSTRUCTION.CALLBACK, this.actorId, "miningContainerBuilderSpawning" ] //1
-            , [INSTRUCTION.PICKUP_AT_POS, pos, RESOURCE_ENERGY ] //2
-            , [INSTRUCTION.BUILD_UNTIL_EMPTY, pos, STRUCTURE_CONTAINER ] //3
-            , [INSTRUCTION.GOTO_IF_STRUCTURE_AT, pos, STRUCTURE_CONTAINER, 6 ] //4
-            , [INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
-            , [INSTRUCTION.RECYCLE_CREEP ] //6
-            , [INSTRUCTION.CALLBACK, this.actorId, "miningContainerBuilderDied" ] //7
-            , [INSTRUCTION.DESTROY_SCRIPT ] ] //8
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "miningContainerBuilderSpawning" ] //1
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS, pos, RESOURCE_ENERGY ] //2
+            , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY, pos, STRUCTURE_CONTAINER ] //3
+            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, pos, STRUCTURE_CONTAINER, 6 ] //4
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
+            , [CREEP_INSTRUCTION.RECYCLE_CREEP ] //6
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "miningContainerBuilderDied" ] //7
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //8
         );
     };
 
@@ -418,15 +386,15 @@ module.exports = function(objectStore)
         let pos = this.memoryObject.upgradeContainerPos;
 
         this.createProceduralCreep("containerBuilder", {},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
-            , [INSTRUCTION.CALLBACK, this.actorId, "upgradeContainerBuilderspawning" ] //1
-            , [INSTRUCTION.PICKUP_AT_POS, pos, RESOURCE_ENERGY ] //2
-            , [INSTRUCTION.BUILD_UNTIL_EMPTY, pos, STRUCTURE_CONTAINER ] //3
-            , [INSTRUCTION.GOTO_IF_STRUCTURE_AT, pos, STRUCTURE_CONTAINER, 6   ] //4
-            , [INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
-            , [INSTRUCTION.RECYCLE_CREEP ] //6
-            , [INSTRUCTION.CALLBACK, this.actorId, "controllerContainerBuilderDied" ] //7
-            , [INSTRUCTION.DESTROY_SCRIPT ] ] //8
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "upgradeContainerBuilderspawning" ] //1
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS, pos, RESOURCE_ENERGY ] //2
+            , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY, pos, STRUCTURE_CONTAINER ] //3
+            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, pos, STRUCTURE_CONTAINER, 6   ] //4
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
+            , [CREEP_INSTRUCTION.RECYCLE_CREEP ] //6
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "controllerContainerBuilderDied" ] //7
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //8
         );
     };
 
@@ -449,13 +417,13 @@ module.exports = function(objectStore)
         let body = [MOVE, MOVE, MOVE, CARRY, CARRY, CARRY];
 
         this.createProceduralCreep("sourceHauler", {sourceId: sourceId},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], body ] //0
-            , [INSTRUCTION.CALLBACK, this.actorId, "sourceHaulerSpawning" ] //1
-            , [INSTRUCTION.PICKUP_AT_POS, fromPos, RESOURCE_ENERGY ] //2
-            , [INSTRUCTION.DEPOSIT_AT, toPos, RESOURCE_ENERGY ] //3
-            , [INSTRUCTION.GOTO_IF_ALIVE, 2 ] //4
-            , [INSTRUCTION.CALLBACK, this.actorId, "sourceHaulerDied" ] //5
-            , [INSTRUCTION.DESTROY_SCRIPT ] ] //6
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], body ] //0
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "sourceHaulerSpawning" ] //1
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS, fromPos, RESOURCE_ENERGY ] //2
+            , [CREEP_INSTRUCTION.DEPOSIT_AT, toPos, RESOURCE_ENERGY ] //3
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 2 ] //4
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "sourceHaulerDied" ] //5
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //6
         );
     };
 
@@ -485,13 +453,13 @@ module.exports = function(objectStore)
             .fabricate();
 
         this.createProceduralCreep("Upgrader", {},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], body ] //0
-            , [INSTRUCTION.CALLBACK, this.actorId, "upgraderSpawning" ] //1
-            , [INSTRUCTION.PICKUP_AT_POS, this.memoryObject.upgradeContainerPos, RESOURCE_ENERGY ] //2
-            , [INSTRUCTION.UPGRADE_UNTIL_EMPTY, this.memoryObject.controllerId ] //3
-            , [INSTRUCTION.GOTO_IF_ALIVE, 2 ] //4
-            , [INSTRUCTION.CALLBACK, this.actorId, "upgraderDied" ] //5
-            , [INSTRUCTION.DESTROY_SCRIPT ] ] //6
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], body ] //0
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "upgraderSpawning" ] //1
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS, this.memoryObject.upgradeContainerPos, RESOURCE_ENERGY ] //2
+            , [CREEP_INSTRUCTION.UPGRADE_UNTIL_EMPTY, this.memoryObject.controllerId ] //3
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 2 ] //4
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "upgraderDied" ] //5
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //6
         );
     };
 
@@ -510,23 +478,23 @@ module.exports = function(objectStore)
     this.createFiller = function(sourceId)
     {
         let source = Game.getObjectById(sourceId);
-        let extensionIds = _.map(source.room.find(FIND_MY_STRUCTURES, FILTER_EXTENSIONS), (x)=>x.id);
+        let extensionIds = _.map(source.room.find(FIND_MY_STRUCTURES, FILTERS.EXTENSIONS), (x)=>x.id);
         let spawnIds = _.map(source.room.find(FIND_MY_SPAWNS), (x)=>x.id);
         let roomPowerFills = _.flatten([spawnIds, extensionIds]);
 
-        let towerFills = _.map(source.room.find(FIND_MY_STRUCTURES, FILTER_TOWERS), (x)=>x.id);
+        let towerFills = _.map(source.room.find(FIND_MY_STRUCTURES, FILTERS.TOWERS), (x)=>x.id);
 
         let containerPos = this.memoryObject.sourcesInfo[sourceId].containerPos;
         let body = [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE];
         this.createProceduralCreep("filler", {sourceId: sourceId},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS,         [this.memoryObject.firstSpawnId],   body            ] //0
-            , [INSTRUCTION.CALLBACK,                    this.actorId,                       "fillerSpawning"] //1
-            , [INSTRUCTION.PICKUP_AT_POS,               containerPos,                       RESOURCE_ENERGY ] //2
-            , [INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,                    towerFills      ] //3
-            , [INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,                    roomPowerFills  ] //4
-            , [INSTRUCTION.GOTO_IF_ALIVE,               2                                                   ] //5
-            , [INSTRUCTION.CALLBACK,                    this.actorId,                       "fillerDied"    ] //6
-            , [INSTRUCTION.DESTROY_SCRIPT                                                                 ] ] //7
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,         [this.memoryObject.firstSpawnId],   body            ] //0
+            , [CREEP_INSTRUCTION.CALLBACK,                    this.actorId,                       "fillerSpawning"] //1
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS,               containerPos,                       RESOURCE_ENERGY ] //2
+            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,                    towerFills      ] //3
+            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,                    roomPowerFills  ] //4
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,               2                                                   ] //5
+            , [CREEP_INSTRUCTION.CALLBACK,                    this.actorId,                       "fillerDied"    ] //6
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                                 ] ] //7
         );
     };
 
@@ -548,24 +516,24 @@ module.exports = function(objectStore)
         let controlSourceContainer = this.memoryObject.sourcesInfo[this.memoryObject.sourceIdNearestController].containerPos;
 
         this.createProceduralCreep("fixer", {},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [WORK, WORK, CARRY, MOVE] ] //0
-            , [INSTRUCTION.CALLBACK, this.actorId, "fixerSpawning"] //1
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [WORK, WORK, CARRY, MOVE] ] //0
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "fixerSpawning"] //1
 
-            , [INSTRUCTION.PICKUP_AT_POS, spawnContainer, RESOURCE_ENERGY] //2
-            , [INSTRUCTION.FIX_AT, spawnContainer, STRUCTURE_CONTAINER ] //3
-            , [INSTRUCTION.GOTO_IF_NOT_FIXED, spawnContainer, STRUCTURE_CONTAINER, 2] //4
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS, spawnContainer, RESOURCE_ENERGY] //2
+            , [CREEP_INSTRUCTION.FIX_AT, spawnContainer, STRUCTURE_CONTAINER ] //3
+            , [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, spawnContainer, STRUCTURE_CONTAINER, 2] //4
 
-            , [INSTRUCTION.PICKUP_AT_POS, controlSourceContainer, RESOURCE_ENERGY] //5
-            , [INSTRUCTION.FIX_AT, controlSourceContainer, STRUCTURE_CONTAINER] //6
-            , [INSTRUCTION.GOTO_IF_NOT_FIXED, controlSourceContainer, STRUCTURE_CONTAINER, 5] //7
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS, controlSourceContainer, RESOURCE_ENERGY] //5
+            , [CREEP_INSTRUCTION.FIX_AT, controlSourceContainer, STRUCTURE_CONTAINER] //6
+            , [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, controlSourceContainer, STRUCTURE_CONTAINER, 5] //7
 
-            , [INSTRUCTION.PICKUP_AT_POS, this.memoryObject.upgradeContainerPos, RESOURCE_ENERGY] //8
-            , [INSTRUCTION.FIX_AT, this.memoryObject.upgradeContainerPos, STRUCTURE_CONTAINER ] //9
-            , [INSTRUCTION.GOTO_IF_NOT_FIXED, this.memoryObject.upgradeContainerPos, STRUCTURE_CONTAINER, 8] //10
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS, this.memoryObject.upgradeContainerPos, RESOURCE_ENERGY] //8
+            , [CREEP_INSTRUCTION.FIX_AT, this.memoryObject.upgradeContainerPos, STRUCTURE_CONTAINER ] //9
+            , [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, this.memoryObject.upgradeContainerPos, STRUCTURE_CONTAINER, 8] //10
 
-            , [INSTRUCTION.GOTO_IF_ALIVE, 2] //11
-            , [INSTRUCTION.CALLBACK, this.actorId, "fixerDied"] //12
-            , [INSTRUCTION.DESTROY_SCRIPT] ] //13
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 2] //11
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "fixerDied"] //12
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT] ] //13
         );
     };
 
@@ -596,14 +564,14 @@ module.exports = function(objectStore)
         let targetPos = [targetRoomPos.x, targetRoomPos.y, targetRoomPos.roomName];
 
         this.createProceduralCreep("soloDismantler", {},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId],   body        ] //0
-            , [INSTRUCTION.CALLBACK,            this.actorId,                       "strategize"] //1
-            , [INSTRUCTION.DISMANTLE_AT,        targetPos                                       ] //2
-            , [INSTRUCTION.GOTO_IF_DEAD,        6                                               ] //3
-            , [INSTRUCTION.REMOVE_FLAG_AT,      targetPos                                       ] //4
-            , [INSTRUCTION.CALLBACK,            this.actorId,                       "strategize"] //5
-            , [INSTRUCTION.RECYCLE_CREEP                                                        ] //6
-            , [INSTRUCTION.DESTROY_SCRIPT                                                     ] ] //7
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId],   body        ] //0
+            , [CREEP_INSTRUCTION.CALLBACK,            this.actorId,                       "strategize"] //1
+            , [CREEP_INSTRUCTION.DISMANTLE_AT,        targetPos                                       ] //2
+            , [CREEP_INSTRUCTION.GOTO_IF_DEAD,        6                                               ] //3
+            , [CREEP_INSTRUCTION.REMOVE_FLAG_AT,      targetPos                                       ] //4
+            , [CREEP_INSTRUCTION.CALLBACK,            this.actorId,                       "strategize"] //5
+            , [CREEP_INSTRUCTION.RECYCLE_CREEP                                                        ] //6
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                     ] ] //7
         );
     };
 
@@ -626,15 +594,15 @@ module.exports = function(objectStore)
         }
 
         this.createProceduralCreep("extensionBuilder", {},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
-            , [INSTRUCTION.CALLBACK, this.actorId, "extensionBuilderSpawning" ] //1
-            , [INSTRUCTION.PICKUP_AT_POS, energyPos, RESOURCE_ENERGY ] //2
-            , [INSTRUCTION.BUILD_UNTIL_EMPTY, targetPos, STRUCTURE_EXTENSION ] //3
-            , [INSTRUCTION.GOTO_IF_STRUCTURE_AT, targetPos, STRUCTURE_EXTENSION, 6   ] //4
-            , [INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
-            , [INSTRUCTION.RECYCLE_CREEP ] //6
-            , [INSTRUCTION.CALLBACK, this.actorId, "extensionBuilderDied" ] //7
-            , [INSTRUCTION.DESTROY_SCRIPT ] ] //8
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "extensionBuilderSpawning" ] //1
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS, energyPos, RESOURCE_ENERGY ] //2
+            , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY, targetPos, STRUCTURE_EXTENSION ] //3
+            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, targetPos, STRUCTURE_EXTENSION, 6   ] //4
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
+            , [CREEP_INSTRUCTION.RECYCLE_CREEP ] //6
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "extensionBuilderDied" ] //7
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //8
         );
     };
 
@@ -672,16 +640,16 @@ module.exports = function(objectStore)
         let body = [MOVE, CARRY, WORK, WORK];
 
         this.createProceduralCreep("towerBuilder", {towerPos: targetPos},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [this.memoryObject.firstSpawnId],   body                    ] //0
-            , [INSTRUCTION.CALLBACK,                this.actorId,                       "builderSpawning"       ] //1
-            , [INSTRUCTION.PICKUP_AT_POS,           energyPos,                          RESOURCE_ENERGY         ] //2
-            , [INSTRUCTION.BUILD_UNTIL_EMPTY,       targetPos,                          STRUCTURE_TOWER         ] //3
-            , [INSTRUCTION.CALLBACK,                this.actorId,                       "towerPlaced"           ] //4
-            , [INSTRUCTION.GOTO_IF_STRUCTURE_AT,    targetPos,                          STRUCTURE_TOWER,    6   ] //5
-            , [INSTRUCTION.GOTO_IF_ALIVE,           2                                                           ] //6
-            , [INSTRUCTION.RECYCLE_CREEP                                                                        ] //7
-            , [INSTRUCTION.CALLBACK,                this.actorId,                       "builderDied"           ] //8
-            , [INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //9
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [this.memoryObject.firstSpawnId],   body                    ] //0
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "builderSpawning"       ] //1
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS,           energyPos,                          RESOURCE_ENERGY         ] //2
+            , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,       targetPos,                          STRUCTURE_TOWER         ] //3
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "towerPlaced"           ] //4
+            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT,    targetPos,                          STRUCTURE_TOWER,    6   ] //5
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,           2                                                           ] //6
+            , [CREEP_INSTRUCTION.RECYCLE_CREEP                                                                        ] //7
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "builderDied"           ] //8
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //9
         );
     };
 

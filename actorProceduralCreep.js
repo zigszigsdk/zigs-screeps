@@ -3,30 +3,6 @@
 const ALIAS = "proceduralCreep";
 const maxSteps = 10;
 
-let INSTRUCTION =
-    { SPAWN_UNTIL_SUCCESS: "spawnUntilSucess"
-    , CALLBACK: "callback"
-    , MINE_UNTIL_FULL: "mineUntilFull"
-    , UPGRADE_UNTIL_EMPTY: "upgradeUntilEmpty"
-    , GOTO_IF_ALIVE: "gotoIfAlive"
-    , DESTROY_SCRIPT: "destroyScript"
-    , PICKUP_AT_POS: "pickupAtPos"
-    , BUILD_UNTIL_EMPTY: "buildUntilEmpty"
-    , GOTO_IF_STRUCTURE_AT: "gotoIfStructureAt"
-    , RECYCLE_CREEP: "recycleCreep"
-    , MOVE_TO_POSITION: "moveToPosition"
-    , MINE_UNTIL_DEATH: "mineUntilDeath"
-    , FILL_NEAREST_UNTIL_EMPTY: "fillNearestUntilEmpty"
-    , DEPOSIT_AT: "depositAt"
-    , DISMANTLE_AT: "dismantleAt"
-    , FIX_AT: "fixAt"
-    , GOTO_IF_NOT_FIXED: "gotoIfNotFixed"
-    , REMOVE_FLAG_AT: "removeFlagAt"
-    , GOTO_IF_DEAD: "gotoIfDead"
-    };
-
-let FILTER_CONTAINER = {filter: (x)=>x.structureType === STRUCTURE_CONTAINER};
-
 module.exports = function(objectStore)
 {
     this.memoryBank = objectStore.memoryBank;
@@ -88,7 +64,7 @@ module.exports = function(objectStore)
             let filter;
             switch(currentInstruction[0])
             {
-                case INSTRUCTION.SPAWN_UNTIL_SUCCESS:
+                case CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS:
                     creep = Game.creeps[this.memoryObject.creepName];
 
                     if(creep !== null && creep !== undefined)
@@ -105,7 +81,7 @@ module.exports = function(objectStore)
                     spawn.createCreep(currentInstruction[2], this.memoryObject.creepName);
                     break;
 
-                case INSTRUCTION.CALLBACK:
+                case CREEP_INSTRUCTION.CALLBACK:
                     let callbackActor = this.actors.getFromId(currentInstruction[1]);
                     if(callbackActor && callbackActor[currentInstruction[2]])
                         callbackActor[currentInstruction[2]](this.memoryObject.callbackStamp);
@@ -114,7 +90,7 @@ module.exports = function(objectStore)
                             currentInstruction[1] + " function: " + currentInstruction[2]);
                     break;
 
-                case INSTRUCTION.MINE_UNTIL_FULL:
+                case CREEP_INSTRUCTION.MINE_UNTIL_FULL:
                     creep = Game.creeps[this.memoryObject.creepName];
 
                     if(!creep || _.sum(creep.carry) === creep.carryCapacity)
@@ -129,7 +105,7 @@ module.exports = function(objectStore)
 
                     break;
 
-                case INSTRUCTION.UPGRADE_UNTIL_EMPTY:
+                case CREEP_INSTRUCTION.UPGRADE_UNTIL_EMPTY:
                     creep = Game.creeps[this.memoryObject.creepName];
 
                     if(!creep || _.sum(creep.carry) === 0)
@@ -143,7 +119,7 @@ module.exports = function(objectStore)
                     stop = true;
                     break;
 
-                case INSTRUCTION.GOTO_IF_ALIVE:
+                case CREEP_INSTRUCTION.GOTO_IF_ALIVE:
                     creep = Game.creeps[this.memoryObject.creepName];
 
                     if(!creep)
@@ -154,7 +130,7 @@ module.exports = function(objectStore)
 
                     break;
 
-                case INSTRUCTION.GOTO_IF_DEAD:
+                case CREEP_INSTRUCTION.GOTO_IF_DEAD:
                     creep = Game.creeps[this.memoryObject.creepName];
 
                     if(creep)
@@ -165,12 +141,12 @@ module.exports = function(objectStore)
 
                     break;
 
-                case INSTRUCTION.DESTROY_SCRIPT:
+                case CREEP_INSTRUCTION.DESTROY_SCRIPT:
                     stop=true;
                     this.actors.removeActor(this.actorId);
                     break;
 
-                case INSTRUCTION.PICKUP_AT_POS:
+                case CREEP_INSTRUCTION.PICKUP_AT_POS:
 
                     creep = Game.creeps[this.memoryObject.creepName];
 
@@ -187,14 +163,14 @@ module.exports = function(objectStore)
                         if(creep.pickup(energyList[0]) === ERR_NOT_IN_RANGE)
                             creep.moveTo(energyList[0]);
 
-                    let containers = pos.lookFor(LOOK_STRUCTURES, FILTER_CONTAINER);
+                    let containers = pos.lookFor(LOOK_STRUCTURES, FILTERS.CONTAINERS);
 
                     if(containers.length !== 0)
                         if(creep.withdraw(containers[0], currentInstruction[2]) === ERR_NOT_IN_RANGE)
                             creep.moveTo(containers[0]);
                     break;
 
-                case INSTRUCTION.BUILD_UNTIL_EMPTY:
+                case CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY:
 
                     creep = Game.creeps[this.memoryObject.creepName];
 
@@ -242,7 +218,7 @@ module.exports = function(objectStore)
                         creep.moveTo(sites[0].pos);
                     break;
 
-                case INSTRUCTION.GOTO_IF_STRUCTURE_AT:
+                case CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT:
 
                     creep = Game.creeps[this.memoryObject.creepName];
 
@@ -268,7 +244,7 @@ module.exports = function(objectStore)
 
                     break;
 
-                case INSTRUCTION.RECYCLE_CREEP:
+                case CREEP_INSTRUCTION.RECYCLE_CREEP:
 
                     creep = Game.creeps[this.memoryObject.creepName];
 
@@ -285,7 +261,7 @@ module.exports = function(objectStore)
 
                     break;
 
-                case INSTRUCTION.MOVE_TO_POSITION:
+                case CREEP_INSTRUCTION.MOVE_TO_POSITION:
 
                     creep = Game.creeps[this.memoryObject.creepName];
 
@@ -311,7 +287,7 @@ module.exports = function(objectStore)
                     creep.moveTo(targetPos);
                     break;
 
-                case INSTRUCTION.MINE_UNTIL_DEATH:
+                case CREEP_INSTRUCTION.MINE_UNTIL_DEATH:
                     creep = Game.creeps[this.memoryObject.creepName];
 
                     if(!creep)
@@ -325,7 +301,7 @@ module.exports = function(objectStore)
                     stop = true;
                     break;
 
-                case INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY:
+                case CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY:
 
                     creep = Game.creeps[this.memoryObject.creepName];
 
@@ -354,7 +330,7 @@ module.exports = function(objectStore)
 
                     break;
 
-                case INSTRUCTION.DEPOSIT_AT:
+                case CREEP_INSTRUCTION.DEPOSIT_AT:
 
                     creep = Game.creeps[this.memoryObject.creepName];
 
@@ -376,7 +352,7 @@ module.exports = function(objectStore)
 
                     break;
 
-                case INSTRUCTION.DISMANTLE_AT:
+                case CREEP_INSTRUCTION.DISMANTLE_AT:
 
                     creep = Game.creeps[this.memoryObject.creepName];
 
@@ -408,7 +384,7 @@ module.exports = function(objectStore)
 
                     break;
 
-                case INSTRUCTION.FIX_AT:
+                case CREEP_INSTRUCTION.FIX_AT:
 
                     creep = Game.creeps[this.memoryObject.creepName];
 
@@ -430,7 +406,7 @@ module.exports = function(objectStore)
 
                     break;
 
-                case INSTRUCTION.GOTO_IF_NOT_FIXED:
+                case CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED:
                     creep = Game.creeps[this.memoryObject.creepName];
 
                     if(!creep)
@@ -448,7 +424,7 @@ module.exports = function(objectStore)
 
                     break;
 
-                case INSTRUCTION.REMOVE_FLAG_AT:
+                case CREEP_INSTRUCTION.REMOVE_FLAG_AT:
 
                     if(! Game.rooms[currentInstruction[1][2] ] )
                         break;

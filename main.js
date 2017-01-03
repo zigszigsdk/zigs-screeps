@@ -28,6 +28,7 @@ module.exports.loop = function ()
 
     if(recycleCount === 0)
     {
+        require('loadGlobals')();
         objectStore = require('objectStore');
         objectStore.build();
 
