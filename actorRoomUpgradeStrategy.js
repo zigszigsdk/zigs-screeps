@@ -477,7 +477,9 @@ module.exports = function(objectStore)
         let body = new CreepBodyFactory()
             .addPattern([CARRY, WORK, MOVE], 1)
             .addPattern([WORK], 9)
-            .setSort([MOVE, WORK, CARRY])
+            .addPattern([MOVE], 9)
+            .addPattern([CARRY], 4)
+            .setSort([MOVE, CARRY, WORK])
             .setMaxCost(energy)
             .fabricate();
 
@@ -514,9 +516,9 @@ module.exports = function(objectStore)
         let towerFills = _.map(source.room.find(FIND_MY_STRUCTURES, FILTER_TOWERS), (x)=>x.id);
 
         let containerPos = this.memoryObject.sourcesInfo[sourceId].containerPos;
-
+        let body = [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE];
         this.createProceduralCreep("filler", {sourceId: sourceId},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS,         [this.memoryObject.firstSpawnId],   [MOVE, CARRY]   ] //0
+            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS,         [this.memoryObject.firstSpawnId],   body            ] //0
             , [INSTRUCTION.CALLBACK,                    this.actorId,                       "fillerSpawning"] //1
             , [INSTRUCTION.PICKUP_AT_POS,               containerPos,                       RESOURCE_ENERGY ] //2
             , [INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,                    towerFills      ] //3
