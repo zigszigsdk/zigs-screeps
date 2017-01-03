@@ -125,7 +125,7 @@ module.exports =
 
     coreBoot: function(preScriptCPU, timesRecycled)
     {
-        if(memoryBank.printBoot !== true)
+        if(memoryObject.printBoot !== true)
             return;
 
         let part2;
