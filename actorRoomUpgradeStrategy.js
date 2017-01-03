@@ -110,6 +110,7 @@ module.exports = function(objectStore)
 
                 sourcesInfo[source.id]=
                     { miners: 0
+                    , recoveryMiners: 0
                     , haulers: 0
                     , containerBuilders: 0
                     , containerPos: [bestPos.x, bestPos.y, bestPos.roomName]
@@ -217,6 +218,9 @@ module.exports = function(objectStore)
         this.cancelLatestSubActorIfNotSpawned();
 
         let spawnSource = this.memoryObject.sourcesInfo[this.memoryObject.sourceIdNearestFirstSpawn];
+
+        if(spawnSource.recoveryMiners < 1 && spawnSource.miners < 1)
+            return this.createRecoveryMiner(this.memoryObject.sourceIdNearestFirstSpawn);
 
         if(spawnSource.fillers < 1)
             return this.createFiller(this.memoryObject.sourceIdNearestFirstSpawn);
@@ -345,6 +349,39 @@ module.exports = function(objectStore)
     this.minerDied = function(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].miners--;
+        this.strategize();
+    };
+
+    this.createRecoveryMiner = function(sourceId)
+    {
+        let energy = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
+
+        let body = new CreepBodyFactory()
+            .addPattern([MOVE, WORK], 1)
+            .setMaxCost(energy)
+            .fabricate();
+
+        let pos = this.memoryObject.sourcesInfo[sourceId].containerPos;
+
+        this.createProceduralCreep( "rMiner", {sourceId: sourceId},
+            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [this.memoryObject.firstSpawnId],   body                    ] //0
+            , [INSTRUCTION.CALLBACK,                this.actorId,                       "recoveryMinerSpawning" ] //1
+            , [INSTRUCTION.MOVE_TO_POSITION,        pos                                                         ] //2
+            , [INSTRUCTION.MINE_UNTIL_DEATH,        sourceId                                                    ] //3
+            , [INSTRUCTION.CALLBACK,                this.actorId,                       "recoveryMinerDied"     ] //4
+            , [INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //5
+        );
+    };
+
+    this.recoveryMinerSpawning = function(infoObj)
+    {
+        this.memoryObject.sourcesInfo[infoObj.sourceId].recoveryMiners++;
+        this.strategize();
+    };
+
+    this.recoveryMinerDied = function(infoObj)
+    {
+        this.memoryObject.sourcesInfo[infoObj.sourceId].recoveryMiners--;
         this.strategize();
     };
 
