@@ -628,17 +628,25 @@ module.exports = function(objectStore)
             }
         }
 
-        this.createProceduralCreep("towerBuilder", {},
-            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
-            , [INSTRUCTION.CALLBACK, this.actorId, "builderSpawning" ] //1
-            , [INSTRUCTION.PICKUP_AT_POS, energyPos, RESOURCE_ENERGY ] //2
-            , [INSTRUCTION.BUILD_UNTIL_EMPTY, targetPos, STRUCTURE_TOWER ] //3
-            , [INSTRUCTION.GOTO_IF_STRUCTURE_AT, targetPos, STRUCTURE_TOWER, 6   ] //4
-            , [INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
-            , [INSTRUCTION.RECYCLE_CREEP ] //6
-            , [INSTRUCTION.CALLBACK, this.actorId, "builderDied" ] //7
-            , [INSTRUCTION.DESTROY_SCRIPT ] ] //8
+        let body = [MOVE, CARRY, WORK, WORK];
+
+        this.createProceduralCreep("towerBuilder", {towerPos: targetPos},
+            [ [INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [this.memoryObject.firstSpawnId],   body                    ] //0
+            , [INSTRUCTION.CALLBACK,                this.actorId,                       "builderSpawning"       ] //1
+            , [INSTRUCTION.PICKUP_AT_POS,           energyPos,                          RESOURCE_ENERGY         ] //2
+            , [INSTRUCTION.BUILD_UNTIL_EMPTY,       targetPos,                          STRUCTURE_TOWER         ] //3
+            , [INSTRUCTION.CALLBACK,                this.actorId,                       "towerPlaced"           ] //4
+            , [INSTRUCTION.GOTO_IF_STRUCTURE_AT,    targetPos,                          STRUCTURE_TOWER,    6   ] //5
+            , [INSTRUCTION.GOTO_IF_ALIVE,           2                                                           ] //6
+            , [INSTRUCTION.RECYCLE_CREEP                                                                        ] //7
+            , [INSTRUCTION.CALLBACK,                this.actorId,                       "builderDied"           ] //8
+            , [INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //9
         );
+    };
+
+    this.towerPlaced = function(infoObj)
+    {
+        this.actors.createNew("actorNaiveTower", (script)=>script.init(infoObj.towerPos));
     };
 
     this.takeAffordableBody = function(fullBody)

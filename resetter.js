@@ -27,6 +27,12 @@ module.exports = {
                 continue;
 
             actors.createNew("actorRoomUpgradeStrategy", (script)=>script.init(roomName));
+
+            let towers = room.find(FIND_STRUCTURES, {filter: (x)=>x.structureType === STRUCTURE_TOWER});
+
+            towers.forEach((towerObj =>
+                actors.createNew("actorNaiveTower", (script) =>
+                    script.init([towerObj.pos.x, towerObj.pos.y, towerObj.pos.roomName]))));
         }
     },
 };
