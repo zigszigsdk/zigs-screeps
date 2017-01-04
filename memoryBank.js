@@ -57,7 +57,7 @@ module.exports = class MemoryBank
 
     getMemory(bankKey)
     {
-        if(this.banksKvp[bankKey] !== undefined)
+        if(typeof this.banksKvp !== 'undefined' && typeof this.banksKvp[bankKey] !== 'undefined')
             return JSON.parse(this.banksKvp[bankKey]);
 
         return {};

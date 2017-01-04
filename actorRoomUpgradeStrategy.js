@@ -23,7 +23,7 @@ module.exports = class ActorRoomUpgradeStrategy
     initiateActor(roomName)
     {
         let sourcesInfo = {};
-        let room = Game.rooms[roomName];
+        let room = this.core.room(roomName);
         let spawns = room.find(FIND_MY_SPAWNS);
 
         room.find(FIND_SOURCES).forEach(
@@ -52,7 +52,7 @@ module.exports = class ActorRoomUpgradeStrategy
 
         this.memoryObject =
             { roomName: roomName
-            , controllerId: Game.rooms[roomName].controller.id
+            , controllerId: this.core.room(roomName).controller.id
             , sourcesInfo: sourcesInfo
             , sourceIdNearestFirstSpawn: sourceNearestFirstSpawn.id
             , sourceIdNearestController: sourceNearestController.id
@@ -83,14 +83,14 @@ module.exports = class ActorRoomUpgradeStrategy
 
     getSurroundingPositions(c)
     {
-        return [ new RoomPosition(c.x-1, c.y-1, c.roomName)
-               , new RoomPosition(c.x-1, c.y,   c.roomName)
-               , new RoomPosition(c.x-1, c.y+1, c.roomName)
-               , new RoomPosition(c.x,   c.y-1, c.roomName)
-               , new RoomPosition(c.x,   c.y+1, c.roomName)
-               , new RoomPosition(c.x+1, c.y-1, c.roomName)
-               , new RoomPosition(c.x+1, c.y,   c.roomName)
-               , new RoomPosition(c.x+1, c.y+1, c.roomName)];
+        return [ this.core.roomPosition(c.x-1, c.y-1, c.roomName)
+               , this.core.roomPosition(c.x-1, c.y,   c.roomName)
+               , this.core.roomPosition(c.x-1, c.y+1, c.roomName)
+               , this.core.roomPosition(c.x,   c.y-1, c.roomName)
+               , this.core.roomPosition(c.x,   c.y+1, c.roomName)
+               , this.core.roomPosition(c.x+1, c.y-1, c.roomName)
+               , this.core.roomPosition(c.x+1, c.y,   c.roomName)
+               , this.core.roomPosition(c.x+1, c.y+1, c.roomName)];
     }
 
     upgraderContainerCandidates(c)
@@ -107,7 +107,7 @@ module.exports = class ActorRoomUpgradeStrategy
                 if(y <= 0 || y >= 49)
                     continue;
 
-                results.push(new RoomPosition(x, y, c.roomName));
+                results.push(this.core.roomPosition(x, y, c.roomName));
             }
         }
         return results;
@@ -128,9 +128,10 @@ module.exports = class ActorRoomUpgradeStrategy
 
     calcExtensionSpots(containerPos)
     {
+        let core = this.core;
         let isOpen = function(location)
         {
-            let rp = new RoomPosition(location[0], location[1], location[2]);
+            let rp = core.roomPosition(location[0], location[1], location[2]);
             let structs = rp.lookFor(LOOK_STRUCTURES);
             let sites = rp.lookFor(LOOK_CONSTRUCTION_SITES);
 
@@ -185,7 +186,7 @@ module.exports = class ActorRoomUpgradeStrategy
         if(steps === MAX_STEPS_REPEAT_FOR_EXTENSION_POS_CALC && extensionPositions.length < 66)
             this.core.logWarning("in ActorRoomUpgradeStratey.calcExtensionSpots: exceeded max allowed steps for repeat");
 
-        let containerRp = new RoomPosition(containerPos[0], containerPos[1], containerPos[2]);
+        let containerRp = this.core.roomPosition(containerPos[0], containerPos[1], containerPos[2]);
 
         extensionPositions = _.take(_.sortBy(extensionPositions, (pos) => containerRp.getRangeTo(pos[0], pos[1])), 66);
 
@@ -208,7 +209,7 @@ module.exports = class ActorRoomUpgradeStrategy
             return this.createMiner(this.memoryObject.sourceIdNearestFirstSpawn);
 
         let scp = spawnSource.containerPos;
-        let spawnContainerList = new RoomPosition(scp[0], scp[1], scp[2]).lookFor(LOOK_STRUCTURES, FILTERS.CONTAINERS);
+        let spawnContainerList = this.core.roomPosition(scp[0], scp[1], scp[2]).lookFor(LOOK_STRUCTURES, FILTERS.CONTAINERS);
 
         if(spawnContainerList.length === 0 && spawnSource.containerBuilders < 1)
             return this.createMiningContainerBuilder(spawnSource.containerPos, this.memoryObject.sourceIdNearestFirstSpawn);
@@ -218,7 +219,7 @@ module.exports = class ActorRoomUpgradeStrategy
         if(controllerSource.miners < 1)
             return this.createMiner(this.memoryObject.sourceIdNearestController);
 
-        let controllerSourceContainerList = new RoomPosition(controllerSource.containerPos[0],
+        let controllerSourceContainerList = this.core.roomPosition(controllerSource.containerPos[0],
                                                             controllerSource.containerPos[1],
                                                             controllerSource.containerPos[2]
                                         ).lookFor(LOOK_STRUCTURES);
@@ -233,7 +234,7 @@ module.exports = class ActorRoomUpgradeStrategy
         if(controllerSource.haulers < 1)
             return this.createSourceHauler(this.memoryObject.sourceIdNearestController);
 
-        let controllerContainerList = new RoomPosition(this.memoryObject.upgradeContainerPos[0],
+        let controllerContainerList = this.core.roomPosition(this.memoryObject.upgradeContainerPos[0],
                                                         this.memoryObject.upgradeContainerPos[1],
                                                         this.memoryObject.upgradeContainerPos[2]
                                         ).lookFor(LOOK_STRUCTURES);
@@ -257,7 +258,7 @@ module.exports = class ActorRoomUpgradeStrategy
 
         if(this.memoryObject.builders < 1)
         {
-            let room = Game.rooms[this.memoryObject.roomName];
+            let room = this.core.room(this.memoryObject.roomName);
 
             let towers = room.find(FIND_MY_STRUCTURES, FILTERS.TOWERS);
 
@@ -306,7 +307,7 @@ module.exports = class ActorRoomUpgradeStrategy
 
     createMiner(sourceId)
     {
-        let energy = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
+        let energy = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
 
         let body = new CreepBodyFactory()
             .addPattern([MOVE], 1)
@@ -342,7 +343,7 @@ module.exports = class ActorRoomUpgradeStrategy
 
     createRecoveryMiner(sourceId)
     {
-        let energy = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
+        let energy = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
 
         let body = new CreepBodyFactory()
             .addPattern([MOVE, WORK], 1)
@@ -431,7 +432,7 @@ module.exports = class ActorRoomUpgradeStrategy
 
     createUpgrader()
     {
-        let energy = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
+        let energy = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
 
         let body = new CreepBodyFactory()
             .addPattern([CARRY, WORK, MOVE], 1)
@@ -467,7 +468,7 @@ module.exports = class ActorRoomUpgradeStrategy
 
     createFiller(sourceId)
     {
-        let source = Game.getObjectById(sourceId);
+        let source = this.core.getObjectById(sourceId);
         let extensionIds = _.map(source.room.find(FIND_MY_STRUCTURES, FILTERS.EXTENSIONS), (x)=>x.id);
         let spawnIds = _.map(source.room.find(FIND_MY_SPAWNS), (x)=>x.id);
         let roomPowerFills = _.flatten([spawnIds, extensionIds]);
@@ -541,7 +542,7 @@ module.exports = class ActorRoomUpgradeStrategy
 
     createSoloDismantler(targetRoomPos)
     {
-        let energy = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
+        let energy = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
 
         let body = new CreepBodyFactory()
             .addPattern([WORK, MOVE], 1)
@@ -570,7 +571,7 @@ module.exports = class ActorRoomUpgradeStrategy
         for(let index in this.memoryObject.extensionPositions)
         {
             let pos = this.memoryObject.extensionPositions[index];
-            let rp = new RoomPosition(pos[0], pos[1], pos[2]);
+            let rp = this.core.roomPosition(pos[0], pos[1], pos[2]);
             let structs = rp.lookFor(LOOK_STRUCTURES);
             if(structs.length === 0 || (structs.length === 1 && structs[0].structureType === STRUCTURE_ROAD))
                 return pos;
@@ -583,7 +584,7 @@ module.exports = class ActorRoomUpgradeStrategy
     {
         let body = new CreepBodyFactory()
             .addPattern([WORK, CARRY, MOVE, MOVE], 4)
-            .setMaxCost(Game.rooms[this.memoryObject.roomName].energyCapacityAvailable)
+            .setMaxCost(this.core.room(this.memoryObject.roomName).energyCapacityAvailable)
             .fabricate();
 
         this.createProceduralCreep("builder", {buildPos: buildPos, structureType: structureType},
@@ -635,7 +636,7 @@ module.exports = class ActorRoomUpgradeStrategy
                 case TOUGH:         return  10;
                 default: return Number.MAX_SAFE_INTEGER;}});
 
-        let maxPrice = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
+        let maxPrice = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
         let price = 0;
         let result = [];
 

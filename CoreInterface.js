@@ -1,7 +1,13 @@
 "use strict";
 
-class CoreInterface
+module.exports = class CoreInterface
 {
+	constructor()
+	{
+		if(DEBUG)
+			this.DebugWrapperScreeps = require("DebugWrapperScreeps");
+	}
+
 	setLogger(logger) { this.logger = logger; }
 	setEventQueue(eventQueue) { this.eventQueue = eventQueue; }
 	setSubscriptions(subscriptions) { this.subscriptions = subscriptions; }
@@ -83,15 +89,53 @@ class CoreInterface
 		this.logger.memory(key, memory);
 	}
 
-	startCpuLog()
+	startCpuLog(text)
 	{
-		this.logger.startCpuLog();
+		this.logger.startCpuLog(text);
 	}
 
 	endCpuLog(text)
 	{
 		this.logger.endCpuLog(text);
 	}
-}
 
-module.exports = CoreInterface;
+	roomPosition(x, y, roomName)
+	{
+		if(!DEBUG)
+			return new RoomPosition(x,y,roomName);
+
+		return new this.DebugWrapperScreeps(this, new RoomPosition(x, y, roomName), "(a RoomPosition)" );
+	}
+
+	room(name)
+	{
+		if(!DEBUG)
+			return Game.rooms[name];
+
+		let room = Game.rooms[name];
+		if(typeof room === 'undefined' || room === null)
+			return null;
+
+		return new this.DebugWrapperScreeps(this, room, "(a Room)");
+	}
+
+	creep(name)
+	{
+		if(!DEBUG)
+			return Game.creeps[name];
+
+		let creep = Game.creeps[name];
+		if(typeof creep === 'undefined' || creep === null)
+			return null;
+
+		return new this.DebugWrapperScreeps(this, creep, "(a Creep)");
+	}
+
+	getObjectById(id)
+	{
+		if(!DEBUG)
+			return Game.getObjectById(id);
+
+		return new this.DebugWrapperScreeps(this, Game.getObjectById(id), "(result of objectById)");
+	}
+};

@@ -17,6 +17,7 @@ module.exports = class Core
         let CoreInterface = require('CoreInterface');
         let coreInterface = new CoreInterface();
 
+
         let Logger = require('Logger');
         let EventQueue = require('EventQueue');
         let Subscriptions = require('Subscriptions');
@@ -25,20 +26,25 @@ module.exports = class Core
         let Resetter = require('Resetter');
         let ConsoleExecuter = require('ConsoleExecuter');
 
-		this.logger = new Logger(coreInterface);
+        let DebugWrapperCore;
+        if(DEBUG)
+            DebugWrapperCore = require("DebugWrapperCore");
+
+		this.logger = !DEBUG ? new Logger(coreInterface) : new DebugWrapperCore(Logger, coreInterface);
         coreInterface.setLogger(this.logger);
 
-        this.eventQueue =  new EventQueue(coreInterface);
+        this.eventQueue = !DEBUG ? new EventQueue(coreInterface) : new DebugWrapperCore(EventQueue, coreInterface);
         coreInterface.setEventQueue(this.eventQueue);
 
-        this.subscriptions = new Subscriptions(coreInterface);
+        this.subscriptions =
+            DEBUG ? new Subscriptions(coreInterface) : new DebugWrapperCore(Subscriptions, coreInterface);
 		coreInterface.setSubscriptions(this.subscriptions);
 
-        this.memoryBank = new MemoryBank(coreInterface);
-		coreInterface.setMemoryBank(this.memoryBank);
+        this.memoryBank = DEBUG ? new MemoryBank(coreInterface) : new DebugWrapperCore(MemoryBank, coreInterface);
+        coreInterface.setMemoryBank(this.memoryBank);
 
-        this.actors = new Actors(coreInterface);
-		coreInterface.setActors(this.actors);
+        this.actors = DEBUG ? new Actors(coreInterface) : new DebugWrapperCore(Actors, coreInterface);
+        coreInterface.setActors(this.actors);
 
         this.resetter = new Resetter(coreInterface);
         this.consoleExecuter = new ConsoleExecuter(coreInterface);
@@ -78,12 +84,12 @@ module.exports = class Core
 	    }
 	    else
 	    {
-	    	this.logger.startCpuLog();
+	    	this.logger.startCpuLog("Core:eventLoop");
 	    	this.eventLoop();
-	    	this.logger.endCpuLog("end of eventLoop");
+	    	this.logger.endCpuLog("Core:eventLoop");
 		}
 
-	    this.logger.startCpuLog();
+	    this.logger.startCpuLog("Core:unwinding");
 
         this.consoleExecuter.unwindCore();
         this.actors.unwindCore();
@@ -91,7 +97,7 @@ module.exports = class Core
         this.logger.unwindCore();
         this.memoryBank.unwindCore();
 
-	    this.logger.endCpuLog("end of unwinding");
+	    this.logger.endCpuLog("Core:unwinding");
 	}
 
 	eventLoop()
@@ -122,11 +128,6 @@ module.exports = class Core
                     continue;
 
                 let callbackMethod = subscribers[actorId];
-                let scriptName = this.actors.getScriptname(actorId);
-                this.logger.display("_entering actorId" + actorId + ": " +
-                    this.actors.getScriptname(actorId) + "." + callbackMethod);
-
-                this.logger.startCpuLog();
 
                 try //if runtime error in one actor, the others will still run.
                 {
@@ -134,11 +135,10 @@ module.exports = class Core
                 }
                 catch(err)
                 {
+                    let scriptName = this.actors.getScriptname(actorId);
                     this.logger.error("In eventLoop, calling actor " + actorId +": " + scriptName + "." +
                         callbackMethod + "(\"" + event + "\")\n", err);
                 }
-
-                this.logger.endCpuLog("finished");
 
                 if(Game.cpu.getUsed() > Game.cpu.tickLimit * CPU_SAFETY_RATIO)
                 {

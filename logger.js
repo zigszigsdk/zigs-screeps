@@ -1,23 +1,26 @@
 "use strict";
 
 const MEMORY_KEYWORD = "core:logger";
+const CPU_TO_TRACE_MULTIPLIER = 1000000;
 
 module.exports = class Logger
 {
     constructor(core)
     {
-        this.loggerStack = [];
         this.core = core;
     }
 
     rewindCore()
     {
         this.memoryObject = this.core.getMemory(MEMORY_KEYWORD);
-        this.loggerStack = [];
+        this.traceLog = [];
     }
 
     unwindCore()
     {
+        if(this.memoryObject && this.memoryObject.printProfiles)
+            console.log(JSON.stringify(this.traceLog));
+
         this.printErrorsAndWarnings();
         this.core.setMemory(MEMORY_KEYWORD, this.memoryObject);
     }
@@ -36,21 +39,30 @@ module.exports = class Logger
             };
     }
 
-    startCpuLog()
+    startCpuLog(name)
     {
-        this.loggerStack.push(Game.cpu.getUsed());
-    }
-
-    endCpuLog(displayText)
-    {
-        if(!this.memoryObject.printProfiles)
+        if(! this.memoryObject || ! this.memoryObject.printProfiles)
             return;
 
-        let newUsedCPU = Game.cpu.getUsed();
+        this.traceLog.push(
+            { name: name
+            , ph: "B"
+            , ts: Game.cpu.getUsed() * CPU_TO_TRACE_MULTIPLIER
+            , pid: 0
+            });
+    }
 
-        console.log("[PROFILE] " + ("_".repeat(this.loggerStack.length-1)) + displayText + ": " +
-            (newUsedCPU - this.loggerStack.pop()) + " CPU (total used: " + newUsedCPU + ")");
+    endCpuLog(name)
+    {
+        if(! this.memoryObject || ! this.memoryObject.printProfiles)
+            return;
 
+        this.traceLog.push(
+            { name: name
+            , ph: "E"
+            , ts: Game.cpu.getUsed() * CPU_TO_TRACE_MULTIPLIER
+            , pid: 0
+            });
     }
 
     display(displayText)

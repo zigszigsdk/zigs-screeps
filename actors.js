@@ -30,6 +30,7 @@ module.exports = class Actors
             { actorIdCounter: 0
             , scriptNameFromId: {}
             , aliases: {}
+            , debugWrap: false
             };
 
         this.localCache =
@@ -87,7 +88,16 @@ module.exports = class Actors
             }
         }
         let ActorClass = this.localCache.classes[scriptName];
-        let actor = new ActorClass(this.core);
+        let actor;
+
+        if(DEBUG)
+        {
+            let DebugWrapperActor = require("DebugWrapperActor");
+            actor = new DebugWrapperActor(ActorClass, actorId, this.core);
+        }
+        else
+            actor = new ActorClass(this.core);
+
         actor.rewindActor(actorId);
 
         this.localCache.actors[actorId] = actor;
@@ -110,10 +120,22 @@ module.exports = class Actors
             }
         }
 
-        let ActorClass = this.localCache.classes;
-        let actor = new ActorClass[scriptName](this.core);
+        let actor;
+
+        let ActorClass = this.localCache.classes[scriptName];
 
         let actorId = this.memoryObject.actorIdCounter++;
+
+        if(DEBUG)
+        {
+            let DebugWrapperActor = require("DebugWrapperActor");
+            actor = new DebugWrapperActor(ActorClass, actorId, this.core);
+        }
+        else
+            actor = new ActorClass(this.core);
+
+
+        console.log(JSON.stringify(actor));
 
         actor.rewindActor(actorId);
 

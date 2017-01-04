@@ -62,15 +62,16 @@ module.exports = class ActorProcedualCreep
             let target;
             let filteredStructs;
             let filter;
+
             switch(currentInstruction[0])
             {
                 case CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS:
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(creep !== null && creep !== undefined)
                         break;
 
-                    let spawn = Game.getObjectById(currentInstruction[1][0]); //should accept multiple spawns
+                    let spawn = this.core.getObjectById(currentInstruction[1][0]); //should accept multiple spawns
 
                     if(spawn.canCreateCreep(currentInstruction[2], this.memoryObject.creepName) !== OK)
                     {
@@ -91,14 +92,14 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.MINE_UNTIL_FULL:
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep || _.sum(creep.carry) === creep.carryCapacity)
                         break;
 
                     stop = true;
 
-                    source = Game.getObjectById(currentInstruction[1]);
+                    source = this.core.getObjectById(currentInstruction[1]);
 
                     if(creep.harvest(source) === ERR_NOT_IN_RANGE)
                        creep.moveTo(source);
@@ -106,12 +107,12 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.UPGRADE_UNTIL_EMPTY:
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
 
-                    let controller = Game.getObjectById(currentInstruction[1]);
+                    let controller = this.core.getObjectById(currentInstruction[1]);
 
                     if(creep.upgradeController(controller) === ERR_NOT_IN_RANGE)
                         creep.moveTo(controller);
@@ -120,7 +121,7 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.GOTO_IF_ALIVE:
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep)
                         break;
@@ -131,7 +132,7 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.GOTO_IF_DEAD:
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(creep)
                         break;
@@ -153,14 +154,14 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.PICKUP_AT_POS:
 
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep || _.sum(creep.carry) === creep.carryCapacity)
                         break;
 
                     stop = true;
                     let posList = currentInstruction[1];
-                    pos = new RoomPosition(posList[0], posList[1], posList[2]);
+                    pos = this.core.roomPosition(posList[0], posList[1], posList[2]);
 
                     let energyList = pos.lookFor(currentInstruction[2]);
 
@@ -177,13 +178,13 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY:
 
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
 
                     let posArr = currentInstruction[1];
-                    pos = new RoomPosition(posArr[0], posArr[1], posArr[2]);
+                    pos = this.core.roomPosition(posArr[0], posArr[1], posArr[2]);
 
                     if(pos.isEqualTo(creep.pos))
                     {
@@ -225,13 +226,13 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT:
 
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep)
                         break;
 
                     let posInst = currentInstruction[1];
-                    pos = new RoomPosition(posInst[0], posInst[1], posInst[2]);
+                    pos = this.core.roomPosition(posInst[0], posInst[1], posInst[2]);
 
                     structs = pos.lookFor(LOOK_STRUCTURES);
 
@@ -251,7 +252,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.RECYCLE_CREEP:
 
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep)
                         break;
@@ -268,12 +269,12 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.MOVE_TO_POSITION:
 
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep)
                         break;
                     pos = currentInstruction[1];
-                    targetPos = new RoomPosition(pos[0], pos[1], pos[2]);
+                    targetPos = this.core.roomPosition(pos[0], pos[1], pos[2]);
 
                     if(creep.pos.x === targetPos.x &&
                         creep.pos.y === targetPos.y &&
@@ -284,7 +285,6 @@ module.exports = class ActorProcedualCreep
                     stop = true;
 
                     let others = targetPos.lookFor(LOOK_CREEPS);
-
                     if(others.length === 1)
                         if(others[0].my === true)
                             others[0].suicide();
@@ -293,12 +293,12 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.MINE_UNTIL_DEATH:
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep)
                         break;
 
-                    source = Game.getObjectById(currentInstruction[1]);
+                    source = this.core.getObjectById(currentInstruction[1]);
 
                     if(creep.harvest(source) === ERR_NOT_IN_RANGE)
                        creep.moveTo(source);
@@ -308,7 +308,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY:
 
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
@@ -317,7 +317,7 @@ module.exports = class ActorProcedualCreep
 
                     currentInstruction[2].forEach((targetId) =>
                     {
-                        let candidate = Game.getObjectById(targetId);
+                        let candidate = this.core.getObjectById(targetId);
 
                         if(candidate.energy !== candidate.energyCapacity)
                             candidates.push(candidate);
@@ -337,7 +337,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.DEPOSIT_AT:
 
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
@@ -345,7 +345,7 @@ module.exports = class ActorProcedualCreep
                     stop = true;
 
                     pos = currentInstruction[1];
-                    targetPos = new RoomPosition(pos[0], pos[1], pos[2]);
+                    targetPos = this.core.roomPosition(pos[0], pos[1], pos[2]);
 
                     if(creep.pos.x !== targetPos.x ||
                         creep.pos.y !== targetPos.y ||
@@ -359,12 +359,12 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.DISMANTLE_AT:
 
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep)
                         break;
 
-                    targetPos = new RoomPosition(   currentInstruction[1][0],
+                    targetPos = this.core.roomPosition(   currentInstruction[1][0],
                                                     currentInstruction[1][1],
                                                     currentInstruction[1][2]);
 
@@ -391,12 +391,12 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.FIX_AT:
 
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
 
-                    pos = new RoomPosition(currentInstruction[1][0], currentInstruction[1][1], currentInstruction[1][2]);
+                    pos = this.core.roomPosition(currentInstruction[1][0], currentInstruction[1][1], currentInstruction[1][2]);
 
                     filter = {filter: (x)=>x.structureType === currentInstruction[2]};
                     filteredStructs = pos.lookFor(LOOK_STRUCTURES, filter);
@@ -412,12 +412,12 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED:
-                    creep = Game.creeps[this.memoryObject.creepName];
+                    creep = this.core.creep(this.memoryObject.creepName);
 
                     if(!creep)
                         break;
 
-                    pos = new RoomPosition(currentInstruction[1][0], currentInstruction[1][1], currentInstruction[1][2]);
+                    pos = this.core.roomPosition(currentInstruction[1][0], currentInstruction[1][1], currentInstruction[1][2]);
 
                     filter = {filter: (x)=>x.structureType === currentInstruction[2]};
                     filteredStructs = pos.lookFor(LOOK_STRUCTURES, filter);
@@ -431,10 +431,10 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.REMOVE_FLAG_AT:
 
-                    if(! Game.rooms[currentInstruction[1][2] ] )
+                    if(! this.core.room(currentInstruction[1][2] ) )
                         break;
 
-                    pos = new RoomPosition(currentInstruction[1][0], currentInstruction[1][1], currentInstruction[1][2]);
+                    pos = this.core.roomPosition(currentInstruction[1][0], currentInstruction[1][1], currentInstruction[1][2]);
 
                     let flags = pos.lookFor(LOOK_FLAGS);
 

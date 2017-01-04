@@ -39,19 +39,18 @@ module.exports = class ActorNaiveTower
 
     onEveryTick()
     {
-        let towerRp = new RoomPosition(this.memoryObject.location[0],
-                                        this.memoryObject.location[1],
-                                        this.memoryObject.location[2]);
+        let towerRp = this.core.roomPosition(   this.memoryObject.location[0],
+                                                this.memoryObject.location[1],
+                                                this.memoryObject.location[2]);
 
         let structs = towerRp.lookFor(LOOK_STRUCTURES);
-
         if(structs.length === 0 || structs[0].structureType !== STRUCTURE_TOWER)
         {
             this.core.removeActor(this.actorId);
             return;
         }
 
-        let room = Game.rooms[this.memoryObject.location[2]];
+        let room = this.core.room(this.memoryObject.location[2]);
 
         let enemies = room.find(FIND_HOSTILE_CREEPS);
 

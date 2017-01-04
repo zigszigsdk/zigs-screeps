@@ -2,6 +2,16 @@
 
 module.exports = function()
 {
+	global.DEBUG = true;
+
+	global.FUNCTION = 'function';
+	global.STRING = 'string';
+	global.NUMBER = 'number';
+	global.OBJECT = 'object';
+	global.UNDEFINED = 'undefined';
+	global.BOOLEAN = 'boolean';
+	global.SYMBOL = 'symbol';
+
 	global.FILTERS =
 		{ CONTAINERS: {filter: (x)=>x.structureType === STRUCTURE_CONTAINER}
 		, EXTENSIONS: {filter: (x)=>x.structureType === STRUCTURE_EXTENSION}
