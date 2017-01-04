@@ -1,31 +1,35 @@
 "use strict";
 
-module.exports = function(objectStore)
+module.exports = class ActorTickExpander
 {
-    this.eventQueue = objectStore.eventQueue;
-    this.subscriptions = objectStore.subscriptions;
+    constructor(core)
+    {
+        this.core = core;
+    }
 
-    this.rewind = function(actorId)
+    rewindActor(actorId)
     {
         this.actorId = actorId;
-    };
+    }
 
-    this.init = function()
+    initiateActor()
     {
-        this.subscriptions.subscribe("everyTick", this.actorId, "everyTick");
-    };
+        this.core.subscribe("everyTick", this.actorId, "everyTick");
+    }
 
-    this.unwind = function(){};
-    this.remove = function(){};
+    unwindActor(){}
 
-    this.everyTick = function(event)
+    removeActor()
+    {
+        this.core.unsubscribe("everyTick", this.actorId);
+    }
+
+    everyTick(event)
     {
         let tick = Game.time;
         let counter = 1;
 
         for(let mod=2; tick % mod === 0; mod *= 2)
-            this.eventQueue.frontLoad("tick2pow" + counter++);
-    };
-
-    return this;
+            this.core.frontLoadEvent("tick2pow" + counter++);
+    }
 };

@@ -1,23 +1,18 @@
 "use strict";
-let memoryBank;
-let actors;
-let logger;
 
-module.exports = {
-
-    build: function(objectStore)
+module.exports = class Resetter
+{
+    constructor(core)
     {
-        memoryBank = objectStore.memoryBank;
-        actors = objectStore.actors;
-        logger = objectStore.logger;
-    },
+        this.core = core;
+    }
 
-    hardReset: function()
+    hardResetCore()
     {
         for(let name in Game.creeps)
             Game.creeps[name].suicide();
 
-        actors.createNew("actorTickExpander");
+        this.core.createActor("ActorTickExpander");
 
         for(let roomName in Game.rooms)
         {
@@ -26,13 +21,13 @@ module.exports = {
             if(room.find(FIND_MY_SPAWNS).length === 0)
                 continue;
 
-            actors.createNew("actorRoomUpgradeStrategy", (script)=>script.init(roomName));
+            this.core.createActor("ActorRoomUpgradeStrategy", (script)=>script.initiateActor(roomName));
 
             let towers = room.find(FIND_STRUCTURES, {filter: (x)=>x.structureType === STRUCTURE_TOWER});
 
             towers.forEach((towerObj =>
-                actors.createNew("actorNaiveTower", (script) =>
-                    script.init([towerObj.pos.x, towerObj.pos.y, towerObj.pos.roomName]))));
+                this.core.createActor("ActorNaiveTower", (script) =>
+                    script.initiateActor([towerObj.pos.x, towerObj.pos.y, towerObj.pos.roomName]))));
         }
-    },
+    }
 };

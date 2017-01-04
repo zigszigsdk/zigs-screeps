@@ -5,10 +5,8 @@ module.exports = function()
 	global.FILTERS =
 		{ CONTAINERS: {filter: (x)=>x.structureType === STRUCTURE_CONTAINER}
 		, EXTENSIONS: {filter: (x)=>x.structureType === STRUCTURE_EXTENSION}
-		, FILTER_TOWERS: {filter: (x)=>x.structureType === STRUCTURE_TOWER}
+		, TOWERS: {filter: (x)=>x.structureType === STRUCTURE_TOWER}
 		};
-
-
 
 	global.LEVEL_INDEX =
 		//  room level           0,   1,   2,   3,   4,   5,   6,   7,   8
@@ -37,5 +35,6 @@ module.exports = function()
 	    , GOTO_IF_NOT_FIXED: "gotoIfNotFixed"
 	    , REMOVE_FLAG_AT: "removeFlagAt"
 	    , GOTO_IF_DEAD: "gotoIfDead"
+	    , GOTO: "goto"
 	    };
 };

@@ -2,59 +2,54 @@
 
 const MEMORY_KEYWORD = "core:subscriptions";
 
-let memoryBank;
-let memoryObject;
-let logger;
-
-module.exports =
+module.exports = class Subscriptions
 {
-    build: function(objectStore)
+    constructor(core)
     {
-        memoryBank = objectStore.memoryBank;
-        logger = objectStore.logger;
-    },
+        this.core = core;
+    }
 
-    rewind: function()
+    rewindCore()
     {
-        memoryObject = memoryBank.get(MEMORY_KEYWORD);
-    },
+        this.memoryObject = this.core.getMemory(MEMORY_KEYWORD);
+    }
 
-    unwind: function()
+    unwindCore()
     {
-        memoryBank.set(MEMORY_KEYWORD, memoryObject);
-    },
+        this.core.setMemory(MEMORY_KEYWORD, this.memoryObject);
+    }
 
-    subscribe: function(eventString, actor, callbackMethod)
+    subscribe(eventString, actor, callbackMethod)
     {
         if(eventString === "" || eventString === undefined || eventString === undefined ||
             actor === "" || actor === undefined || actor === undefined ||
             callbackMethod === "" || callbackMethod === undefined || callbackMethod === undefined
         )
-            logger.warning("Tried to subscribe with invalid parameters. eventString: " +
+            this.core.logWarning("Tried to subscribe with invalid parameters. eventString: " +
                 eventString +
                 ", actor: " +
                 actor +
                 ", callbackMethod: " +
                 callbackMethod);
 
-        if(!memoryObject[eventString])
-            memoryObject[eventString] = {};
+        if(!this.memoryObject[eventString])
+            this.memoryObject[eventString] = {};
 
-        memoryObject[eventString][actor] = callbackMethod;
-    },
+        this.memoryObject[eventString][actor] = callbackMethod;
+    }
 
-    unsubscribe: function(eventString, actor)
+    unsubscribe(eventString, actor)
     {
-        delete memoryObject[eventString][actor];
-    },
+        delete this.memoryObject[eventString][actor];
+    }
 
-    getSubscribersForEvent: function(eventString)
+    getSubscribersForEvent(eventString)
     {
-        return memoryObject[eventString];
-    },
+        return this.memoryObject[eventString];
+    }
 
-    hardReset: function()
+    hardResetCore()
     {
-        memoryObject = {};
-    },
+        this.memoryObject = {};
+    }
 };

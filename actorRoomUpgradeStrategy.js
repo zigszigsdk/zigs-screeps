@@ -5,67 +5,22 @@ const MAX_STEPS_REPEAT_FOR_EXTENSION_POS_CALC = 100;
 
 let CreepBodyFactory = require('CreepBodyFactory');
 
-module.exports = function(objectStore)
+module.exports = class ActorRoomUpgradeStrategy
 {
-    this.memoryBank = objectStore.memoryBank;
-    this.subscriptions = objectStore.subscriptions;
-    this.actors = objectStore.actors;
-    this.logger = objectStore.logger;
+    constructor(core)
+    {
+        this.core = core;
+    }
 
-    this.rewind = function(actorId)
+    rewindActor(actorId)
     {
         this.actorId = actorId;
         this.bankKey = "actor:" + ALIAS + ":" + actorId;
 
-        this.memoryObject = this.memoryBank.get(this.bankKey);
-    };
+        this.memoryObject = this.core.getMemory(this.bankKey);
+    }
 
-    this.getSurroundingPositions = function(c)
-    {
-        return [ new RoomPosition(c.x-1, c.y-1, c.roomName)
-               , new RoomPosition(c.x-1, c.y,   c.roomName)
-               , new RoomPosition(c.x-1, c.y+1, c.roomName)
-               , new RoomPosition(c.x,   c.y-1, c.roomName)
-               , new RoomPosition(c.x,   c.y+1, c.roomName)
-               , new RoomPosition(c.x+1, c.y-1, c.roomName)
-               , new RoomPosition(c.x+1, c.y,   c.roomName)
-               , new RoomPosition(c.x+1, c.y+1, c.roomName)];
-    };
-
-    this.upgraderContainerCandidates = function(c)
-    {
-        let results = [];
-
-        for(let x = c.x-4; x <= c.x+4; x++)
-        {
-            if(x <= 0 || x >= 49)
-                continue;
-
-            for(let y = c.y-4; y <= c.y+4; y++)
-            {
-                if(y <= 0 || y >= 49)
-                    continue;
-
-                results.push(new RoomPosition(x, y, c.roomName));
-            }
-        }
-        return results;
-    };
-
-    this.filterBlockedPositions = function(positions)
-    {
-        let result = [];
-
-        positions.forEach((position) =>
-        {
-            if(position.lookFor(LOOK_TERRAIN)[0] !== "wall")
-                result.push(position);
-        });
-
-        return result;
-    };
-
-    this.init = function(roomName)
+    initiateActor(roomName)
     {
         let sourcesInfo = {};
         let room = Game.rooms[roomName];
@@ -103,7 +58,6 @@ module.exports = function(objectStore)
             , sourceIdNearestController: sourceNearestController.id
             , firstSpawnId: room.find(FIND_MY_SPAWNS)[0].id
             , upgradeContainerPos: ucp
-            , upgradeContainerBuilders: 0
             , upgraders: 0
             , builders: 0
             , fixers: 0
@@ -114,9 +68,65 @@ module.exports = function(objectStore)
             };
 
         this.strategize();
-    };
+    }
 
-    this.calcExtensionSpots = function(containerPos)
+    unwindActor()
+    {
+        this.core.setMemory(this.bankKey, this.memoryObject);
+    }
+
+    removeActor()
+    {
+        this.core.eraseMemory(this.bankKey);
+        this.memoryObject = null;
+    }
+
+    getSurroundingPositions(c)
+    {
+        return [ new RoomPosition(c.x-1, c.y-1, c.roomName)
+               , new RoomPosition(c.x-1, c.y,   c.roomName)
+               , new RoomPosition(c.x-1, c.y+1, c.roomName)
+               , new RoomPosition(c.x,   c.y-1, c.roomName)
+               , new RoomPosition(c.x,   c.y+1, c.roomName)
+               , new RoomPosition(c.x+1, c.y-1, c.roomName)
+               , new RoomPosition(c.x+1, c.y,   c.roomName)
+               , new RoomPosition(c.x+1, c.y+1, c.roomName)];
+    }
+
+    upgraderContainerCandidates(c)
+    {
+        let results = [];
+
+        for(let x = c.x-4; x <= c.x+4; x++)
+        {
+            if(x <= 0 || x >= 49)
+                continue;
+
+            for(let y = c.y-4; y <= c.y+4; y++)
+            {
+                if(y <= 0 || y >= 49)
+                    continue;
+
+                results.push(new RoomPosition(x, y, c.roomName));
+            }
+        }
+        return results;
+    }
+
+    filterBlockedPositions(positions)
+    {
+        let result = [];
+
+        positions.forEach((position) =>
+        {
+            if(position.lookFor(LOOK_TERRAIN)[0] !== "wall")
+                result.push(position);
+        });
+
+        return result;
+    }
+
+    calcExtensionSpots(containerPos)
     {
         let isOpen = function(location)
         {
@@ -173,16 +183,16 @@ module.exports = function(objectStore)
         }
 
         if(steps === MAX_STEPS_REPEAT_FOR_EXTENSION_POS_CALC && extensionPositions.length < 66)
-            this.logger.warning("in actorRoomUpgradeStratey.calcExtensionSpots: exceeded max allowed steps for repeat");
+            this.core.logWarning("in ActorRoomUpgradeStratey.calcExtensionSpots: exceeded max allowed steps for repeat");
 
         let containerRp = new RoomPosition(containerPos[0], containerPos[1], containerPos[2]);
 
         extensionPositions = _.take(_.sortBy(extensionPositions, (pos) => containerRp.getRangeTo(pos[0], pos[1])), 66);
 
         return extensionPositions;
-    };
+    }
 
-    this.strategize = function()
+    strategize()
     {
         this.cancelLatestSubActorIfNotSpawned();
 
@@ -215,7 +225,7 @@ module.exports = function(objectStore)
         if( (   controllerSourceContainerList.length === 0 ||
                 (controllerSourceContainerList.length === 1 &&
                 controllerSourceContainerList[0].structureType === STRUCTURE_ROAD)
-            ) && this.memoryObject.upgradeContainerBuilders < 1
+            ) && this.memoryObject.builders < 1
         )
             return this.createMiningContainerBuilder(controllerSource.containerPos,
                                                     this.memoryObject.sourceIdNearestController);
@@ -230,7 +240,7 @@ module.exports = function(objectStore)
 
         if( (   controllerContainerList.length === 0 ||
                 (controllerContainerList.length === 1 && controllerContainerList[0].structureType === STRUCTURE_ROAD)
-            ) && this.memoryObject.upgradeContainerBuilders < 1
+            ) && this.memoryObject.builders < 1
         )
             return this.createControllerContainerBuilder();
 
@@ -268,24 +278,24 @@ module.exports = function(objectStore)
         else if(Game.flags.Flag5)
             return this.createSoloDismantler(Game.flags.Flag5.pos);
 
-        this.logger.warning("end of actorRoomUpgradeStrategy");
-    };
+        this.core.logWarning("end of ActorRoomUpgradeStrategy");
+    }
 
-    this.cancelLatestSubActorIfNotSpawned = function()
+    cancelLatestSubActorIfNotSpawned()
     {
         if(this.memoryObject.latestSubActorId === null)
             return;
 
-        let subActor = this.actors.getFromId(this.memoryObject.latestSubActorId);
+        let subActor = this.core.actorFromId(this.memoryObject.latestSubActorId);
         if(subActor === null || subActor.pointerAt() !== 0)
             return;
 
-        this.actors.removeActor(this.memoryObject.latestSubActorId);
+        this.core.removeActor(this.memoryObject.latestSubActorId);
 
         this.memoryObject.latestSubActorId = null;
-    };
+    }
 
-    this.createMiner = function(sourceId)
+    createMiner(sourceId)
     {
         let energy = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
 
@@ -307,21 +317,21 @@ module.exports = function(objectStore)
             , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "minerDied"     ] //4
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                             ] ] //5
         );
-    };
+    }
 
-    this.minerSpawning = function(infoObj)
+    minerSpawning(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].miners++;
         this.strategize();
-    };
+    }
 
-    this.minerDied = function(infoObj)
+    minerDied(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].miners--;
         this.strategize();
-    };
+    }
 
-    this.createRecoveryMiner = function(sourceId)
+    createRecoveryMiner(sourceId)
     {
         let energy = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
 
@@ -340,21 +350,21 @@ module.exports = function(objectStore)
             , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "recoveryMinerDied"     ] //4
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //5
         );
-    };
+    }
 
-    this.recoveryMinerSpawning = function(infoObj)
+    recoveryMinerSpawning(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].recoveryMiners++;
         this.strategize();
-    };
+    }
 
-    this.recoveryMinerDied = function(infoObj)
+    recoveryMinerDied(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].recoveryMiners--;
         this.strategize();
-    };
+    }
 
-    this.createMiningContainerBuilder = function(pos, sourceId)
+    createMiningContainerBuilder(pos, sourceId)
     {
         this.createProceduralCreep("containerBuilder", {sourceId: sourceId},
             [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
@@ -367,50 +377,38 @@ module.exports = function(objectStore)
             , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "miningContainerBuilderDied" ] //7
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //8
         );
-    };
+    }
 
-    this.miningContainerBuilderSpawning = function(infoObj)
+    miningContainerBuilderSpawning(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].containerBuilders++;
         this.strategize();
-    };
+    }
 
-    this.miningContainerBuilderDied = function(infoObj)
+    miningContainerBuilderDied(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].containerBuilders--;
         this.strategize();
-    };
+    }
 
-    this.createControllerContainerBuilder = function()
+    createControllerContainerBuilder()
     {
         let pos = this.memoryObject.upgradeContainerPos;
 
         this.createProceduralCreep("containerBuilder", {},
             [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
-            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "upgradeContainerBuilderspawning" ] //1
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "builderspawning" ] //1
             , [CREEP_INSTRUCTION.PICKUP_AT_POS, pos, RESOURCE_ENERGY ] //2
             , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY, pos, STRUCTURE_CONTAINER ] //3
             , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, pos, STRUCTURE_CONTAINER, 6   ] //4
             , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
             , [CREEP_INSTRUCTION.RECYCLE_CREEP ] //6
-            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "controllerContainerBuilderDied" ] //7
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "builderDied" ] //7
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //8
         );
-    };
+    }
 
-    this.upgradeContainerBuilderspawning = function(infoObj)
-    {
-        this.memoryObject.upgradeContainerBuilders++;
-        this.strategize();
-    };
-
-    this.controllerContainerBuilderDied = function(infoObj)
-    {
-        this.memoryObject.upgradeContainerBuilders--;
-        this.strategize();
-    };
-
-    this.createSourceHauler = function(sourceId)
+    createSourceHauler(sourceId)
     {
         let fromPos = this.memoryObject.sourcesInfo[sourceId].containerPos;
         let toPos = this.memoryObject.upgradeContainerPos;
@@ -425,21 +423,21 @@ module.exports = function(objectStore)
             , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "sourceHaulerDied" ] //5
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //6
         );
-    };
+    }
 
-    this.sourceHaulerSpawning = function(infoObj)
+    sourceHaulerSpawning(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].haulers++;
         this.strategize();
-    };
+    }
 
-    this.sourceHaulerDied = function(infoObj)
+    sourceHaulerDied(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].haulers--;
         this.strategize();
-    };
+    }
 
-    this.createUpgrader = function()
+    createUpgrader()
     {
         let energy = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
 
@@ -461,21 +459,21 @@ module.exports = function(objectStore)
             , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "upgraderDied" ] //5
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //6
         );
-    };
+    }
 
-    this.upgraderSpawning = function(infoObj)
+    upgraderSpawning(infoObj)
     {
         this.memoryObject.upgraders++;
         this.strategize();
-    };
+    }
 
-    this.upgraderDied  = function(infoObj)
+    upgraderDied (infoObj)
     {
         this.memoryObject.upgraders--;
         this.strategize();
-    };
+    }
 
-    this.createFiller = function(sourceId)
+    createFiller(sourceId)
     {
         let source = Game.getObjectById(sourceId);
         let extensionIds = _.map(source.room.find(FIND_MY_STRUCTURES, FILTERS.EXTENSIONS), (x)=>x.id);
@@ -496,21 +494,21 @@ module.exports = function(objectStore)
             , [CREEP_INSTRUCTION.CALLBACK,                    this.actorId,                       "fillerDied"    ] //6
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                                 ] ] //7
         );
-    };
+    }
 
-    this.fillerSpawning = function(infoObj)
+    fillerSpawning(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].fillers++;
         this.strategize();
-    };
+    }
 
-    this.fillerDied = function(infoObj)
+    fillerDied(infoObj)
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].fillers--;
         this.strategize();
-    };
+    }
 
-    this.createFixer = function()
+    createFixer()
     {
         let spawnContainer = this.memoryObject.sourcesInfo[this.memoryObject.sourceIdNearestFirstSpawn].containerPos;
         let controlSourceContainer = this.memoryObject.sourcesInfo[this.memoryObject.sourceIdNearestController].containerPos;
@@ -535,21 +533,21 @@ module.exports = function(objectStore)
             , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "fixerDied"] //12
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT] ] //13
         );
-    };
+    }
 
-    this.fixerSpawning = function(infoObj)
+    fixerSpawning(infoObj)
     {
         this.memoryObject.fixers++;
         this.strategize();
-    };
+    }
 
-    this.fixerDied = function(infoObj)
+    fixerDied(infoObj)
     {
         this.memoryObject.fixers--;
         this.strategize();
-    };
+    }
 
-    this.createSoloDismantler = function(targetRoomPos)
+    createSoloDismantler(targetRoomPos)
     {
         let energy = Game.rooms[this.memoryObject.roomName].energyCapacityAvailable;
 
@@ -573,9 +571,9 @@ module.exports = function(objectStore)
             , [CREEP_INSTRUCTION.RECYCLE_CREEP                                                        ] //6
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                     ] ] //7
         );
-    };
+    }
 
-    this.createExtensionBuilder = function()
+    createExtensionBuilder()
     {
         let energyPos = this.memoryObject.sourcesInfo[this.memoryObject.sourceIdNearestFirstSpawn].containerPos;
 
@@ -595,31 +593,31 @@ module.exports = function(objectStore)
 
         this.createProceduralCreep("extensionBuilder", {},
             [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
-            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "extensionBuilderSpawning" ] //1
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "builderSpawning" ] //1
             , [CREEP_INSTRUCTION.PICKUP_AT_POS, energyPos, RESOURCE_ENERGY ] //2
             , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY, targetPos, STRUCTURE_EXTENSION ] //3
             , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, targetPos, STRUCTURE_EXTENSION, 6   ] //4
             , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
             , [CREEP_INSTRUCTION.RECYCLE_CREEP ] //6
-            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "extensionBuilderDied" ] //7
+            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "builderDied" ] //7
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //8
         );
-    };
+    }
 
 
-    this.builderSpawning = function(infoObj)
+    builderSpawning(infoObj)
     {
         this.memoryObject.builders++;
         this.strategize();
-    };
+    }
 
-    this.builderDied = function(infoObj)
+    builderDied(infoObj)
     {
         this.memoryObject.builders--;
         this.strategize();
-    };
+    }
 
-    this.createTowerBuilder = function()
+    createTowerBuilder()
     {
         let energyPos = this.memoryObject.sourcesInfo[this.memoryObject.sourceIdNearestFirstSpawn].containerPos;
 
@@ -644,21 +642,22 @@ module.exports = function(objectStore)
             , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "builderSpawning"       ] //1
             , [CREEP_INSTRUCTION.PICKUP_AT_POS,           energyPos,                          RESOURCE_ENERGY         ] //2
             , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,       targetPos,                          STRUCTURE_TOWER         ] //3
-            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "towerPlaced"           ] //4
-            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT,    targetPos,                          STRUCTURE_TOWER,    6   ] //5
-            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,           2                                                           ] //6
-            , [CREEP_INSTRUCTION.RECYCLE_CREEP                                                                        ] //7
-            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "builderDied"           ] //8
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //9
+            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT,    targetPos,                          STRUCTURE_TOWER,    7   ] //4
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,           2                                                           ] //5
+            , [CREEP_INSTRUCTION.GOTO,                    7                                                           ] //6
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "towerCompleted"        ] //7
+            , [CREEP_INSTRUCTION.RECYCLE_CREEP                                                                        ] //8
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "builderDied"           ] //9
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //10
         );
-    };
+    }
 
-    this.towerPlaced = function(infoObj)
+    towerCompleted(infoObj)
     {
-        this.actors.createNew("actorNaiveTower", (script)=>script.init(infoObj.towerPos));
-    };
+        this.core.createActor("ActorNaiveTower", (script)=>script.initiateActor(infoObj.towerPos));
+    }
 
-    this.takeAffordableBody = function(fullBody)
+    takeAffordableBody(fullBody)
     {
         let bodypartPrice = ((part) =>
         {
@@ -689,28 +688,15 @@ module.exports = function(objectStore)
         }
 
         return result;
-    };
+    }
 
-    this.createProceduralCreep = function(creepName, callbackStamp, instructions)
+    createProceduralCreep(creepName, callbackStamp, instructions)
     {
-        let actorInfo = this.actors.createNew("actorProceduralCreep",
-            (script)=>script.init(creepName, callbackStamp, instructions));
+        let actorInfo = this.core.createActor("ActorProceduralCreep",
+            (script)=>script.initiateActor(creepName, callbackStamp, instructions));
 
         this.memoryObject.latestSubActorId = actorInfo.id;
 
         return actorInfo.id;
-    };
-
-    this.unwind = function()
-    {
-        this.memoryBank.set(this.bankKey, this.memoryObject);
-    };
-
-    this.remove = function()
-    {
-        this.memoryBank.erase(this.bankKey);
-        this.memoryObject = null;
-    };
-
-    return this;
+    }
 };

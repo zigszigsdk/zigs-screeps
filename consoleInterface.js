@@ -1,83 +1,83 @@
 "use strict";
 
-module.exports = {
-
-    replaceMemory: function(oldValue, newValue)
+module.exports = class ConsoleInterface
+{
+    replaceMemory(oldValue, newValue)
     {
         RawMemory.set(RawMemory.get().replace(oldValue, newValue));
-    },
+    }
 
-    printMemory: function()
+    printMemory()
     {
         console.log(RawMemory.get());
-    },
+    }
 
-    hardReset: function()
+    hardReset()
     {
         this.replaceMemory('"clearMemory":false', '"clearMemory":true');
-    },
+    }
 
-    enableWarnings: function()
+    enableWarnings()
     {
         this.replaceMemory('"printWarnings":false', '"printWarnings":true');
-    },
+    }
 
-    disableWarnings: function()
+    disableWarnings()
     {
         this.replaceMemory('"printWarnings":true', '"printWarnings":false');
-    },
+    }
 
-    enableErrors: function()
+    enableErrors()
     {
         this.replaceMemory('"printErrors":false', '"printErrors":true');
-    },
+    }
 
-    disableErrors: function()
+    disableErrors()
     {
         this.replaceMemory('"printErrors":true', '"printErrors":false');
-    },
+    }
 
-    enableProfiles: function()
+    enableProfiles()
     {
         this.replaceMemory('"printProfiles":false', '"printProfiles":true');
-    },
+    }
 
-    disableProfiles: function()
+    disableProfiles()
     {
         this.replaceMemory('"printProfiles":true', '"printProfiles":false');
-    },
+    }
 
-    enableMemories: function()
+    enableMemories()
     {
         this.replaceMemory('"printMemory":false', '"printMemory":true');
-    },
+    }
 
-    disableMemories: function()
+    disableMemories()
     {
         this.replaceMemory('"printMemory":true', '"printMemory":false');
-    },
+    }
 
-    enableDisplays: function()
+    enableDisplays()
     {
         this.replaceMemory('"printDisplay":false', '"printDisplay":true');
-    },
+    }
 
-    disableDisplays: function()
+    disableDisplays()
     {
         this.replaceMemory('"printDisplay":true', '"printDisplay":false');
-    },
+    }
 
-    enableBoots: function()
+    enableBoots()
     {
         this.replaceMemory('"printBoot":false', '"printBoot":true');
-    },
+    }
 
-    disableBoots: function()
+    disableBoots()
     {
         this.replaceMemory('"printBoot":true', '"printBoot":false');
-    },
+    }
 
-    enableAll: function()
+    enableAll()
     {
         this.enableWarnings();
         this.enableErrors();
@@ -85,9 +85,9 @@ module.exports = {
         this.enableMemories();
         this.enableDisplays();
         this.enableBoots();
-    },
+    }
 
-    disableAll: function()
+    disableAll()
     {
         this.disableWarnings();
         this.disableErrors();
@@ -95,32 +95,27 @@ module.exports = {
         this.disableMemories();
         this.disableDisplays();
         this.disableBoots();
-    },
+    }
 
-    clearErrors: function()
+    clearErrors()
     {
-        let memoryBank = require('memoryBank');
-        memoryBank.rewind();
-        let memoryObject = memoryBank.get("core:logger");
-        memoryObject.errors = {};
-        memoryBank.set("core:logger", memoryObject);
-        memoryBank.unwind();
-    },
+        this.setCommand(1);
+    }
 
-    clearWarnings: function()
+    clearWarnings()
     {
-        let memoryBank = require('memoryBank');
-        memoryBank.rewind();
-        let memoryObject = memoryBank.get("core:logger");
-        memoryObject.warnings = {};
-        memoryBank.set("core:logger", memoryObject);
-        memoryBank.unwind();
-    },
+        this.setCommand(2);
+    }
 
-    clearFlags: function()
+    setCommand(value)
+    {
+        this.replaceMemory('{"consoleInterfaceHook":null}', '{"consoleInterfaceHook":' + value + '}');
+    }
+
+    clearFlags()
     {
         for(let flagName of Object.keys(Game.flags))
             Game.flags[flagName].remove();
-    },
+    }
 
 };

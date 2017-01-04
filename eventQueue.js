@@ -1,29 +1,27 @@
-
 "use strict";
-let queue;
 
-module.exports =
+module.exports = class EventQueue
 {
-    rewind: function()
+    rewindCore()
     {
-        queue = ["lazyProcesses", "everyTick"];
-    },
+        this.queue = ["lazyProcesses", "everyTick"];
+    }
 
-    frontLoad: function(item)
+    frontLoad(item)
     {
-        queue.push(item);
-    },
+        this.queue.push(item);
+    }
 
-    rearLoad: function(item)
+    rearLoad(item)
     {
-        queue.unshift(item);
-    },
+        this.queue.unshift(item);
+    }
 
-    next: function()
+    next()
     {
-        if(queue.length === 0)
+        if(this.queue.length === 0)
             return null;
 
-        return queue.pop();
-    },
+        return this.queue.pop();
+    }
 };

@@ -1,33 +1,26 @@
 "use strict";
+
 const bankDelimiter = "||";
 const kvpDelimiter = "|";
 
-let banksKvp;
-let logger;
-
-module.exports =
+module.exports = class MemoryBank
 {
-    build: function(objectStore)
+    constructor(core)
     {
-        logger = objectStore.logger;
-    },
+        this.core = core;
+    }
 
-    rewind: function()
+    rewindCore()
     {
         let memoryString = RawMemory.get();
 
-        banksKvp = {};
+        let banksKvp = {};
 
         if(memoryString === null || memoryString === undefined || memoryString === "")
             return;
 
         let banks = memoryString.split(bankDelimiter);
 
-        if(banks.indexOf("memoryBackup") !== -1)
-        {
-            console.log("recovering memoryBackup");
-            //banks = Memory.memoryBackup.split(bankDelimiter);
-        }
         banks.forEach(function(bank)
         {
             let kvp = bank.split(kvpDelimiter);
@@ -37,54 +30,55 @@ module.exports =
             banksKvp[kvp[0]] = kvp[1];
         });
 
-        RawMemory.set(JSON.stringify({creeps:{}})); //memoryBackup: memoryString
-    },
+        this.banksKvp = banksKvp;
+        RawMemory.set(JSON.stringify({creeps:{}}));
+    }
 
-    unwind: function()
+    unwindCore()
     {
         let rawMemory = "";
 
-        for (let bankKey in banksKvp)
+        for (let bankKey in this.banksKvp)
         {
-            if (!banksKvp.hasOwnProperty(bankKey) ||
-                typeof banksKvp[bankKey] === "undefined" ||
-                banksKvp[bankKey] === null ||
-                banksKvp[bankKey] === "null"
+            if (!this.banksKvp.hasOwnProperty(bankKey) ||
+                typeof this.banksKvp[bankKey] === "undefined" ||
+                this.banksKvp[bankKey] === null ||
+                this.banksKvp[bankKey] === "null"
             )
                 continue;
 
-            logger.memory(bankKey, banksKvp[bankKey]);
+            this.core.logMemory(bankKey, this.banksKvp[bankKey]);
 
-            rawMemory += bankKey + kvpDelimiter + banksKvp[bankKey] + bankDelimiter;
+            rawMemory += bankKey + kvpDelimiter + this.banksKvp[bankKey] + bankDelimiter;
         }
 
         RawMemory.set(rawMemory);
-    },
+    }
 
-    get: function(bankKey)
+    getMemory(bankKey)
     {
-        if(banksKvp[bankKey] !== undefined)
-            return JSON.parse(banksKvp[bankKey]);
+        if(this.banksKvp[bankKey] !== undefined)
+            return JSON.parse(this.banksKvp[bankKey]);
 
         return {};
-    },
+    }
 
-    set: function(bankKey, value)
+    setMemory(bankKey, value)
     {
         if(bankKey === undefined || bankKey === null || bankKey === "")
             return;
 
-        banksKvp[bankKey] = JSON.stringify(value);
-    },
+        this.banksKvp[bankKey] = JSON.stringify(value);
+    }
 
-    erase: function(bankKey)
+    erase(bankKey)
     {
-        delete banksKvp[bankKey];
-    },
+        delete this.banksKvp[bankKey];
+    }
 
-    hardReset: function()
+    hardResetCore()
     {
-        banksKvp = {};
-        this.unwind();
-    },
+        this.banksKvp = {};
+        this.unwindCore();
+    }
 };

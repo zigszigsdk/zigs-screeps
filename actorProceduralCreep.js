@@ -3,49 +3,49 @@
 const ALIAS = "proceduralCreep";
 const maxSteps = 10;
 
-module.exports = function(objectStore)
+module.exports = class ActorProcedualCreep
 {
-    this.memoryBank = objectStore.memoryBank;
-    this.subscriptions = objectStore.subscriptions;
-    this.actors = objectStore.actors;
-    this.logger = objectStore.logger;
+    constructor(core)
+    {
+        this.core = core;
+    }
 
-    this.rewind = function(actorId)
+    rewindActor(actorId)
     {
         this.actorId = actorId;
         this.bankKey = "actor:" + ALIAS + ":" + this.actorId;
-        this.memoryObject = this.memoryBank.get(this.bankKey);
-    };
+        this.memoryObject = this.core.getMemory(this.bankKey);
+    }
 
-    this.init = function(creepNamePrefix, callbackStamp, instructions)
+    initiateActor(creepNamePrefix, callbackStamp, instructions)
     {
-        this.subscriptions.subscribe("everyTick", this.actorId, "onEveryTick");
+        this.core.subscribe("everyTick", this.actorId, "onEveryTick");
         this.memoryObject =
             { creepName: creepNamePrefix + this.actorId
             , pointer: 0
             , instructions: instructions
             , callbackStamp: callbackStamp
             };
-    };
+    }
 
-    this.unwind = function()
+    unwindActor()
     {
-        this.memoryBank.set(this.bankKey, this.memoryObject);
-    };
+        this.core.setMemory(this.bankKey, this.memoryObject);
+    }
 
-    this.remove = function()
+    removeActor()
     {
-        this.subscriptions.unsubscribe("everyTick", this.actorId);
-        this.memoryBank.erase(this.bankKey);
+        this.core.unsubscribe("everyTick", this.actorId);
+        this.core.eraseMemory(this.bankKey);
         this.memoryObject = null;
-    };
+    }
 
-    this.pointerAt = function()
+    pointerAt()
     {
         return this.memoryObject.pointer;
-    };
+    }
 
-    this.onEveryTick = function(event)
+    onEveryTick(event)
     {
         let steps = 0;
 
@@ -82,11 +82,11 @@ module.exports = function(objectStore)
                     break;
 
                 case CREEP_INSTRUCTION.CALLBACK:
-                    let callbackActor = this.actors.getFromId(currentInstruction[1]);
+                    let callbackActor = this.core.actorFromId(currentInstruction[1]);
                     if(callbackActor && callbackActor[currentInstruction[2]])
                         callbackActor[currentInstruction[2]](this.memoryObject.callbackStamp);
                     else
-                        this.logger.warning("actorProcedualCreep: callback did not exist. ID: " +
+                        this.core.logWarning("actorProcedualCreep: callback did not exist. ID: " +
                             currentInstruction[1] + " function: " + currentInstruction[2]);
                     break;
 
@@ -141,9 +141,14 @@ module.exports = function(objectStore)
 
                     break;
 
+                case CREEP_INSTRUCTION.GOTO:
+                    //easier to subtract 1 than set a flag to not increase by 1 at end of loop
+                    this.memoryObject.pointer = currentInstruction[1]-1;
+                    break;
+
                 case CREEP_INSTRUCTION.DESTROY_SCRIPT:
                     stop=true;
-                    this.actors.removeActor(this.actorId);
+                    this.core.removeActor(this.actorId);
                     break;
 
                 case CREEP_INSTRUCTION.PICKUP_AT_POS:
@@ -439,7 +444,7 @@ module.exports = function(objectStore)
                     break;
 
                 default:
-                    this.logger.error("actorProcedualCreep doesn't have a case called: " + currentInstruction[0]);
+                    this.core.logWarning("actorProcedualCreep doesn't have a case called: " + currentInstruction[0]);
                     stop = true;
                     break;
             }
@@ -453,7 +458,7 @@ module.exports = function(objectStore)
         }
 
         if(steps === maxSteps)
-            this.logger.warning("aborted actorProcedualCreep (" + this.memoryObject.creepName +
+            this.core.logWarning("aborted actorProcedualCreep (" + this.memoryObject.creepName +
                 ") loop after " + steps + " steps");
-    };
+    }
 };

@@ -3,39 +3,41 @@
 const ALIAS = "naiveTower";
 const TOWER_MAX_DMG_RANGE = 5;
 
-module.exports = function(objectStore)
+module.exports = class ActorNaiveTower
 {
-    this.memoryBank = objectStore.memoryBank;
-    this.subscriptions = objectStore.subscriptions;
+    constructor(core)
+    {
+        this.core = core;
+    }
 
-    this.rewind = function(actorId)
+    rewindActor(actorId)
     {
         this.actorId = actorId;
         this.bankKey = "actor:" + ALIAS + ":" + this.actorId;
-        this.memoryObject = this.memoryBank.get(this.bankKey);
-    };
+        this.memoryObject = this.core.getMemory(this.bankKey);
+    }
 
-    this.init = function(location)
+    initiateActor(location)
     {
-        this.subscriptions.subscribe("everyTick", this.actorId, "onEveryTick");
+        this.core.subscribe("everyTick", this.actorId, "onEveryTick");
         this.memoryObject =
             { location: location
             };
-    };
+    }
 
-    this.unwind = function()
+    unwindActor()
     {
-        this.memoryBank.set(this.bankKey, this.memoryObject);
-    };
+        this.core.setMemory(this.bankKey, this.memoryObject);
+    }
 
-    this.remove = function()
+    removeActor()
     {
-        this.subscriptions.unsubscribe("everyTick", this.actorId);
-        this.memoryBank.erase(this.bankKey);
+        this.core.unsubscribe("everyTick", this.actorId);
+        this.core.eraseMemory(this.bankKey);
         this.memoryObject = null;
-    };
+    }
 
-    this.onEveryTick = function()
+    onEveryTick()
     {
         let towerRp = new RoomPosition(this.memoryObject.location[0],
                                         this.memoryObject.location[1],
@@ -44,7 +46,10 @@ module.exports = function(objectStore)
         let structs = towerRp.lookFor(LOOK_STRUCTURES);
 
         if(structs.length === 0 || structs[0].structureType !== STRUCTURE_TOWER)
+        {
+            this.core.removeActor(this.actorId);
             return;
+        }
 
         let room = Game.rooms[this.memoryObject.location[2]];
 
@@ -63,5 +68,5 @@ module.exports = function(objectStore)
         let target = targets[Math.floor(Math.random() * targets.length)];
 
         tower.attack(target);
-    };
+    }
 };

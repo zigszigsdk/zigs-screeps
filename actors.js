@@ -2,169 +2,162 @@
 
 const MEMORY_KEYWORD = "core:actors";
 
-let memoryBank;
-let memoryObject;
-let objectStore;
-let logger;
-
-let localCache;
-
-module.exports =
+module.exports = class Actors
 {
-    build: function(_objectStore)
+    constructor(core)
     {
-        objectStore = _objectStore;
-        memoryBank = _objectStore.memoryBank;
-        logger = _objectStore.logger;
-
-        localCache =
+        this.core = core;
+        this.localCache =
             { actors: {}
-            , scripts: {}
+            , classes: {}
             , outdatedActors: {}
             };
-    },
+    }
 
-    rewind: function()
+    rewindCore()
     {
-        memoryObject = memoryBank.get(MEMORY_KEYWORD);
+        this.memoryObject = this.core.getMemory(MEMORY_KEYWORD);
 
-        for(let actorId in localCache.actors)
-            localCache.outdatedActors[actorId]=localCache.actors[actorId];
+        for(let actorId in this.localCache.actors)
+            this.localCache.outdatedActors[actorId] = this.localCache.actors[actorId];
 
-        localCache.actors = {};
-    },
+        this.localCache.actors = {};
+    }
 
-    hardReset: function()
+    hardResetCore()
     {
-        memoryObject =
+        this.memoryObject =
             { actorIdCounter: 0
-            , actorNameFromId: {}
+            , scriptNameFromId: {}
             , aliases: {}
             };
 
-        localCache =
+        this.localCache =
             { actors: {}
-            , scripts: {}
+            , classes: {}
             , outdatedActors: {}
             };
-    },
+    }
 
-    unwind: function()
+    unwindCore()
     {
-        for (let actorId in localCache.actors)
+        for (let actorId in this.localCache.actors)
         {
-            if (!localCache.actors.hasOwnProperty(actorId))
+            if (!this.localCache.actors.hasOwnProperty(actorId))
                 continue;
 
-             localCache.actors[actorId].unwind();
+             this.localCache.actors[actorId].unwindActor();
         }
 
-        memoryBank.set(MEMORY_KEYWORD, memoryObject);
+        this.core.setMemory(MEMORY_KEYWORD, this.memoryObject);
+    }
 
-    },
-
-    getFromId: function(actorId)
+    getFromId(actorId)
     {
-        if(localCache.actors[actorId])
-            return localCache.actors[actorId];
+        if(this.localCache.actors[actorId])
+            return this.localCache.actors[actorId];
 
-        if(localCache.outdatedActors[actorId])
+        if(this.localCache.outdatedActors[actorId])
         {
-            let actor = localCache.outdatedActors[actorId];
-            actor.rewind(actorId);
-            localCache.actors[actorId] = actor;
+            let actor = this.localCache.outdatedActors[actorId];
+            actor.rewindActor(actorId);
+            this.localCache.actors[actorId] = actor;
             return actor;
         }
 
-        let scriptName = memoryObject.actorNameFromId[actorId];
+        let scriptName = this.memoryObject.scriptNameFromId[actorId];
 
         if(typeof scriptName === "undefined" || scriptName === null)
         {
-            logger.warning("attempted to actors.getFromId with invalid details. Scriptname: " +
+            this.core.logWarning("attempted to actors.getFromId with invalid details. Scriptname: " +
                 scriptName + ", actorId: " + actorId);
             return null;
         }
-        if(!localCache.scripts[scriptName])
+
+        if(!this.localCache.classes[scriptName])
         {
             try //insure that one failing actor can't take the core and thus all actors down.
             {
-                localCache.scripts[scriptName] = require(scriptName);
+                this.localCache.classes[scriptName] = require(scriptName);
             }
             catch(error)
             {
-                this.logger.error("error requiring script " + scriptName, error);
+                this.core.logError("error requiring script " + scriptName, error);
+                return;
+            }
+        }
+        let ActorClass = this.localCache.classes[scriptName];
+        let actor = new ActorClass(this.core);
+        actor.rewindActor(actorId);
+
+        this.localCache.actors[actorId] = actor;
+
+        return actor;
+    }
+
+    createNew(scriptName, initFunc)
+    {
+        if(!this.localCache.classes[scriptName])
+        {
+            try //insure that one failing actor can't take the core and thus all actors down.
+            {
+                this.localCache.classes[scriptName] = require(scriptName);
+            }
+            catch(error)
+            {
+                this.core.logError("error requiring script " + scriptName, error);
+                return;
             }
         }
 
-        if(!localCache.scripts[scriptName])
-            return;
+        let ActorClass = this.localCache.classes;
+        let actor = new ActorClass[scriptName](this.core);
 
-        let actor = new localCache.scripts[scriptName](objectStore);
-        actor.rewind(actorId);
+        let actorId = this.memoryObject.actorIdCounter++;
 
-        localCache.actors[actorId] = actor;
-
-        return actor;
-    },
-
-    createNew: function(scriptName, initFunc)
-    {
-        if(!localCache.scripts[scriptName])
-            localCache.scripts[scriptName] = require(scriptName);
-
-        if(!localCache.scripts[scriptName])
-        {
-            logger.warning("attempted to create script that doesn't exist: " + scriptName);
-            return;
-        }
-
-        let actor = new localCache.scripts[scriptName](objectStore);
-
-        let actorId = memoryObject.actorIdCounter++;
-
-        actor.rewind(actorId);
+        actor.rewindActor(actorId);
 
         if(initFunc === null || initFunc === undefined)
-            actor.init();
+            actor.initiateActor();
         else
             initFunc(actor);
 
-        memoryObject.actorNameFromId[actorId] = scriptName;
-        localCache.actors[actorId] = actor;
+        this.memoryObject.scriptNameFromId[actorId] = scriptName;
+        this.localCache.actors[actorId] = actor;
 
         return {
               actor: actor
             , id: actorId
             };
-    },
+    }
 
-    removeActor: function(actorId)
+    removeActor(actorId)
     {
         let actor = this.getFromId(actorId);
-        actor.remove();
+        actor.removeActor();
 
-        delete localCache.actors[actorId];
-        delete localCache.outdatedActors[actorId];
-        delete memoryObject.actorNameFromId[actorId];
-    },
+        delete this.localCache.actors[actorId];
+        delete this.localCache.outdatedActors[actorId];
+        delete this.memoryObject.scriptNameFromId[actorId];
+    }
 
-    registerAlias: function(actorId, alias)
+    registerAlias(actorId, alias)
     {
-        memoryObject.aliases[alias] = actorId;
-    },
+        this.memoryObject.aliases[alias] = actorId;
+    }
 
-    getFromAlias: function(alias)
+    getFromAlias(alias)
     {
-        return this.getFromId(memoryObject.aliases[alias]);
-    },
+        return this.getFromId(this.memoryObject.aliases[alias]);
+    }
 
-    removeAlias: function(alias)
+    removeAlias(alias)
     {
-        delete memoryObject.aliases[alias];
-    },
+        delete this.memoryObject.aliases[alias];
+    }
 
-    getScriptname: function(actorId)
+    getScriptname(actorId)
     {
-        return memoryObject.actorNameFromId[actorId];
-    },
+        return this.memoryObject.scriptNameFromId[actorId];
+    }
 };
