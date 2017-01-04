@@ -242,7 +242,10 @@ module.exports = class ActorRoomUpgradeStrategy
                 (controllerContainerList.length === 1 && controllerContainerList[0].structureType === STRUCTURE_ROAD)
             ) && this.memoryObject.builders < 1
         )
-            return this.createControllerContainerBuilder();
+            return this.createBuilder(
+                this.memoryObject.upgradeContainerPos,
+                this.memoryObject.upgradeContainerPos,
+                STRUCTURE_CONTAINER);
 
         if(this.memoryObject.fixers < 1)
             this.createFixer();
@@ -259,12 +262,18 @@ module.exports = class ActorRoomUpgradeStrategy
             let towers = room.find(FIND_MY_STRUCTURES, FILTERS.TOWERS);
 
             if(LEVEL_INDEX.MAX_TOWERS[room.controller.level] > towers.length)
-                return this.createTowerBuilder();
+                return this.createBuilder(
+                    this.memoryObject.sourcesInfo[this.memoryObject.sourceIdNearestFirstSpawn].containerPos,
+                    this.pickExtensionPositions(),
+                    STRUCTURE_TOWER);
 
             let extensions = room.find(FIND_MY_STRUCTURES, FILTERS.EXTENSIONS);
 
             if(LEVEL_INDEX.MAX_EXTENSIONS[room.controller.level] > extensions.length)
-                return this.createExtensionBuilder();
+                return this.createBuilder(
+                    this.memoryObject.sourcesInfo[this.memoryObject.sourceIdNearestFirstSpawn].containerPos,
+                    this.pickExtensionPositions(),
+                    STRUCTURE_EXTENSION);
         }
 
         if(Game.flags.Flag1)
@@ -389,23 +398,6 @@ module.exports = class ActorRoomUpgradeStrategy
     {
         this.memoryObject.sourcesInfo[infoObj.sourceId].containerBuilders--;
         this.strategize();
-    }
-
-    createControllerContainerBuilder()
-    {
-        let pos = this.memoryObject.upgradeContainerPos;
-
-        this.createProceduralCreep("containerBuilder", {},
-            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
-            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "builderspawning" ] //1
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS, pos, RESOURCE_ENERGY ] //2
-            , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY, pos, STRUCTURE_CONTAINER ] //3
-            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, pos, STRUCTURE_CONTAINER, 6   ] //4
-            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
-            , [CREEP_INSTRUCTION.RECYCLE_CREEP ] //6
-            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "builderDied" ] //7
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //8
-        );
     }
 
     createSourceHauler(sourceId)
@@ -573,37 +565,41 @@ module.exports = class ActorRoomUpgradeStrategy
         );
     }
 
-    createExtensionBuilder()
+    pickExtensionPositions()
     {
-        let energyPos = this.memoryObject.sourcesInfo[this.memoryObject.sourceIdNearestFirstSpawn].containerPos;
-
-        let targetPos;
-
         for(let index in this.memoryObject.extensionPositions)
         {
             let pos = this.memoryObject.extensionPositions[index];
             let rp = new RoomPosition(pos[0], pos[1], pos[2]);
             let structs = rp.lookFor(LOOK_STRUCTURES);
             if(structs.length === 0 || (structs.length === 1 && structs[0].structureType === STRUCTURE_ROAD))
-            {
-                targetPos = pos;
-                break;
-            }
+                return pos;
         }
 
-        this.createProceduralCreep("extensionBuilder", {},
-            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [this.memoryObject.firstSpawnId], [MOVE, CARRY, WORK, WORK] ] //0
-            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "builderSpawning" ] //1
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS, energyPos, RESOURCE_ENERGY ] //2
-            , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY, targetPos, STRUCTURE_EXTENSION ] //3
-            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, targetPos, STRUCTURE_EXTENSION, 6   ] //4
-            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 2 ] //5
-            , [CREEP_INSTRUCTION.RECYCLE_CREEP ] //6
-            , [CREEP_INSTRUCTION.CALLBACK, this.actorId, "builderDied" ] //7
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT ] ] //8
-        );
+        return null;
     }
 
+    createBuilder(energyPos, buildPos, structureType)
+    {
+        let body = new CreepBodyFactory()
+            .addPattern([WORK, CARRY, MOVE, MOVE], 4)
+            .setMaxCost(Game.rooms[this.memoryObject.roomName].energyCapacityAvailable)
+            .fabricate();
+
+        this.createProceduralCreep("builder", {buildPos: buildPos, structureType: structureType},
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [this.memoryObject.firstSpawnId],   body                    ] //0
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "builderSpawning"       ] //1
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS,           energyPos,                          RESOURCE_ENERGY         ] //2
+            , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,       buildPos,                           structureType         ] //3
+            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT,    buildPos,                           structureType,    7   ] //4
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,           2                                                           ] //5
+            , [CREEP_INSTRUCTION.GOTO,                    7                                                           ] //6
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "buildCompleted"        ] //7
+            , [CREEP_INSTRUCTION.RECYCLE_CREEP                                                                        ] //8
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "builderDied"           ] //9
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //10
+        );
+    }
 
     builderSpawning(infoObj)
     {
@@ -617,44 +613,10 @@ module.exports = class ActorRoomUpgradeStrategy
         this.strategize();
     }
 
-    createTowerBuilder()
+    buildCompleted(infoObj)
     {
-        let energyPos = this.memoryObject.sourcesInfo[this.memoryObject.sourceIdNearestFirstSpawn].containerPos;
-
-        let targetPos;
-
-        for(let index in this.memoryObject.extensionPositions)
-        {
-            let pos = this.memoryObject.extensionPositions[index];
-            let rp = new RoomPosition(pos[0], pos[1], pos[2]);
-            let structs = rp.lookFor(LOOK_STRUCTURES);
-            if(structs.length === 0 || (structs.length === 1 && structs[0].structureType === STRUCTURE_ROAD))
-            {
-                targetPos = pos;
-                break;
-            }
-        }
-
-        let body = [MOVE, CARRY, WORK, WORK];
-
-        this.createProceduralCreep("towerBuilder", {towerPos: targetPos},
-            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [this.memoryObject.firstSpawnId],   body                    ] //0
-            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "builderSpawning"       ] //1
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS,           energyPos,                          RESOURCE_ENERGY         ] //2
-            , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,       targetPos,                          STRUCTURE_TOWER         ] //3
-            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT,    targetPos,                          STRUCTURE_TOWER,    7   ] //4
-            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,           2                                                           ] //5
-            , [CREEP_INSTRUCTION.GOTO,                    7                                                           ] //6
-            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "towerCompleted"        ] //7
-            , [CREEP_INSTRUCTION.RECYCLE_CREEP                                                                        ] //8
-            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "builderDied"           ] //9
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //10
-        );
-    }
-
-    towerCompleted(infoObj)
-    {
-        this.core.createActor("ActorNaiveTower", (script)=>script.initiateActor(infoObj.towerPos));
+        if(infoObj.structureType === STRUCTURE_TOWER)
+            this.core.createActor("ActorNaiveTower", (script)=>script.initiateActor(infoObj.buildPos));
     }
 
     takeAffordableBody(fullBody)
