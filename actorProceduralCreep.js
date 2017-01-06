@@ -451,6 +451,32 @@ module.exports = class ActorProcedualCreep
 
                     break;
 
+                case CREEP_INSTRUCTION.CLAIM_AT:
+
+                    creep = this.getCreep(creep);
+
+                    if(!creep)
+                        break;
+
+                    stop = true;
+
+                    let room = this.core.room(currentInstruction[1][2]);
+
+                    if(typeof room === UNDEFINED)
+                    {
+                        pos = this.core.roomPosition(
+                            currentInstruction[1][0],
+                            currentInstruction[1][1],
+                            currentInstruction[1][2]);
+                        creep.moveTo(pos);
+                        break;
+                    }
+
+                    if(creep.claimController(room.controller) !== OK)
+                        creep.moveTo(room.controller);
+
+                    break;
+
                 default:
                     this.core.logWarning("actorProcedualCreep doesn't have a case called: " + currentInstruction[0]);
                     stop = true;

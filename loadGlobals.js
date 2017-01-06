@@ -47,5 +47,6 @@ module.exports = function()
 	    , REMOVE_FLAG_AT: "removeFlagAt"
 	    , GOTO_IF_DEAD: "gotoIfDead"
 	    , GOTO: "goto"
+	    , CLAIM_AT: "claimAt"
 	    };
 };

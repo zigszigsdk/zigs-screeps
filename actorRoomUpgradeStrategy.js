@@ -61,6 +61,7 @@ module.exports = class ActorRoomUpgradeStrategy
             , upgraders: 0
             , builders: 0
             , fixers: 0
+            , claimers: 0
             , latestSubActorId: null
             , monitoredRooms: [roomName]
             , unmonitoredRooms: []
@@ -254,8 +255,6 @@ module.exports = class ActorRoomUpgradeStrategy
         if(this.memoryObject.upgraders < 2)
             return this.createUpgrader();
 
-
-
         if(this.memoryObject.builders < 1)
         {
             let room = this.core.room(this.memoryObject.roomName);
@@ -277,16 +276,20 @@ module.exports = class ActorRoomUpgradeStrategy
                     STRUCTURE_EXTENSION);
         }
 
-        if(Game.flags.Flag1)
-            return this.createSoloDismantler(Game.flags.Flag1.pos);
-        else if(Game.flags.Flag2)
-            return this.createSoloDismantler(Game.flags.Flag2.pos);
-        else if(Game.flags.Flag3)
-            return this.createSoloDismantler(Game.flags.Flag3.pos);
-        else if(Game.flags.Flag4)
-            return this.createSoloDismantler(Game.flags.Flag4.pos);
-        else if(Game.flags.Flag5)
-            return this.createSoloDismantler(Game.flags.Flag5.pos);
+        if(Game.flags.kill1)
+            return this.createSoloDismantler(Game.flags.kill1.pos);
+        else if(Game.flags.kill2)
+            return this.createSoloDismantler(Game.flags.kill2.pos);
+        else if(Game.flags.kill3)
+            return this.createSoloDismantler(Game.flags.kill3.pos);
+        else if(Game.flags.kill4)
+            return this.createSoloDismantler(Game.flags.kill4.pos);
+        else if(Game.flags.kill5)
+            return this.createSoloDismantler(Game.flags.kill5.pos);
+        
+        this.memoryObject.claimers = 0;
+        //if(this.memoryObject.claimers === 0 && Game.flags.claim1)
+            //return this.createClaimer(Game.flags.claim1.pos);
 
         this.core.logWarning("end of ActorRoomUpgradeStrategy");
     }
@@ -618,6 +621,36 @@ module.exports = class ActorRoomUpgradeStrategy
     {
         if(infoObj.structureType === STRUCTURE_TOWER)
             this.core.createActor("ActorNaiveTower", (script)=>script.initiateActor(infoObj.buildPos));
+    }
+
+    createClaimer(claimControllerPos)
+    {
+        let body = new CreepBodyFactory()
+            .addPattern([CLAIM, MOVE, MOVE, MOVE, MOVE], 1)
+            .setMaxCost(this.core.room(this.memoryObject.roomName).energyCapacityAvailable)
+            .fabricate();
+
+        let pos = [claimControllerPos.x, claimControllerPos.y, claimControllerPos.roomName];
+
+        this.createProceduralCreep("claimer", {},
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,   [this.memoryObject.firstSpawnId],   body                    ] //0
+            , [CREEP_INSTRUCTION.CALLBACK,              this.actorId,                       "claimerSpawning"       ] //1
+            , [CREEP_INSTRUCTION.CLAIM_AT,              pos                                                         ] //2
+            , [CREEP_INSTRUCTION.CALLBACK,              this.actorId,                       "claimerDied"           ] //3
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                                     ] ] //4
+        );
+    }
+
+    claimerSpawning(infoObj)
+    {
+        this.memoryObject.claimer++;
+        this.strategize();
+    }
+
+    claimerDied(infoObj)
+    {
+        this.memoryObject.claimer--;
+        this.strategize();
     }
 
     takeAffordableBody(fullBody)
