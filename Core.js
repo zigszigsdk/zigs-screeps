@@ -1,16 +1,15 @@
 "use strict";
 
 const MEMORY_KEY = "core:booter";
-const CPU_SAFETY_RATIO = 0.8;
 
 module.exports = class Core
 {
 	constructor()
 	{
-		let ConsoleInterface = require('ConsoleInterface');
-	    global.CI = new ConsoleInterface();
-
 		require('loadGlobals')();
+
+        let ConsoleInterface = require('ConsoleInterface');
+        global.CI = new ConsoleInterface();
 
         this.recycleCount = 0;
 
@@ -28,23 +27,43 @@ module.exports = class Core
 
         let DebugWrapperCore;
         if(DEBUG)
+        {
             DebugWrapperCore = require("DebugWrapperCore");
+            this.logger = new DebugWrapperCore(Logger, coreInterface);
+            coreInterface.setLogger(this.logger);
 
-		this.logger = !DEBUG ? new Logger(coreInterface) : new DebugWrapperCore(Logger, coreInterface);
-        coreInterface.setLogger(this.logger);
+            this.eventQueue = new DebugWrapperCore(EventQueue, coreInterface);
+            coreInterface.setEventQueue(this.eventQueue);
 
-        this.eventQueue = !DEBUG ? new EventQueue(coreInterface) : new DebugWrapperCore(EventQueue, coreInterface);
-        coreInterface.setEventQueue(this.eventQueue);
+            this.subscriptions = new DebugWrapperCore(Subscriptions, coreInterface);
+            coreInterface.setSubscriptions(this.subscriptions);
 
-        this.subscriptions =
-            DEBUG ? new Subscriptions(coreInterface) : new DebugWrapperCore(Subscriptions, coreInterface);
-		coreInterface.setSubscriptions(this.subscriptions);
+            this.memoryBank = new DebugWrapperCore(MemoryBank, coreInterface);
+            coreInterface.setMemoryBank(this.memoryBank);
 
-        this.memoryBank = DEBUG ? new MemoryBank(coreInterface) : new DebugWrapperCore(MemoryBank, coreInterface);
-        coreInterface.setMemoryBank(this.memoryBank);
+            this.actors = new DebugWrapperCore(Actors, coreInterface);
+            coreInterface.setActors(this.actors);
 
-        this.actors = DEBUG ? new Actors(coreInterface) : new DebugWrapperCore(Actors, coreInterface);
-        coreInterface.setActors(this.actors);
+            this.resetter = new Resetter(coreInterface);
+            this.consoleExecuter = new ConsoleExecuter(coreInterface);
+        }
+        else
+        {
+            this.logger = new Logger(coreInterface);
+            coreInterface.setLogger(this.logger);
+
+            this.eventQueue = new EventQueue(coreInterface);
+            coreInterface.setEventQueue(this.eventQueue);
+
+            this.subscriptions = new Subscriptions(coreInterface);
+            coreInterface.setSubscriptions(this.subscriptions);
+
+            this.memoryBank = new MemoryBank(coreInterface);
+            coreInterface.setMemoryBank(this.memoryBank);
+
+            this.actors = new Actors(coreInterface);
+            coreInterface.setActors(this.actors);
+        }
 
         this.resetter = new Resetter(coreInterface);
         this.consoleExecuter = new ConsoleExecuter(coreInterface);

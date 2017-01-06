@@ -2,7 +2,8 @@
 
 module.exports = function()
 {
-	global.DEBUG = true;
+	global.DEBUG = false;
+	global.CPU_SAFETY_RATIO = 0.25;
 
 	global.FUNCTION = 'function';
 	global.STRING = 'string';
