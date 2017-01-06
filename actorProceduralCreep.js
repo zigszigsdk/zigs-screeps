@@ -45,6 +45,14 @@ module.exports = class ActorProcedualCreep
         return this.memoryObject.pointer;
     }
 
+    getCreep(creep)
+    {
+        if(creep)
+            return creep;
+
+        return this.core.creep(this.memoryObject.creepName);
+    }
+
     onEveryTick(event)
     {
         let steps = 0;
@@ -66,7 +74,7 @@ module.exports = class ActorProcedualCreep
             switch(currentInstruction[0])
             {
                 case CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS:
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(creep !== null && creep !== undefined)
                         break;
@@ -92,7 +100,7 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.MINE_UNTIL_FULL:
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep || _.sum(creep.carry) === creep.carryCapacity)
                         break;
@@ -107,7 +115,7 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.UPGRADE_UNTIL_EMPTY:
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
@@ -121,7 +129,7 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.GOTO_IF_ALIVE:
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep)
                         break;
@@ -132,7 +140,7 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.GOTO_IF_DEAD:
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(creep)
                         break;
@@ -154,7 +162,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.PICKUP_AT_POS:
 
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep || _.sum(creep.carry) === creep.carryCapacity)
                         break;
@@ -178,7 +186,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY:
 
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
@@ -226,7 +234,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT:
 
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep)
                         break;
@@ -252,7 +260,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.RECYCLE_CREEP:
 
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep)
                         break;
@@ -269,7 +277,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.MOVE_TO_POSITION:
 
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep)
                         break;
@@ -293,7 +301,7 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.MINE_UNTIL_DEATH:
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep)
                         break;
@@ -308,7 +316,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY:
 
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
@@ -337,7 +345,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.DEPOSIT_AT:
 
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
@@ -359,7 +367,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.DISMANTLE_AT:
 
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep)
                         break;
@@ -391,7 +399,7 @@ module.exports = class ActorProcedualCreep
 
                 case CREEP_INSTRUCTION.FIX_AT:
 
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
@@ -412,7 +420,7 @@ module.exports = class ActorProcedualCreep
                     break;
 
                 case CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED:
-                    creep = this.core.creep(this.memoryObject.creepName);
+                    creep = this.getCreep(creep);
 
                     if(!creep)
                         break;
