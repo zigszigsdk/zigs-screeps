@@ -8,7 +8,9 @@ module.exports = class DebugWrapperActor
 	{
 		core.startCpuLog(ActorClass.name + ".constructor");
 
+		core.startCpuLog(ActorClass.name + ".constructor.inner");
 		let actorInstance = new ActorClass(core);
+		core.endCpuLog(ActorClass.name + ".constructor.inner");
 
 		//doesn't see inhereted values. http://stackoverflow.com/questions/30881632/es6-iterate-over-class-methods
 		let actorProperties = Object.getOwnPropertyNames( ActorClass.prototype );

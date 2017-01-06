@@ -52,8 +52,12 @@ module.exports = class Core
 
 	boot()
 	{
+        this.logger.startCpuLog("Core:boot");
+
 	    //if the memory isn't saved at some point in the loop, all data would be lost.
 	    RawMemory.set(RawMemory.get()); //This makes sure it'll be preserved even at runtime error after this point.
+
+        //return;
 
 	    let memBlank = RawMemory.get() === "";
 
@@ -98,6 +102,8 @@ module.exports = class Core
         this.memoryBank.unwindCore();
 
 	    this.logger.endCpuLog("Core:unwinding");
+
+        this.logger.endCpuLog("Core:boot");
 	}
 
 	eventLoop()
@@ -107,17 +113,23 @@ module.exports = class Core
         while(!stop)
         {
             let event = this.eventQueue.next();
+
+            this.logger.startCpuLog("event:" + event);
+
             if(event === null)
             {
                 stop = true;
+                this.logger.endCpuLog("event:" + event);
                 break;
             }
 
             let subscribers = this.subscriptions.getSubscribersForEvent(event);
 
             if(subscribers === null || subscribers === undefined)
+            {
+                this.logger.endCpuLog("event:" + event);
                 continue;
-
+            }
             for (let actorId in subscribers)
             {
                 if (!subscribers.hasOwnProperty(actorId))
@@ -142,12 +154,15 @@ module.exports = class Core
 
                 if(Game.cpu.getUsed() > Game.cpu.tickLimit * CPU_SAFETY_RATIO)
                 {
-                    this.logger.warning("aborted eventLoop due to low CPU. " + Game.cpu.getUsed() + " > " +
-                        Game.cpu.tickLimit + " * " + CPU_SAFETY_RATIO);
+                    this.logger.endCpuLog("event:" + event);
+                    this.logger.warning("aborted eventLoop due to low CPU.");
                     stop = true;
                     break;
                 }
             }
+
+            this.logger.endCpuLog("event:" + event);
+
         }
     }
 };
