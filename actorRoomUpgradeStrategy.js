@@ -286,10 +286,6 @@ module.exports = class ActorRoomUpgradeStrategy
             return this.createSoloDismantler(Game.flags.kill4.pos);
         else if(Game.flags.kill5)
             return this.createSoloDismantler(Game.flags.kill5.pos);
-        
-        this.memoryObject.claimers = 0;
-        //if(this.memoryObject.claimers === 0 && Game.flags.claim1)
-            //return this.createClaimer(Game.flags.claim1.pos);
 
         this.core.logWarning("end of ActorRoomUpgradeStrategy");
     }
