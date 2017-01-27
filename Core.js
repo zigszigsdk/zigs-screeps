@@ -95,7 +95,14 @@ module.exports = class Core
 
         this.logger.coreBoot(this.recycleCount++);
 
-        this.consoleExecuter.execute();
+        try //make sure an invalid console command doesn't break the core.
+        {
+            this.consoleExecuter.execute();
+        }
+        catch(error)
+        {
+            this.logger.error("consoleExecuter", error);
+        }
 
 	    this.memoryObject = this.memoryBank.getMemory(MEMORY_KEY);
 
