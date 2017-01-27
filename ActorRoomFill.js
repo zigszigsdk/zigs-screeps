@@ -35,23 +35,23 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			, priority: PRIORITY_NAMES.SPAWN.FILLER
 			});
 
-		for(let index in scoring.extension)
-			parent.requestBuilding([STRUCTURE_EXTENSION], scoring.extension[index], PRIORITY_NAMES.BUILD.EXTENSION);
+		for(let index in scoring.flower.extension)
+			parent.requestBuilding([STRUCTURE_EXTENSION], scoring.flower.extension[index], PRIORITY_NAMES.BUILD.EXTENSION);
 
-		for(let index in scoring.spawn)
-			parent.requestBuilding([STRUCTURE_SPAWN], scoring.spawn[index], PRIORITY_NAMES.BUILD.SPAWN);
+		for(let index in scoring.flower.spawn)
+			parent.requestBuilding([STRUCTURE_SPAWN], scoring.flower.spawn[index], PRIORITY_NAMES.BUILD.SPAWN);
 
-		for(let index in scoring.link)
-			parent.requestBuilding([STRUCTURE_LINK], scoring.link[index], PRIORITY_NAMES.BUILD.FLOWER_LINK);
+		for(let index in scoring.flower.link)
+			parent.requestBuilding([STRUCTURE_LINK], scoring.flower.link[index], PRIORITY_NAMES.BUILD.FLOWER_LINK);
 
-		for(let index in scoring.container)
-			parent.requestBuilding([STRUCTURE_CONTAINER], scoring.container[index], PRIORITY_NAMES.BUILD.FLOWER_CONTAINER);
+		for(let index in scoring.flower.container)
+			parent.requestBuilding([STRUCTURE_CONTAINER], scoring.flower.container[index], PRIORITY_NAMES.BUILD.FLOWER_CONTAINER);
 
-		for(let index in scoring.storage)
-			parent.requestBuilding([STRUCTURE_STORAGE], scoring.storage[index], PRIORITY_NAMES.BUILD.STORAGE);
+		for(let index in scoring.flower.storage)
+			parent.requestBuilding([STRUCTURE_STORAGE], scoring.flower.storage[index], PRIORITY_NAMES.BUILD.STORAGE);
 
-		for(let index in scoring.road)
-			parent.requestBuilding([STRUCTURE_ROAD], scoring.road[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
+		for(let index in scoring.flower.road)
+			parent.requestBuilding([STRUCTURE_ROAD], scoring.flower.road[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
 
 		//don't request towers. let ROOM_GUARD take care of that.
 	}
