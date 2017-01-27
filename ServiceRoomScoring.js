@@ -206,6 +206,7 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 					scoring.flower[key].push(
 						[ pos.x + flowerPos[0]
 						, pos.y + flowerPos[1]
+						, roomName
 						]);
 				}
 			}
