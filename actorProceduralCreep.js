@@ -187,16 +187,14 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     if(currentInstruction.length >= 4)
                         limit = currentInstruction[3];
 
-                    if(energyList.length !== 0)
+                    if(energyList.length !== 0 && energyList[0].amount >= limit)
                     {
-                        if(energyList[0].amount < limit)
-                            break;
-
                         if(creep.pickup(energyList[0]) === ERR_NOT_IN_RANGE)
                             creep.moveTo(energyList[0]);
 
                         break;
                     }
+
                     let containers = pos.lookFor(LOOK_STRUCTURES, FILTERS.CONTAINERS);
 
                     if(containers.length === 0 || containers[0].store[currentInstruction[2]] < limit)
