@@ -91,12 +91,12 @@ module.exports = class Core
         this.subscriptions.rewindCore();
         this.eventQueue.rewindCore();
         this.actors.rewindCore();
-        this.consoleExecuter.rewindCore();
 
         this.logger.coreBoot(this.recycleCount++);
 
         try //make sure an invalid console command doesn't break the core.
         {
+            this.consoleExecuter.rewindCore();
             this.consoleExecuter.execute();
         }
         catch(error)
