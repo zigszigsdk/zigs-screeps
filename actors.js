@@ -68,9 +68,9 @@ module.exports = class Actors
             return actor;
         }
 
-        let scriptName = this.memoryObject.scriptNameFromId[actorId];
+        let scriptName = this.getScriptname(actorId);
 
-        if(typeof scriptName === "undefined" || scriptName === null)
+        if(typeof scriptName === UNDEFINED || scriptName === null)
         {
             this.core.logWarning("attempted to actors.getFromId with invalid details. Scriptname: " +
                 scriptName + ", actorId: " + actorId);
@@ -79,21 +79,21 @@ module.exports = class Actors
 
         if(!this.localCache.classes[scriptName])
         {
-            this.core.startCpuLog("load class script");
+            this.core.startCpuLog("load actor class script");
             try //insure that one failing actor can't take the core and thus all actors down.
             {
                 this.localCache.classes[scriptName] = require(scriptName);
             }
             catch(error)
             {
-                this.core.endCpuLog("load class script");
+                this.core.endCpuLog("load actor class script");
                 this.core.logError("error requiring script " + scriptName, error);
                 return;
             }
-            this.core.endCpuLog("load class script");
+            this.core.endCpuLog("load actor class script");
         }
 
-        this.core.startCpuLog("instanciate class script");
+        this.core.startCpuLog("instanciate actor script");
 
         let ActorClass = this.localCache.classes[scriptName];
         let actor;
@@ -106,7 +106,7 @@ module.exports = class Actors
         else
             actor = new ActorClass(this.core);
 
-        this.core.endCpuLog("instanciate class script");
+        this.core.endCpuLog("instanciate actor script");
 
         actor.rewindActor(actorId);
 
