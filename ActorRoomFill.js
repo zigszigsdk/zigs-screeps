@@ -14,7 +14,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 	{
 		let roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
 		let scoring = roomScoring.getRoom(roomName);
-		console.log(JSON.stringify(scoring));
+
 		this.memoryObject =
 			{ parentId: parentId
 			, roomName: roomName
