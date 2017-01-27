@@ -62,22 +62,28 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 				.requestPickup(at, type);
 
 			if(type === RESOURCE_ENERGY)
-			{
-				this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
-					.addEnergyLocation(at);
-
-				this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD])
-					.addEnergyLocation(at);
-
-				this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
-					.addEnergyLocation(at);
-			}
+				this.addEnergyLocation(at);
 		}
 
 		requestResource(at, type, priority, amount)
 		{
 			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_HAUL])
 				.requestResource(at, type, priority, amount);
+
+			if(type === RESOURCE_ENERGY)
+				this.addEnergyLocation(at);
+		}
+
+		addEnergyLocation(at)
+		{
+			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
+				.addEnergyLocation(at);
+
+			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD])
+				.addEnergyLocation(at);
+
+			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
+				.addEnergyLocation(at);
 		}
 
 		requestMaintain(at, type)
