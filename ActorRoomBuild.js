@@ -25,6 +25,23 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		this.update();
 	}
 
+	resetActor()
+	{
+		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject)); //copy
+
+		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
+		this.memoryObject.subActorId = oldMemory.subActorId;
+
+		for(let index in oldMemory.requests)
+		{
+			let request = oldMemory.requests[index];
+			this.requestBuilding(request.typeProgression, request.pos, request.priority);
+		}
+
+		for(let index in oldMemory.energyLocations)
+			this.addEnergyLocation(oldMemory.energyLocations[index]);
+	}
+
 	requestBuilding(typeProgression, at, priority)
 	{
 		let rp = this.core.getRoomPosition(at);
