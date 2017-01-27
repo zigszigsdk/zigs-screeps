@@ -1,43 +1,33 @@
 "use strict";
 
-const ALIAS = "proceduralCreep";
 const maxSteps = 10;
 
-module.exports = class ActorProcedualCreep
+let ActorWithMemory = require('ActorWithMemory');
+
+module.exports = class ActorProcedualCreep extends ActorWithMemory
 {
     constructor(core)
     {
-        this.core = core;
-    }
-
-    rewindActor(actorId)
-    {
-        this.actorId = actorId;
-        this.bankKey = "actor:" + ALIAS + ":" + this.actorId;
-        this.memoryObject = this.core.getMemory(this.bankKey);
+        super(core);
     }
 
     initiateActor(creepNamePrefix, callbackStamp, instructions)
     {
-        this.core.subscribe("everyTick", this.actorId, "onEveryTick");
         this.memoryObject =
             { creepName: creepNamePrefix + this.actorId
             , pointer: 0
             , instructions: instructions
             , callbackStamp: callbackStamp
             };
-    }
 
-    unwindActor()
-    {
-        this.core.setMemory(this.bankKey, this.memoryObject);
+        this.core.subscribe("everyTick", this.actorId, "onEveryTick");
+        this.onEveryTick(); //act or initiation tick
     }
 
     removeActor()
     {
         this.core.unsubscribe("everyTick", this.actorId);
-        this.core.eraseMemory(this.bankKey);
-        this.memoryObject = null;
+        super.removeActor();
     }
 
     pointerAt()
@@ -51,6 +41,26 @@ module.exports = class ActorProcedualCreep
             return creep;
 
         return this.core.creep(this.memoryObject.creepName);
+    }
+
+    replaceInstruction(index, instruction)
+    {
+        this.memoryObject.instructions[index] = instruction;
+    }
+
+    setPointer(val)
+    {
+        this.memoryObject.pointer = val;
+    }
+
+    getCallbackObj()
+    {
+        return this.memoryObject.callbackStamp;
+    }
+
+    setCallbackObj(callbackObj)
+    {
+        this.memoryObject.callbackStamp = callbackObj;
     }
 
     onEveryTick(event)
@@ -172,16 +182,29 @@ module.exports = class ActorProcedualCreep
                     pos = this.core.roomPosition(posList[0], posList[1], posList[2]);
 
                     let energyList = pos.lookFor(currentInstruction[2]);
+                    let limit = 0;
+
+                    if(currentInstruction.length >= 4)
+                        limit = currentInstruction[3];
 
                     if(energyList.length !== 0)
+                    {
+                        if(energyList[0].amount < limit)
+                            break;
+
                         if(creep.pickup(energyList[0]) === ERR_NOT_IN_RANGE)
                             creep.moveTo(energyList[0]);
 
+                        break;
+                    }
                     let containers = pos.lookFor(LOOK_STRUCTURES, FILTERS.CONTAINERS);
 
-                    if(containers.length !== 0)
-                        if(creep.withdraw(containers[0], currentInstruction[2]) === ERR_NOT_IN_RANGE)
-                            creep.moveTo(containers[0]);
+                    if(containers.length === 0 || containers[0].store[currentInstruction[2]] < limit)
+                        break;
+
+                    if(creep.withdraw(containers[0], currentInstruction[2]) === ERR_NOT_IN_RANGE)
+                        creep.moveTo(containers[0]);
+
                     break;
 
                 case CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY:
@@ -372,9 +395,12 @@ module.exports = class ActorProcedualCreep
                     if(!creep)
                         break;
 
-                    targetPos = this.core.roomPosition(   currentInstruction[1][0],
-                                                    currentInstruction[1][1],
-                                                    currentInstruction[1][2]);
+                    if(creep.hits !== creep.hitsMax)
+                        creep.heal(creep);
+
+                    targetPos = this.core.roomPosition( currentInstruction[1][0],
+                                                        currentInstruction[1][1],
+                                                        currentInstruction[1][2]);
 
                     if(creep.pos.roomName !== targetPos.roomName)
                     {
@@ -393,7 +419,7 @@ module.exports = class ActorProcedualCreep
                     target = targets[0];
 
                     if(creep.dismantle(target) !== OK)
-                        creep.moveTo(target);
+                        creep.moveTo(target, {maxRooms: 4});
 
                     break;
 
@@ -404,7 +430,8 @@ module.exports = class ActorProcedualCreep
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
 
-                    pos = this.core.roomPosition(currentInstruction[1][0], currentInstruction[1][1], currentInstruction[1][2]);
+                    pos = this.core.roomPosition(currentInstruction[1][0],
+                        currentInstruction[1][1], currentInstruction[1][2]);
 
                     filter = {filter: (x)=>x.structureType === currentInstruction[2]};
                     filteredStructs = pos.lookFor(LOOK_STRUCTURES, filter);
@@ -425,7 +452,8 @@ module.exports = class ActorProcedualCreep
                     if(!creep)
                         break;
 
-                    pos = this.core.roomPosition(currentInstruction[1][0], currentInstruction[1][1], currentInstruction[1][2]);
+                    pos = this.core.roomPosition(currentInstruction[1][0],
+                        currentInstruction[1][1], currentInstruction[1][2]);
 
                     filter = {filter: (x)=>x.structureType === currentInstruction[2]};
                     filteredStructs = pos.lookFor(LOOK_STRUCTURES, filter);
@@ -442,7 +470,8 @@ module.exports = class ActorProcedualCreep
                     if(! this.core.room(currentInstruction[1][2] ) )
                         break;
 
-                    pos = this.core.roomPosition(currentInstruction[1][0], currentInstruction[1][1], currentInstruction[1][2]);
+                    pos = this.core.roomPosition(currentInstruction[1][0],
+                        currentInstruction[1][1], currentInstruction[1][2]);
 
                     let flags = pos.lookFor(LOOK_FLAGS);
 

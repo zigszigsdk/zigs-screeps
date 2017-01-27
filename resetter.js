@@ -21,13 +21,7 @@ module.exports = class Resetter
             if(room.find(FIND_MY_SPAWNS).length === 0)
                 continue;
 
-            this.core.createActor("ActorRoomUpgradeStrategy", (script)=>script.initiateActor(roomName));
-
-            let towers = room.find(FIND_STRUCTURES, {filter: (x)=>x.structureType === STRUCTURE_TOWER});
-
-            towers.forEach((towerObj =>
-                this.core.createActor("ActorNaiveTower", (script) =>
-                    script.initiateActor([towerObj.pos.x, towerObj.pos.y, towerObj.pos.roomName]))));
+            this.core.createActor(ACTOR_NAMES.ROOM_BOOTER,(script)=>script.initiateActor(roomName));
         }
     }
 };

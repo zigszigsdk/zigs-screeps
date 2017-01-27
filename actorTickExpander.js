@@ -19,6 +19,8 @@ module.exports = class ActorTickExpander
 
     unwindActor(){}
 
+    resetActor(){}
+
     removeActor()
     {
         this.core.unsubscribe("everyTick", this.actorId);

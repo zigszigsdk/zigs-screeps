@@ -2,7 +2,7 @@
 
 const MEMORY_KEYWORD = "core:logger";
 const CPU_TO_TRACE_MULTIPLIER = 1000000;
-
+const BOOT_MESSAGE_EMPHASIS_COUNT = 45;
 module.exports = class Logger
 {
     constructor(core)
@@ -14,14 +14,12 @@ module.exports = class Logger
     {
         this.memoryObject = this.core.getMemory(MEMORY_KEYWORD);
         this.traceLog = [];
+        this.memoryLog = "";
+        this.bootLog = "";
     }
 
     unwindCore()
     {
-        if(this.memoryObject && this.memoryObject.printProfiles)
-            console.log(JSON.stringify(this.traceLog));
-
-        this.printErrorsAndWarnings();
         this.core.setMemory(MEMORY_KEYWORD, this.memoryObject);
     }
 
@@ -32,11 +30,52 @@ module.exports = class Logger
             , printWarnings: true
             , printProfiles: false
             , printMemory: false
-            , printDisplay: false
             , printBoot: true
             , errors: {}
             , warnings: {}
             };
+    }
+
+    latePrints()
+    {
+        if(!this.memoryObject)
+            return;
+
+        let latePrint = "";
+
+        if(this.memoryObject.printBoot)
+            latePrint += this.bootLog;
+
+        if(this.memoryObject.printMemory)
+            latePrint += "----------MEMORY----------\n" + this.memoryLog;
+
+        if(this.memoryObject.printWarnings)
+        {
+            let warningText = "----------WARNINGS----------\n";
+
+            for(let hash in this.memoryObject.warnings)
+                warningText += "(" + this.memoryObject.warnings[hash].times +
+                    " time(s)) " + this.memoryObject.warnings[hash].text + "\n";
+
+            latePrint += warningText;
+        }
+
+        if(this.memoryObject.printErrors)
+        {
+            let errorText = "----------ERRORS----------\n";
+
+            for(let hash in this.memoryObject.errors)
+                errorText += "(" + this.memoryObject.errors[hash].times +
+                    " time(s)) " + this.memoryObject.errors[hash].text + "\n" +
+                    this.memoryObject.errors[hash].error + "\n";
+
+            latePrint += errorText;
+        }
+
+        if(this.memoryObject && this.memoryObject.printProfiles)
+            latePrint += "----------PROFILE----------\n" + JSON.stringify(this.traceLog) + "\n";
+
+        console.log(latePrint);
     }
 
     startCpuLog(name)
@@ -65,12 +104,6 @@ module.exports = class Logger
             });
     }
 
-    display(displayText)
-    {
-        if(this.memoryObject.printDisplay)
-            console.log("[DISPLAY] " + displayText);
-    }
-
     error(errorText, error)
     {
         let hash = this.stringHash(errorText);
@@ -96,23 +129,12 @@ module.exports = class Logger
                 };
     }
 
-    printErrorsAndWarnings()
-    {
-        if(this.memoryObject.printWarnings)
-            for(let hash in this.memoryObject.warnings)
-                console.log("[WARNING] (" + this.memoryObject.warnings[hash].times +
-                    " time(s)) " + this.memoryObject.warnings[hash].text);
-
-        if(this.memoryObject.printErrors)
-            for(let hash in this.memoryObject.errors)
-                console.log("[  ERROR] (" + this.memoryObject.errors[hash].times +
-                    " time(s)) " + this.memoryObject.errors[hash].text + "\n" + this.memoryObject.errors[hash].error);
-    }
-
     memory(bankKey, bankMemory)
     {
-        if(this.memoryObject.printMemory)
-            console.log("[ MEMORY] " + bankKey + " => " + bankMemory);
+        if(!this.memoryObject.printMemory)
+            return;
+
+        this.memoryLog += bankKey + " => " + bankMemory + "\n";
     }
 
     coreBoot(timesRecycled)
@@ -126,7 +148,16 @@ module.exports = class Logger
         else
             recyclesMessage = " on " + timesRecycled + " times reused cloud unit";
 
-        console.log("=".repeat(60) + "Booted tick " + Game.time + recyclesMessage + "=".repeat(60));
+        this.bootLog =
+            "=".repeat(BOOT_MESSAGE_EMPHASIS_COUNT) +
+            "Booted tick " +
+            Game.time +
+            recyclesMessage +
+            " with " +
+            Game.cpu.bucket +
+            " CPU in bucket " +
+            "=".repeat(BOOT_MESSAGE_EMPHASIS_COUNT) +
+            "\n";
     }
 
     stringHash(input)

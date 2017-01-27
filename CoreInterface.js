@@ -5,7 +5,7 @@ module.exports = class CoreInterface
 	constructor()
 	{
 		if(DEBUG)
-			this.DebugWrapperScreeps = require("DebugWrapperScreeps");
+			this.DebugWrapperScreeps = require('DebugWrapperScreeps');
 	}
 
 	setLogger(logger) { this.logger = logger; }
@@ -13,6 +13,7 @@ module.exports = class CoreInterface
 	setSubscriptions(subscriptions) { this.subscriptions = subscriptions; }
 	setMemoryBank(memoryBank) { this.memoryBank = memoryBank; }
 	setActors(actors) { this.actors = actors; }
+	setLocator(locator) { this.locator = locator; }
 
 	getMemory(key)
 	{
@@ -40,6 +41,11 @@ module.exports = class CoreInterface
 	}
 
 	actorFromId(actorId)
+	{
+		return this.actors.getFromId(actorId);
+	}
+
+	getActor(actorId)
 	{
 		return this.actors.getFromId(actorId);
 	}
@@ -99,15 +105,15 @@ module.exports = class CoreInterface
 		this.logger.endCpuLog(text);
 	}
 
-	roomPosition(x, y, roomName)
+	getRoomPosition(list)
 	{
 		if(!DEBUG)
-			return new RoomPosition(x,y,roomName);
+			return new RoomPosition(list[0], list[1], list[2]);
 
-		return new this.DebugWrapperScreeps(this, new RoomPosition(x, y, roomName), "(a RoomPosition)" );
+		return new this.DebugWrapperScreeps(this, new RoomPosition(list[0], list[1], list[2]), "(a RoomPosition)" );
 	}
 
-	room(name)
+	getRoom(name)
 	{
 		if(!DEBUG)
 			return Game.rooms[name];
@@ -119,7 +125,7 @@ module.exports = class CoreInterface
 		return new this.DebugWrapperScreeps(this, room, "(a Room)");
 	}
 
-	creep(name)
+	getCreep(name)
 	{
 		if(!DEBUG)
 			return Game.creeps[name];
@@ -137,5 +143,49 @@ module.exports = class CoreInterface
 			return Game.getObjectById(id);
 
 		return new this.DebugWrapperScreeps(this, Game.getObjectById(id), "(result of objectById)");
+	}
+
+	getService(serviceName, callerObj)
+	{
+		return this.locator.getService(serviceName, callerObj);
+	}
+
+	getSpawn(name)
+	{
+		if(!DEBUG)
+			return Game.spawns[name];
+
+		let spawn = Game.spawns[name];
+		if(typeof spawn === 'undefined' || spawn === null)
+			return null;
+
+		return new this.DebugWrapperScreeps(this, spawn, "(a StructureSpawn)");
+	}
+
+	getClass(className)
+	{
+		return this.locator.getClass(className);
+	}
+
+	//legacy interface
+
+	creep(name)
+	{
+		this.logWarning("using legacy interface CoreInterface.creep(name). Use CoreInterface.getCreep(name)");
+		return this.getCreep(name);
+	}
+
+	room(name)
+	{
+		this.logWarning("using legacy interface CoreInterface.room(name). Use CoreInterface.getRoom(name)");
+		return this.getRoom(name);
+	}
+
+	roomPosition(x, y, roomName)
+	{
+		this.logWarning("using legacy interface CoreInterface.roomPosition(x, y, roomName). " +
+			"Use CoreInterface.getRoomPosition([x, y, roomName])");
+
+		return this.getRoomPosition([x, y, roomName]);
 	}
 };

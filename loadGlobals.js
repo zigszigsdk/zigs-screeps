@@ -2,8 +2,47 @@
 
 module.exports = function()
 {
-	global.DEBUG = false;
-	global.CPU_SAFETY_RATIO = 0.25;
+	global.SERVICE_NAMES =
+		{ ROOM_CALC: "ServiceRoomCalc"
+		, MAP_CALC: "ServiceMapCalc"
+		, TERRAIN_CACHE: "ServiceTerrainCache"
+		, ROOM_SCORING: "ServiceRoomScoring"
+		};
+
+	global.ACTOR_NAMES =
+		{ ROOM_GUARD: "ActorRoomGuard"
+		, ROOM_MINE: "ActorRoomMine"
+		, ROOM_BUILD: "ActorRoomBuild"
+		, ROOM_REPAIR: "ActorRoomRepair"
+		, ROOM_UPGRADE: "ActorRoomUpgrade"
+		, ROOM_OFFENSE: "ActorRoomOffense"
+		, ROOM_HAUL: "ActorRoomHaul"
+		, ROOM_FILL: "ActorRoomFill"
+		, PROCEDUAL_CREEP: "ActorProceduralCreep"
+		, CONTROLLED_ROOM: "ActorControlledRoom"
+		, ROOM_SCORING: "ActorRoomScoring"
+		, ROOM_BOOTER: "ActorRoomBooter"
+		};
+
+	global.CLASS_NAMES =
+		{ CREEP_BODY_FACTORY: "CreepBodyFactory"
+		};
+
+	global.EVENTS =
+		{ EVERY_TICK_EARLY: "everyTickEarly"
+		, EVERY_TICK: "everyTick"
+		, EVERY_TICK_LATE: "everyTickLate"
+		};
+
+	global.NORTH = "N";
+	global.SOUTH = "S";
+	global.EAST = "E";
+	global.WEST = "W";
+
+	global.TERRAIN_WALL = "wall";
+	global.TERRAIN_PLAIN = "plain";
+	global.TERRAIN_SWAMP = "swamp";
+	global.TERRAIN_OUTSIDE_ROOM = "terrainOutsideRoom";
 
 	global.FUNCTION = 'function';
 	global.STRING = 'string';
@@ -13,10 +52,16 @@ module.exports = function()
 	global.BOOLEAN = 'boolean';
 	global.SYMBOL = 'symbol';
 
+	global.FIRST_OF_ROOM = 0;
+	global.FIRST_INSIDE_ROOM = 1;
+	global.LAST_INSIDE_ROOM = 48;
+	global.LAST_OF_ROOM = 49;
+
 	global.FILTERS =
 		{ CONTAINERS: {filter: (x)=>x.structureType === STRUCTURE_CONTAINER}
 		, EXTENSIONS: {filter: (x)=>x.structureType === STRUCTURE_EXTENSION}
 		, TOWERS: {filter: (x)=>x.structureType === STRUCTURE_TOWER}
+		, SPAWNS: {filter: (x)=>x.structureType === STRUCTURE_SPAWN}
 		};
 
 	global.LEVEL_INDEX =

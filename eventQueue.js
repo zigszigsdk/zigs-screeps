@@ -4,7 +4,10 @@ module.exports = class EventQueue
 {
     rewindCore()
     {
-        this.queue = ["lazyProcesses", "everyTick"];
+        this.queue = [EVENTS.EVERY_TICK, EVENTS.EVERY_TICK_EARLY];
+
+        if(Game.cpu.bucket >= REQUIRED_BUCKET_FOR_LATE_TICK)
+            this.rearLoad(EVENTS.EVERY_TICK_LATE);
     }
 
     frontLoad(item)

@@ -144,6 +144,9 @@ module.exports = class Actors
         else
             actor = new ActorClass(this.core);
 
+        this.memoryObject.scriptNameFromId[actorId] = scriptName;
+        this.localCache.actors[actorId] = actor;
+
         actor.rewindActor(actorId);
 
         if(initFunc === null || initFunc === undefined)
@@ -151,13 +154,9 @@ module.exports = class Actors
         else
             initFunc(actor);
 
-        this.memoryObject.scriptNameFromId[actorId] = scriptName;
-        this.localCache.actors[actorId] = actor;
-
-        return {
-              actor: actor
-            , id: actorId
-            };
+        return  { actor: actor
+                , id: actorId
+                };
     }
 
     removeActor(actorId)
@@ -188,5 +187,11 @@ module.exports = class Actors
     getScriptname(actorId)
     {
         return this.memoryObject.scriptNameFromId[actorId];
+    }
+
+    resetActor(actorId)
+    {
+        let actor = this.getFromId(actorId);
+        actor.resetActor();
     }
 };

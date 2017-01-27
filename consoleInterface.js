@@ -57,16 +57,6 @@ module.exports = class ConsoleInterface
         this.replaceMemory('"printMemory":true', '"printMemory":false');
     }
 
-    enableDisplays()
-    {
-        this.replaceMemory('"printDisplay":false', '"printDisplay":true');
-    }
-
-    disableDisplays()
-    {
-        this.replaceMemory('"printDisplay":true', '"printDisplay":false');
-    }
-
     enableBoots()
     {
         this.replaceMemory('"printBoot":false', '"printBoot":true');
@@ -83,7 +73,6 @@ module.exports = class ConsoleInterface
         this.enableErrors();
         this.enableProfiles();
         this.enableMemories();
-        this.enableDisplays();
         this.enableBoots();
     }
 
@@ -93,7 +82,6 @@ module.exports = class ConsoleInterface
         this.disableErrors();
         this.disableProfiles();
         this.disableMemories();
-        this.disableDisplays();
         this.disableBoots();
     }
 

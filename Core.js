@@ -7,6 +7,8 @@ module.exports = class Core
 	constructor()
 	{
 		require('loadGlobals')();
+        require('loadConfig')();
+        require('loadData')();
 
         let ConsoleInterface = require('ConsoleInterface');
         global.CI = new ConsoleInterface();
@@ -22,6 +24,7 @@ module.exports = class Core
         let Subscriptions = require('Subscriptions');
         let MemoryBank = require('MemoryBank');
         let Actors = require('Actors');
+        let Locator = require('Locator');
         let Resetter = require('Resetter');
         let ConsoleExecuter = require('ConsoleExecuter');
 
@@ -44,8 +47,8 @@ module.exports = class Core
             this.actors = new DebugWrapperCore(Actors, coreInterface);
             coreInterface.setActors(this.actors);
 
-            this.resetter = new Resetter(coreInterface);
-            this.consoleExecuter = new ConsoleExecuter(coreInterface);
+            this.locator = new DebugWrapperCore(Locator, coreInterface);
+            coreInterface.setLocator(this.locator);
         }
         else
         {
@@ -63,6 +66,9 @@ module.exports = class Core
 
             this.actors = new Actors(coreInterface);
             coreInterface.setActors(this.actors);
+
+            this.locator = new Locator(coreInterface);
+            coreInterface.setLocator(this.locator);
         }
 
         this.resetter = new Resetter(coreInterface);
@@ -117,12 +123,15 @@ module.exports = class Core
         this.consoleExecuter.unwindCore();
         this.actors.unwindCore();
         this.subscriptions.unwindCore();
+        this.locator.unwindCore();
         this.logger.unwindCore();
         this.memoryBank.unwindCore();
 
 	    this.logger.endCpuLog("Core:unwinding");
 
         this.logger.endCpuLog("Core:boot");
+
+        this.logger.latePrints();
 	}
 
 	eventLoop()
@@ -174,8 +183,9 @@ module.exports = class Core
                 if(Game.cpu.getUsed() > Game.cpu.tickLimit * CPU_SAFETY_RATIO)
                 {
                     this.logger.endCpuLog("event:" + event);
-                    this.logger.warning("aborted eventLoop due to low CPU.");
                     stop = true;
+                    if(event !== EVENTS.EVERY_TICK_LATE)
+                        this.logger.warning("aborted eventLoop due to low CPU, during event: " + event);
                     break;
                 }
             }
