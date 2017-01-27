@@ -24,6 +24,20 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 			};
 	}
 
+	resetActor()
+	{
+		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
+
+		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
+		this.memoryObject.subActorId = oldMemory.subActorId;
+
+		for(let index in oldMemory.maintainRequests)
+			this.requestMaintain(oldMemory.maintainRequests[index].at, oldMemory.maintainRequests[index].type);
+
+		for(let index in oldMemory.energyLocations)
+			this.addEnergyLocation(oldMemory.maintainRequests[index]);
+	}
+
 	requestMaintain(at, type)
 	{
 		for(let index in this.memoryObject.maintainRequests)
