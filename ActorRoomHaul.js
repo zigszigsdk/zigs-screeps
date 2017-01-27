@@ -26,6 +26,13 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 	requestResource(at, type, priority, amount)
 	{
+		for(let index in this.memoryObject.resourceRequests)
+		{
+			let request = this.memoryObject.resourceRequests[index];
+			if(request.at[0] === at[0] && request.at[1] === at[1] && request.at[2] === at[2] && request.type === type)
+				return;
+		}
+
 		this.memoryObject.resourceRequests.push(
 			{ at: at
 			, type: type
@@ -39,6 +46,13 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 	requestPickup(at, type)
 	{
+		for(let index in this.memoryObject.pickupRequests)
+		{
+			let request = this.memoryObject.pickupRequests[index];
+			if(request.at[0] === at[0] && request.at[1] === at[1] && request.at[2] === at[2] && request.type === type)
+				return;
+		}
+
 		this.memoryObject.pickupRequests.push(
 			{ at: at
 			, type: type

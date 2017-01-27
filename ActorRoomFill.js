@@ -58,6 +58,14 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 	addEnergyLocation(at)
 	{
+		for(let index in this.memoryObject.energyLocations)
+		{
+			let location = this.memoryObject.energyLocations[index];
+
+			if(location[0] === at[0] && location[1] === at[1] && location[2] === at[2])
+				return;
+		}
+
 		this.memoryObject.energyLocations.push(at);
 	}
 

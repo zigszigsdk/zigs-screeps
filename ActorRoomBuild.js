@@ -44,6 +44,13 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 	requestBuilding(typeProgression, at, priority)
 	{
+		for(let index in this.memoryObject.requests)
+		{
+			let request = this.memoryObject.requests[index];
+			if(request.pos[0] === at[0] && request.pos[1] === at[1] && request.pos[2] === at[2])
+				return;
+		}
+
 		let rp = this.core.getRoomPosition(at);
 
 		let completeness = -1;
@@ -57,7 +64,6 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 				break;
 			}
 		}
-		console.log(completeness);
 
 		this.memoryObject.requests.push(
 			{ typeProgression: typeProgression
@@ -79,6 +85,13 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 	addEnergyLocation(at)
 	{
+		for(let index in this.memoryObject.energyLocations)
+		{
+			let location = this.memoryObject.energyLocations[index];
+			if(location[0] === at[0] && location[1] === at[1] && location[2] === at[2])
+				return;
+		}
+
 		this.memoryObject.energyLocations.push(at);
 		this.update();
 	}
