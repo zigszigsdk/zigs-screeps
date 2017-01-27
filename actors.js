@@ -192,6 +192,8 @@ module.exports = class Actors
     resetActor(actorId)
     {
         let actor = this.getFromId(actorId);
-        actor.resetActor();
+
+        if(actor !== null)
+            actor.resetActor();
     }
 };
