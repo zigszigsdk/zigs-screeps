@@ -56,6 +56,16 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		//don't request towers. let ROOM_GUARD take care of that.
 	}
 
+	resetActor()
+	{
+		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
+
+		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
+
+		for(let index in oldMemory.energyLocations)
+			this.addEnergyLocation(oldMemory.energyLocations[index]);
+	}
+
 	addEnergyLocation(at)
 	{
 		for(let index in this.memoryObject.energyLocations)
