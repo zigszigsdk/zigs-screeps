@@ -16,20 +16,23 @@ module.exports = class ConsoleExecuter
 
     execute()
     {
-    	if(this.memoryObject.consoleInterfaceHook === null)
-    		return;
+        if(this.memoryObject.consoleInterfaceHook === null)
+            return;
 
     	switch(this.memoryObject.consoleInterfaceHook)
     	{
-    		case 1:
-    			this.core.logger.memoryObject.errors = {};
-    			break;
-    		case 2:
-				this.core.logger.memoryObject.warnings = {};
-    			break;
-    		default:
-    			break;
-    	}
+            case 1:
+                this.core.logger.memoryObject.errors = {};
+                break;
+            case 2:
+                this.core.logger.memoryObject.warnings = {};
+                break;
+            case 3:
+                this.core.resetActor(this.memoryObject.p1);
+                break;
+            default:
+                break;
+        }
     }
 
     unwindCore()

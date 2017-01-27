@@ -65,6 +65,11 @@ module.exports = class CoreInterface
 		this.actors.removeActor(actorId);
 	}
 
+	resetActor(actorId)
+	{
+		this.actors.resetActor(actorId);
+	}
+
 	frontLoadEvent(event)
 	{
 		this.eventQueue.frontLoad(event);
