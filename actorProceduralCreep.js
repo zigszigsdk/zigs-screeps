@@ -376,6 +376,41 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     pos = currentInstruction[1];
                     targetPos = this.core.roomPosition(pos[0], pos[1], pos[2]);
 
+                    let structures = targetPos.lookFor(LOOK_STRUCTURES);
+
+                    let breakOut = false;
+
+                    for(let index in structures)
+                    {
+                        switch(structures[index].structureType)
+                        {
+                            case STRUCTURE_CONTAINER:
+                            case STRUCTURE_SPAWN:
+                            case STRUCTURE_EXTENSION:
+                            case STRUCTURE_LINK:
+                            case STRUCTURE_STORAGE:
+                            case STRUCTURE_TOWER:
+                            case STRUCTURE_POWER_SPAWN:
+                            case STRUCTURE_LAB:
+                            case STRUCTURE_TERMINAL:
+                            case STRUCTURE_NUKER:
+
+                                breakOut = true;
+                                if(creep.transfer(structures[index], currentInstruction[2]))
+                                    creep.moveTo(targetPos);
+                                break;
+
+                            default:
+                                break;
+                        }
+
+                        if(breakOut)
+                            break;
+                    }
+
+                    if(breakOut)
+                        break;
+
                     if(creep.pos.x !== targetPos.x ||
                         creep.pos.y !== targetPos.y ||
                         creep.pos.roomName !== targetPos.roomName
