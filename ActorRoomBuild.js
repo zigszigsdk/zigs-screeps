@@ -218,9 +218,9 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 	buildCompleted(callbackObj)
 	{
-		this.update();
 		let parent = this.core.getActor(this.memoryObject.parentId);
-
 		parent.requestMaintain(callbackObj.at, callbackObj.type);
+
+		this.update();
 	}
 };
