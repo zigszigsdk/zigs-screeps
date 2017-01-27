@@ -22,11 +22,11 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 	            , subActorIds: {}
 	            };
 
-	        let subActorNames = [ ACTOR_NAMES.ROOM_BUILD
+	        let subActorNames = [ ACTOR_NAMES.ROOM_REPAIR
+	        					, ACTOR_NAMES.ROOM_BUILD
 	        					, ACTOR_NAMES.ROOM_HAUL
 	        					, ACTOR_NAMES.ROOM_FILL
 	        					, ACTOR_NAMES.ROOM_UPGRADE
-	        					, ACTOR_NAMES.ROOM_REPAIR
 	        					, ACTOR_NAMES.ROOM_MINE
 	        					, ACTOR_NAMES.ROOM_GUARD
 	        					, ACTOR_NAMES.ROOM_OFFENSE

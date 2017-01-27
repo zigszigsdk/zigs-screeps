@@ -27,12 +27,33 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 	requestBuilding(typeProgression, at, priority)
 	{
+		let rp = this.core.getRoomPosition(at);
+
+		let completeness = -1;
+
+		for(let index = typeProgression.length-1; index >= 0; index--)
+		{
+			if(rp.lookFor(	LOOK_STRUCTURES,
+							{filter: (x)=>x.structureType === typeProgression[index]}).length > 0)
+			{
+				completeness = index;
+				break;
+			}
+		}
+		console.log(completeness);
+
 		this.memoryObject.requests.push(
 			{ typeProgression: typeProgression
 			, pos: at
 			, priority: priority
-			, completeness: -1
+			, completeness: completeness
 			});
+
+		if(completeness !== -1)
+		{
+			let parent = this.core.getActor(this.memoryObject.parentId);
+			parent.requestMaintain(at, typeProgression[completeness]);
+		}
 
 		this.memoryObject.requests.sort((a, b) => b.priority - a.priority); //sort decending
 
