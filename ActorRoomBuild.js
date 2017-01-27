@@ -78,7 +78,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 			parent.requestMaintain(at, typeProgression[completeness]);
 		}
 
-		this.memoryObject.requests.sort((a, b) => b.priority - a.priority); //sort decending
+		this.memoryObject.requests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]); //sort decending
 
 		this.update();
 	}
@@ -144,7 +144,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 			parent.requestCreep(
 				{ actorId: this.actorId
 				, functionName: "createBuilder"
-				, priority: PRIORITIES.SPAWN.BUILDER
+				, priority: PRIORITY_NAMES.SPAWN.BUILDER
 				, subActorId: null
 				, callbackObj: {}
 				});
@@ -262,7 +262,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createBuilder"
-			, priority: PRIORITIES.SPAWN.BUILDER
+			, priority: PRIORITY_NAMES.SPAWN.BUILDER
 			, callbackObj: callbackObj
 			});
 	}

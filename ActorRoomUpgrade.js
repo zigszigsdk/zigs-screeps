@@ -25,9 +25,9 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 
 		parent.requestBuilding([STRUCTURE_CONTAINER, STRUCTURE_LINK],
 								upgradeContainerPos,
-								PRIORITIES.BUILD.UPGRADER_CONTAINER);
+								PRIORITY_NAMES.BUILD.UPGRADER_CONTAINER);
 
-		parent.requestResource(upgradeContainerPos, RESOURCE_ENERGY, PRIORITIES.RESOURCE.UPGRADE, TARGET_RESOURCE_RESERVE);
+		parent.requestResource(upgradeContainerPos, RESOURCE_ENERGY, PRIORITY_NAMES.RESOURCE.UPGRADE, TARGET_RESOURCE_RESERVE);
 
 		this.memoryObject =
 			{ roomName: roomName
@@ -54,7 +54,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createUpgrader"
-			, priority: PRIORITIES.SPAWN.UPGRADER
+			, priority: PRIORITY_NAMES.SPAWN.UPGRADER
 			});
 	}
 

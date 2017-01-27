@@ -32,26 +32,26 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createFiller"
-			, priority: PRIORITIES.SPAWN.FILLER
+			, priority: PRIORITY_NAMES.SPAWN.FILLER
 			});
 
 		for(let index in scoring.extension)
-			parent.requestBuilding([STRUCTURE_EXTENSION], scoring.extension[index], PRIORITIES.BUILD.EXTENSION);
+			parent.requestBuilding([STRUCTURE_EXTENSION], scoring.extension[index], PRIORITY_NAMES.BUILD.EXTENSION);
 
 		for(let index in scoring.spawn)
-			parent.requestBuilding([STRUCTURE_SPAWN], scoring.spawn[index], PRIORITIES.BUILD.SPAWN);
+			parent.requestBuilding([STRUCTURE_SPAWN], scoring.spawn[index], PRIORITY_NAMES.BUILD.SPAWN);
 
 		for(let index in scoring.link)
-			parent.requestBuilding([STRUCTURE_LINK], scoring.link[index], PRIORITIES.BUILD.FLOWER_LINK);
+			parent.requestBuilding([STRUCTURE_LINK], scoring.link[index], PRIORITY_NAMES.BUILD.FLOWER_LINK);
 
 		for(let index in scoring.container)
-			parent.requestBuilding([STRUCTURE_CONTAINER], scoring.container[index], PRIORITIES.BUILD.FLOWER_CONTAINER);
+			parent.requestBuilding([STRUCTURE_CONTAINER], scoring.container[index], PRIORITY_NAMES.BUILD.FLOWER_CONTAINER);
 
 		for(let index in scoring.storage)
-			parent.requestBuilding([STRUCTURE_STORAGE], scoring.storage[index], PRIORITIES.BUILD.STORAGE);
+			parent.requestBuilding([STRUCTURE_STORAGE], scoring.storage[index], PRIORITY_NAMES.BUILD.STORAGE);
 
 		for(let index in scoring.road)
-			parent.requestBuilding([STRUCTURE_ROAD], scoring.road[index], PRIORITIES.BUILD.FLOWER_ROAD);
+			parent.requestBuilding([STRUCTURE_ROAD], scoring.road[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
 
 		//don't request towers. let ROOM_GUARD take care of that.
 	}
@@ -114,7 +114,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createFiller"
-			, priority: PRIORITIES.SPAWN.FILLER
+			, priority: PRIORITY_NAMES.SPAWN.FILLER
 			});
 	}
 

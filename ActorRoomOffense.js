@@ -25,7 +25,7 @@ module.exports = class ActorRoomOffense extends ActorWithMemory
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createDismantler"
-			, priority: PRIORITIES.SPAWN.OFFENSE
+			, priority: PRIORITY_NAMES.SPAWN.OFFENSE
 			}
 		);
 	}

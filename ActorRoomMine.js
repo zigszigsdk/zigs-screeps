@@ -43,13 +43,13 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 			parent.requestCreep(
 				{ actorId: this.actorId
 				, functionName: "createMiner"
-				, priority: mines[keys[index]].firstSpot ? PRIORITIES.SPAWN.FIRST_MINER : PRIORITIES.SPAWN.MINER
+				, priority: mines[keys[index]].firstSpot ? PRIORITY_NAMES.SPAWN.FIRST_MINER : PRIORITY_NAMES.SPAWN.MINER
 				, callbackObj: mines[keys[index]].sourceId
 				});
 
 		for(let index in mines)
 		{
-			parent.requestBuilding([STRUCTURE_CONTAINER], mines[index].miningSpot, PRIORITIES.BUILD.DROP_MINING_CONTAINER);
+			parent.requestBuilding([STRUCTURE_CONTAINER], mines[index].miningSpot, PRIORITY_NAMES.BUILD.DROP_MINING_CONTAINER);
 			parent.requestPickup(mines[index].miningSpot, RESOURCE_ENERGY);
 		}
 
@@ -89,7 +89,7 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createMiner"
-			, priority: PRIORITIES.SPAWN.MINER
+			, priority: PRIORITY_NAMES.SPAWN.MINER
 			, callbackObj: callbackObj.sourceId
 			});
     }

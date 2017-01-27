@@ -47,7 +47,7 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 		requestCreep(request)
 		{
 			this.memoryObject.creepRequests.push(request);
-			this.memoryObject.creepRequests.sort((a, b) => b.priority - a.priority); //descending
+			this.memoryObject.creepRequests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]); //descending
 		}
 
 		requestBuilding(typeProgression, at, priority)

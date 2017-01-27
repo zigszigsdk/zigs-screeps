@@ -26,7 +26,7 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 		let parent = this.core.getActor(parentId);
 
 		for(let index in towerLocations)
-			parent.requestBuilding([STRUCTURE_TOWER], towerLocations[index], PRIORITIES.BUILD.TOWER);
+			parent.requestBuilding([STRUCTURE_TOWER], towerLocations[index], PRIORITY_NAMES.BUILD.TOWER);
 	}
 
 	removeActor()

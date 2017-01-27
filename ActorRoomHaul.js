@@ -108,7 +108,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 				});
 		}
 
-		this.memoryObject.routes.sort((a, b)=> b.priority - a.priority); //descending
+		this.memoryObject.routes.sort((a, b)=> PRIORITIES[b.priority] - PRIORITIES[a.priority]); //descending
 	}
 
 	redistributeWorkers()
@@ -187,7 +187,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		parent.requestCreep(
 				{ actorId: this.actorId
 				, functionName: "createHauler"
-				, priority: PRIORITIES.SPAWN.HAULER
+				, priority: PRIORITY_NAMES.SPAWN.HAULER
 				});
 	}
 };
