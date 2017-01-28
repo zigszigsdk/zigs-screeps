@@ -22,11 +22,14 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 			, roomName: roomName
 			, towerLocations: towerLocations
 			};
+	}
 
-		let parent = this.core.getActor(parentId);
+	lateInitiate()
+	{
+		let parent = this.core.getActor(this.memoryObject.parentId);
 
-		for(let index in towerLocations)
-			parent.requestBuilding([STRUCTURE_TOWER], towerLocations[index], PRIORITY_NAMES.BUILD.TOWER);
+		for(let index in this.memoryObject.towerLocations)
+			parent.requestBuilding([STRUCTURE_TOWER], this.memoryObject.towerLocations[index], PRIORITY_NAMES.BUILD.TOWER);
 	}
 
 	removeActor()

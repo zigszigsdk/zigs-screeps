@@ -15,7 +15,10 @@ module.exports = class ActorRoomOffense extends ActorWithMemory
 		this.memoryObject =
 			{ parentId: parentId
 			};
+	}
 
+	lateInitiate()
+	{
 		this.requestCreep();
 	}
 

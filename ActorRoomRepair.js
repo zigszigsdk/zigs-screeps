@@ -24,12 +24,15 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 			};
 	}
 
+	lateInitiate(){}
+
 	resetActor()
 	{
 		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
 
 		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
 		this.memoryObject.subActorId = oldMemory.subActorId;
+		this.lateInitiate();
 
 		for(let index in oldMemory.maintainRequests)
 			this.requestMaintain(oldMemory.maintainRequests[index].at, oldMemory.maintainRequests[index].type);

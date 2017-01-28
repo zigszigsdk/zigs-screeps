@@ -22,6 +22,10 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 			, subActorId: null
 			};
 
+	}
+
+	lateInitiate()
+	{
 		this.update();
 	}
 

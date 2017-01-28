@@ -24,6 +24,8 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			};
 	}
 
+	lateInitiate(){}
+
 	requestResource(at, type, priority, amount)
 	{
 		for(let index in this.memoryObject.resourceRequests)

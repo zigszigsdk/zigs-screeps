@@ -20,15 +20,6 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 
 		let room = this.core.room(roomName);
 
-		let parent = this.core.getActor(parentId);
-
-
-		parent.requestBuilding([STRUCTURE_CONTAINER, STRUCTURE_LINK],
-								upgradeContainerPos,
-								PRIORITY_NAMES.BUILD.UPGRADER_CONTAINER);
-
-		parent.requestResource(upgradeContainerPos, RESOURCE_ENERGY, PRIORITY_NAMES.RESOURCE.UPGRADE, TARGET_RESOURCE_RESERVE);
-
 		this.memoryObject =
 			{ roomName: roomName
 			, parentId: parentId
@@ -37,6 +28,22 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 			, controllerId: room.controller.id
 			};
 
+	}
+
+	lateInitiate()
+	{
+
+		let parent = this.core.getActor(this.memoryObject.parentId);
+
+
+		parent.requestBuilding(	[STRUCTURE_CONTAINER, STRUCTURE_LINK],
+								this.memoryObject.energyPos,
+								PRIORITY_NAMES.BUILD.UPGRADER_CONTAINER);
+
+		parent.requestResource(	this.memoryObject.energyPos,
+								RESOURCE_ENERGY,
+								PRIORITY_NAMES.RESOURCE.UPGRADE,
+								TARGET_RESOURCE_RESERVE);
 		this.requestCreep();
 	}
 
@@ -45,6 +52,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
 		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
 		this.memoryObject.workParts = oldMemory.workParts;
+		this.lateInitiate();
 	}
 
 	requestCreep()

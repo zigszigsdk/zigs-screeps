@@ -28,30 +28,36 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			, energyLocations: []
 			};
 
-		let parent = this.core.getActor(parentId);
+	}
+
+	lateInitiate()
+	{
+		let parent = this.core.getActor(this.memoryObject.parentId);
+
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createFiller"
 			, priority: PRIORITY_NAMES.SPAWN.FILLER
+			, energyNeeded: 300
 			});
 
-		for(let index in scoring.flower.extension)
-			parent.requestBuilding([STRUCTURE_EXTENSION], scoring.flower.extension[index], PRIORITY_NAMES.BUILD.EXTENSION);
+		for(let index in this.memoryObject.extensions)
+			parent.requestBuilding([STRUCTURE_EXTENSION], this.memoryObject.extensions[index], PRIORITY_NAMES.BUILD.EXTENSION);
 
-		for(let index in scoring.flower.spawn)
-			parent.requestBuilding([STRUCTURE_SPAWN], scoring.flower.spawn[index], PRIORITY_NAMES.BUILD.SPAWN);
+		for(let index in this.memoryObject.spawns)
+			parent.requestBuilding([STRUCTURE_SPAWN], this.memoryObject.spawns[index], PRIORITY_NAMES.BUILD.SPAWN);
 
-		for(let index in scoring.flower.link)
-			parent.requestBuilding([STRUCTURE_LINK], scoring.flower.link[index], PRIORITY_NAMES.BUILD.FLOWER_LINK);
+		for(let index in this.memoryObject.links)
+			parent.requestBuilding([STRUCTURE_LINK], this.memoryObject.links[index], PRIORITY_NAMES.BUILD.FLOWER_LINK);
 
-		for(let index in scoring.flower.container)
-			parent.requestBuilding([STRUCTURE_CONTAINER], scoring.flower.container[index], PRIORITY_NAMES.BUILD.FLOWER_CONTAINER);
+		for(let index in this.memoryObject.containers)
+			parent.requestBuilding([STRUCTURE_CONTAINER], this.memoryObject.containers[index], PRIORITY_NAMES.BUILD.FLOWER_CONTAINER);
 
-		for(let index in scoring.flower.storage)
-			parent.requestBuilding([STRUCTURE_STORAGE], scoring.flower.storage[index], PRIORITY_NAMES.BUILD.STORAGE);
+		for(let index in this.memoryObject.storages)
+			parent.requestBuilding([STRUCTURE_STORAGE], this.memoryObject.storages[index], PRIORITY_NAMES.BUILD.STORAGE);
 
-		for(let index in scoring.flower.road)
-			parent.requestBuilding([STRUCTURE_ROAD], scoring.flower.road[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
+		for(let index in this.memoryObject.roads)
+			parent.requestBuilding([STRUCTURE_ROAD], this.memoryObject.roads[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
 
 		//don't request towers. let ROOM_GUARD take care of that.
 	}
@@ -64,6 +70,9 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 		for(let index in oldMemory.energyLocations)
 			this.addEnergyLocation(oldMemory.energyLocations[index]);
+
+		this.lateInitiate();
+	}
 	}
 
 	addEnergyLocation(at)

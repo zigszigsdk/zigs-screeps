@@ -37,27 +37,32 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 
 		mines[keyOfNearest].firstSpot = true;
 
-		let parent = this.core.getActor(parentId);
-
-		for(let index in keys)
-			parent.requestCreep(
-				{ actorId: this.actorId
-				, functionName: "createMiner"
-				, priority: mines[keys[index]].firstSpot ? PRIORITY_NAMES.SPAWN.FIRST_MINER : PRIORITY_NAMES.SPAWN.MINER
-				, callbackObj: mines[keys[index]].sourceId
-				});
-
-		for(let index in mines)
-		{
-			parent.requestBuilding([STRUCTURE_CONTAINER], mines[index].miningSpot, PRIORITY_NAMES.BUILD.DROP_MINING_CONTAINER);
-			parent.requestPickup(mines[index].miningSpot, RESOURCE_ENERGY);
-		}
-
 		this.memoryObject =
 			{ parentId: parentId
 			, roomName: roomName
 			, mines: mines
 			};
+	}
+
+	lateInitiate()
+	{
+		let parent = this.core.getActor(this.memoryObject.parentId);
+
+		let keys = Object.keys(this.memoryObject.mines);
+		for(let index in keys)
+			parent.requestCreep(
+				{ actorId: this.actorId
+				, functionName: "createMiner"
+				, priority: this.memoryObject.mines[keys[index]].firstSpot ? PRIORITY_NAMES.SPAWN.FIRST_MINER : PRIORITY_NAMES.SPAWN.MINER
+				, callbackObj: this.memoryObject.mines[keys[index]].sourceId
+				, energyNeeded: 300
+				});
+
+		for(let index in this.memoryObject.mines)
+		{
+			parent.requestBuilding([STRUCTURE_CONTAINER], this.memoryObject.mines[index].miningSpot, PRIORITY_NAMES.BUILD.DROP_MINING_CONTAINER);
+			parent.requestPickup(this.memoryObject.mines[index].miningSpot, RESOURCE_ENERGY);
+		}
 	}
 
 	createMiner(spawnId, sourceId)

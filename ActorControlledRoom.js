@@ -36,6 +36,11 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 	        	this.memoryObject.subActorIds[subActorNames[index]] =
 	        		this.core.createActor(subActorNames[index], (script)=>
 						script.initiateActor(this.actorId, roomName) ).id;
+
+	        for(let index in subActorNames)
+		        this.core.getActor(this.memoryObject.subActorIds[subActorNames[index]]).lateInitiate();
+		}
+
 		resetActor()
 		{
 			let keys = Object.keys(this.memoryObject.subActorIds);
