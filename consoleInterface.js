@@ -100,6 +100,10 @@ module.exports = class ConsoleInterface
         this.setCommand(3, actorId);
     }
 
+    removeActor(actorId)
+    {
+        this.setCommand(4, actorId);
+    }
 
     setCommand(command, p1)
     {

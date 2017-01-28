@@ -30,6 +30,9 @@ module.exports = class ConsoleExecuter
             case 3:
                 this.core.resetActor(this.memoryObject.p1);
                 break;
+            case 4:
+                this.core.removeActor(this.memoryObject.p1);
+                break;
             default:
                 break;
         }
