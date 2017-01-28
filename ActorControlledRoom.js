@@ -53,6 +53,12 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 
 		requestCreep(request)
 		{
+			//dirty deduplication
+			let requestText = JSON.stringify(request);
+			for(let index in this.memoryObject.creepRequests)
+				if(JSON.stringify(this.memoryObject.creepRequests[index]) === requestText)
+					return;
+
 			this.memoryObject.creepRequests.push(request);
 			this.memoryObject.creepRequests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]); //descending
 		}
