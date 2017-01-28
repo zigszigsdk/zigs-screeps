@@ -36,6 +36,8 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
 		this.memoryObject.subActorId = oldMemory.subActorId;
 
+		this.lateInitiate();
+
 		for(let index in oldMemory.requests)
 		{
 			let request = oldMemory.requests[index];
