@@ -28,6 +28,25 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 	lateInitiate(){}
 
+	resetActor()
+	{
+		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
+
+		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
+		this.lateInitiate();
+		for(let index in oldMemory.resourceRequests)
+		{
+			let request = oldMemory.resourceRequests[index];
+			this.requestResource(request.at, request.type, request.priority, request.amount);
+		}
+
+		for(let index in oldMemory.pickupRequests)
+		{
+			let request = oldMemory.pickupRequests[index];
+			this.requestPickup(request.at, request.type);
+		}
+	}
+
 	requestResource(at, type, priority, amount)
 	{
 		for(let index in this.memoryObject.resourceRequests)
