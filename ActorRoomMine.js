@@ -64,7 +64,23 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 									RESOURCE_ENERGY);
 		}
 	}
+
+	resetActor()
+	{
+		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
+
+		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
+
+		let keys = Object.keys(oldMemory.mines);
+		for(let index in keys)
+		{
+			this.memoryObject.mines[keys[index]].regularFillActorId = oldMemory.mines[keys[index]].regularFillActorId;
+			this.memoryObject.mines[keys[index]].recoveryMinerActorId = oldMemory.mines[keys[index]].recoveryFillActorId;
 		}
+
+		this.lateInitiate();
+	}
+
 	requestMinerFor(mineKey)
 	{
 		if(this.memoryObject.mines[mineKey].regularMinerActorId !== null)
