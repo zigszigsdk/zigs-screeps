@@ -1,5 +1,8 @@
 "use strict";
 
+const MINER = "miner";
+const RECOVERY_MINER = "recoveryMiner";
+
 let ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorRoomMine extends ActorWithMemory
@@ -24,7 +27,9 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 		let keys = Object.keys(mines);
 		for(let index in keys)
 		{
-			mines[keys[index]].firstSpot = false;
+			mines[keys[index]].regularMinerActorId = null;
+			mines[keys[index]].recoveryMinerActorId = null;
+
 			let miningSpot = mines[keys[index]].miningSpot;
 			let score = spawn.pos.findPathTo(miningSpot[0], miningSpot[0], roomName).length;
 
@@ -34,8 +39,6 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 			bestScore = score;
 			keyOfNearest = keys[index];
 		}
-
-		mines[keyOfNearest].firstSpot = true;
 
 		this.memoryObject =
 			{ parentId: parentId
@@ -50,53 +53,99 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 
 		let keys = Object.keys(this.memoryObject.mines);
 		for(let index in keys)
-			parent.requestCreep(
-				{ actorId: this.actorId
-				, functionName: "createMiner"
-				, priority: this.memoryObject.mines[keys[index]].firstSpot ? PRIORITY_NAMES.SPAWN.FIRST_MINER : PRIORITY_NAMES.SPAWN.MINER
-				, callbackObj: this.memoryObject.mines[keys[index]].sourceId
-				, energyNeeded: 300
-				});
-
-		for(let index in this.memoryObject.mines)
 		{
-			parent.requestBuilding([STRUCTURE_CONTAINER], this.memoryObject.mines[index].miningSpot, PRIORITY_NAMES.BUILD.DROP_MINING_CONTAINER);
-			parent.requestPickup(this.memoryObject.mines[index].miningSpot, RESOURCE_ENERGY);
+			this.requestMinerFor(keys[index]);
+
+			parent.requestBuilding(	[STRUCTURE_CONTAINER],
+									this.memoryObject.mines[keys[index]].miningSpot,
+									PRIORITY_NAMES.BUILD.DROP_MINING_CONTAINER);
+
+			parent.requestPickup(	this.memoryObject.mines[keys[index]].miningSpot,
+									RESOURCE_ENERGY);
 		}
 	}
+		}
+	requestMinerFor(mineKey)
+	{
+		if(this.memoryObject.mines[mineKey].regularMinerActorId !== null)
+			return;
 
-	createMiner(spawnId, sourceId)
-    {
-        let energy = this.core.room(this.memoryObject.roomName).energyAvailable;
+		let parent = this.core.getActor(this.memoryObject.parentId);
 
-        let body = new this.CreepBodyFactory()
-            .addPattern([MOVE], 1)
-            .addPattern([WORK], 5)
-            .addPattern([MOVE], 4)
-            .setSort([MOVE, WORK])
-            .setMaxCost(energy)
-            .fabricate();
-
-        let pos = this.memoryObject.mines[sourceId].miningSpot;
-
-		this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
-            (script)=>script.initiateActor("miner", {sourceId: sourceId},
-            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [spawnId],   body            						  ]   //0
-            , [CREEP_INSTRUCTION.MOVE_TO_POSITION,        pos                                                 ]   //1
-            , [CREEP_INSTRUCTION.MINE_UNTIL_DEATH,        sourceId                                            ]   //2
-            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "minerDied"     ]   //3
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                             ] ]));//4
-    }
-
-    minerDied(callbackObj)
-    {
-    	let parent = this.core.getActor(this.memoryObject.parentId);
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createMiner"
 			, priority: PRIORITY_NAMES.SPAWN.MINER
-			, callbackObj: callbackObj.sourceId
-			, energyNeeded: 300
+			, callbackObj: { sourceId: this.memoryObject.mines[mineKey].sourceId }
+			, energyNeeded: 750
 			});
+
+		if(this.memoryObject.mines[mineKey].regularMinerActorId !== null)
+			return;
+
+		parent.requestCreep(
+			{ actorId: this.actorId
+			, functionName: "createMiner"
+			, priority: PRIORITY_NAMES.SPAWN.RECOVERY_MINER
+			, callbackObj: { sourceId: this.memoryObject.mines[mineKey].sourceId }
+			, energyNeeded: 150
+			});
+	}
+
+	createMiner(spawnId, callbackObj)
+    {
+		if(this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId !== null)
+			return;
+
+		let room = this.core.room(this.memoryObject.roomName);
+        let energy = room.energyAvailable;
+
+        let role = room.energyAvailable === room.energyCapacityAvailable ? MINER : RECOVERY_MINER;
+
+        if(role === RECOVERY_MINER && this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId !== null)
+        	return;
+
+        let body;
+        if(role === MINER)
+        	body = new this.CreepBodyFactory()
+	            .addPattern([MOVE], 1)
+	            .addPattern([WORK], 5)
+	            .addPattern([MOVE], 4)
+	            .setSort([MOVE, WORK])
+	            .setMaxCost(energy)
+	            .fabricate();
+	    else
+	    	body = [MOVE, WORK];
+
+        let pos = this.memoryObject.mines[callbackObj.sourceId].miningSpot;
+
+		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+            (script)=>script.initiateActor(role, {sourceId: callbackObj.sourceId, role: role},
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [spawnId],   body            						  ]   //0
+            , [CREEP_INSTRUCTION.MOVE_TO_POSITION,        pos                                                 ]   //1
+            , [CREEP_INSTRUCTION.MINE_UNTIL_DEATH,        callbackObj.sourceId                                ]   //2
+            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "minerDied"     ]   //3
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                             ] ]));//4
+
+		if(role === MINER)
+		{
+			this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId = result.id;
+			this.core.removeActor(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId);
+			this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = null;
+			return;
+		}
+
+		this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = result.id;
+		this.requestMinerFor(callbackObj.sourceId);
+    }
+
+    minerDied(callbackObj)
+    {
+    	if(callbackObj.role === MINER)
+    		this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId = null;
+    	else
+    		this.memoryObject.mines[callbackObj.sourceId].recoveryMiner = null;
+
+    	this.requestMinerFor(callbackObj.sourceId);
     }
 };
