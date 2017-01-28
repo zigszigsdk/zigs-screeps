@@ -162,7 +162,8 @@ module.exports = class Actors
     removeActor(actorId)
     {
         let actor = this.getFromId(actorId);
-        actor.removeActor();
+        if(actor)
+            actor.removeActor();
 
         delete this.localCache.actors[actorId];
         delete this.localCache.outdatedActors[actorId];
