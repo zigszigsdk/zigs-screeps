@@ -67,7 +67,7 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 
 	createMiner(spawnId, sourceId)
     {
-        let energy = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
+        let energy = this.core.room(this.memoryObject.roomName).energyAvailable;
 
         let body = new this.CreepBodyFactory()
             .addPattern([MOVE], 1)
@@ -96,6 +96,7 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 			, functionName: "createMiner"
 			, priority: PRIORITY_NAMES.SPAWN.MINER
 			, callbackObj: callbackObj.sourceId
+			, energyNeeded: 300
 			});
     }
 };
