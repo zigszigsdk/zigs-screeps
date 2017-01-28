@@ -29,6 +29,7 @@ module.exports = class ActorRoomOffense extends ActorWithMemory
 			{ actorId: this.actorId
 			, functionName: "createDismantler"
 			, priority: PRIORITY_NAMES.SPAWN.OFFENSE
+			, energyNeeded: 7350
 			}
 		);
 	}

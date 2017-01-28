@@ -124,6 +124,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 			{ actorId: this.actorId
 			, functionName: "createFixer"
 			, priority: PRIORITY_NAMES.SPAWN.FIXER
+			, energyNeeded: 600
 			}
 		);
 

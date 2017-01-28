@@ -27,8 +27,8 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 			, workParts: 0
 			, energyPos: upgradeContainerPos
 			, controllerId: room.controller.id
-			};
 			, creepCount: 0
+			};
 	}
 
 	lateInitiate()
@@ -64,6 +64,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 			{ actorId: this.actorId
 			, functionName: "createUpgrader"
 			, priority: PRIORITY_NAMES.SPAWN.UPGRADER
+			, energyNeeded: 2000
 			});
 	}
 
