@@ -104,10 +104,25 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 				.addEnergyLocation(at);
 		}
 
-		requestMaintain(at, type)
+		buildingCompleted(at, type)
 		{
 			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
 				.requestMaintain(at, type);
+
+			switch(type)
+			{
+				case STRUCTURE_TOWER:
+					this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_GUARD])
+						.buildingCompleted(at, type);
+					this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
+						.buildingCompleted(at, type);
+					break;
+				case STRUCTURE_EXTENSION:
+				case STRUCTURE_SPAWN:
+					this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
+						.buildingCompleted(at, type);
+					break;
+			}
 		}
 
 		onEveryTick()

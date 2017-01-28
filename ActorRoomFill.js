@@ -73,6 +73,24 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 		this.lateInitiate();
 	}
+
+	buildingCompleted(at, type)
+	{
+		if(this.memoryObject.subActorId === null)
+			return;
+
+		let subActor = this.core.getActor(this.memoryObject.subActorId);
+
+		let room = this.core.getRoom(this.memoryObject.roomName);
+
+		let getId = (list) => _.map(list, (item)=>item.id);
+		let towers = getId(room.find(FIND_STRUCTURES, FILTERS.TOWERS));
+		let extensions = getId(room.find(FIND_STRUCTURES, FILTERS.EXTENSIONS));
+		let spawns = getId(room.find(FIND_STRUCTURES, FILTERS.SPAWNS));
+
+		subActor.replaceInstruction(2, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, towers]);
+		subActor.replaceInstruction(3, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, extensions]);
+		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, spawns]);
 	}
 
 	addEnergyLocation(at)

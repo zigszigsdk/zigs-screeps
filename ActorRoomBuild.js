@@ -79,7 +79,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		if(completeness !== -1)
 		{
 			let parent = this.core.getActor(this.memoryObject.parentId);
-			parent.requestMaintain(at, typeProgression[completeness]);
+			parent.buildingCompleted(at, typeProgression[completeness]);
 		}
 
 		this.memoryObject.requests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]); //sort decending
@@ -274,7 +274,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 	buildCompleted(callbackObj)
 	{
 		let parent = this.core.getActor(this.memoryObject.parentId);
-		parent.requestMaintain(callbackObj.at, callbackObj.type);
+		parent.buildingCompleted(callbackObj.at, callbackObj.type);
 
 		this.update();
 	}

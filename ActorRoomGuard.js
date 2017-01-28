@@ -38,6 +38,8 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 		super.removeActor();
 	}
 
+	buildingCompleted(at, type){}
+
 	onEveryTick()
 	{
 		for(let index in this.memoryObject.towerLocations)
