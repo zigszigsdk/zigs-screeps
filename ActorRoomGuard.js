@@ -50,10 +50,7 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 
 	        let structs = towerRp.lookFor(LOOK_STRUCTURES);
 	        if(structs.length === 0 || structs[0].structureType !== STRUCTURE_TOWER)
-	        {
-	            this.core.removeActor(this.actorId);
 	            return;
-	        }
 
 	        let room = this.core.room(this.memoryObject.location[2]);
 
@@ -64,12 +61,13 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 
 	        let targets = towerRp.findInRange(enemies, TOWER_MAX_DMG_RANGE);
 
-	        if(targets.length === 0)
-	            return;
-
 	        let tower = structs[0];
+	        let target;
 
-	        let target = targets[Math.floor(Math.random() * targets.length)];
+	        if(targets.length === 0)
+	        	target = targets[Math.floor(Math.random() * targets.length)];
+	        else
+	        	target = enemies[Math.floor(Math.random() * targets.length)];
 
 	        tower.attack(target);
 	    }
