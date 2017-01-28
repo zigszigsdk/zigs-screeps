@@ -109,15 +109,6 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 		{
 			let room = this.core.room(this.memoryObject.room.name);
 
-			if(this.memoryObject.creepRequests.length === 0)
-				return;
-
-			let request = this.memoryObject.creepRequests[0];
-
-			if(room.energyAvailable !== room.energyCapacityAvailable &&
-				(!request.energyNeeded || room.energyAvailable < request.energyNeeded))
-				return;
-
 			let spawns = room.find(FIND_MY_SPAWNS);
 			let spawn;
 
@@ -133,9 +124,16 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 			if(!spawn)
 				return;
 
+			if(this.memoryObject.creepRequests.length === 0)
+				return;
+
+			let request = this.memoryObject.creepRequests.shift();
+
+			if(room.energyAvailable !== room.energyCapacityAvailable &&
+				(!request.energyNeeded || room.energyAvailable < request.energyNeeded))
+				return this.memoryObject.creepRequests.unshift(request);
 			let actor = this.core.getActor(request.actorId);
 
 			actor[request.functionName](spawn.id, request.callbackObj);
-			this.memoryObject.creepRequests.shift();
 		}
 };
