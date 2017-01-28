@@ -87,12 +87,12 @@ module.exports = class ConsoleInterface
 
     clearErrors()
     {
-        this.setCommand(1);
+        this.setCommand(1, 0);
     }
 
     clearWarnings()
     {
-        this.setCommand(2);
+        this.setCommand(2, 0);
     }
 
     resetActor(actorId)
