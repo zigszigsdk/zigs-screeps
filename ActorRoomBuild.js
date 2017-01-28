@@ -31,6 +31,12 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 	resetActor()
 	{
+		let room = this.core.getRoom(this.memoryObject.roomName);
+
+		let sites = room.find(FIND_CONSTRUCTION_SITES);
+		for(let index in sites)
+			sites[index].remove();
+
 		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject)); //copy
 
 		this.initiateActor(oldMemory.parentId, oldMemory.roomName);

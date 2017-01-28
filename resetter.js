@@ -18,6 +18,10 @@ module.exports = class Resetter
         {
             let room = Game.rooms[roomName];
 
+            let sites = room.find(FIND_CONSTRUCTION_SITES);
+            for(let index in sites)
+                sites[index].remove();
+
             if(room.find(FIND_MY_SPAWNS).length === 0)
                 continue;
 
