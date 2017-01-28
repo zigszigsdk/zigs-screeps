@@ -144,6 +144,9 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 			}
 		}
 
+		let structureType = this.memoryObject.currentTask.structureType;
+		let buildPos = this.memoryObject.currentTask.pos;
+
 		if(this.memoryObject.subActorId === null)
 		{
 			if(this.memoryObject.pendingCallback === true)
@@ -151,21 +154,14 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 			this.memoryObject.pendingCallback = true;
 
-			let parent = this.core.getActor(this.memoryObject.parentId);
-
-			parent.requestCreep(
-				{ actorId: this.actorId
-				, functionName: "createBuilder"
-				, priority: PRIORITY_NAMES.SPAWN.BUILDER
-				, subActorId: null
-				, callbackObj: {}
+			this.requestBuilder(
+				{ type: structureType
+				, at: buildPos
 				});
 
 			return;
 		}
 
-		let structureType = this.memoryObject.currentTask.structureType;
-		let buildPos = this.memoryObject.currentTask.pos;
 		let energyPos = this.findNearestEnergyPosition(buildPos);
 
 		let subActor = this.core.getActor(this.memoryObject.subActorId);
@@ -179,6 +175,19 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		callbackObj.at = buildPos;
 		callbackObj.type = structureType;
 		subActor.setCallbackObj(callbackObj);
+	}
+
+	requestBuilder(callbackObj)
+	{
+		let parent = this.core.getActor(this.memoryObject.parentId);
+
+		parent.requestCreep(
+			{ actorId: this.actorId
+			, functionName: "createBuilder"
+			, priority: PRIORITY_NAMES.SPAWN.BUILDER
+			, callbackObj: callbackObj
+			, energyNeeded: 3000
+			});
 	}
 
 	getNextTask()
@@ -238,7 +247,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
         }
 
 		let body = new this.CreepBodyFactory()
-            .addPattern([WORK, CARRY, MOVE, MOVE], 4)
+            .addPattern([WORK, CARRY, MOVE, MOVE], 12)
             .setMaxCost(this.core.room(this.memoryObject.roomName).energyCapacityAvailable)
             .fabricate();
 
@@ -270,13 +279,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 	builderDied(callbackObj)
 	{
 		this.memoryObject.subActorId = null;
-		let parent = this.core.getActor(this.memoryObject.parentId);
-		parent.requestCreep(
-			{ actorId: this.actorId
-			, functionName: "createBuilder"
-			, priority: PRIORITY_NAMES.SPAWN.BUILDER
-			, callbackObj: callbackObj
-			});
+		this.requestBuilder(callbackObj);
 	}
 
 	buildCompleted(callbackObj)
