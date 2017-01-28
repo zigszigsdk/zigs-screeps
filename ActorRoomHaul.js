@@ -2,6 +2,8 @@
 
 let ActorWithMemory = require('ActorWithMemory');
 
+let CARRY_TO_LINK_RATIO = 16;
+
 module.exports = class ActorRoomHaul extends ActorWithMemory
 {
 	constructor(core)
@@ -142,7 +144,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		let energy = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
 
 		let body = new this.CreepBodyFactory()
-            .addPattern([CARRY, MOVE], 3)
+            .addPattern([CARRY, MOVE], CARRY_TO_LINK_RATIO)
             .setSort([CARRY, MOVE])
             .setMaxCost(energy)
             .fabricate();
