@@ -179,6 +179,9 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 
 		let subActor = this.core.getActor(this.memoryObject.subActorId);
 
+		if(subActor === null) //died on same tick as completed
+			return;
+
         let job = this.memoryObject.jobs[this.memoryObject.jobPointer];
 
 		subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS, 	 job.energyAt, 	 RESOURCE_ENERGY	]);
