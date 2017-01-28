@@ -67,7 +67,7 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 	        if(targets.length === 0)
 	        	target = targets[Math.floor(Math.random() * targets.length)];
 	        else
-	        	target = enemies[Math.floor(Math.random() * targets.length)];
+	        	target = towerRp.closestByRange(enemies);
 
 	        tower.attack(target);
 	    }
