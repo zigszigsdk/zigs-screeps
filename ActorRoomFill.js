@@ -26,6 +26,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			, roads: scoring.flower.road
 			, towers: scoring.flower.tower
 			, energyLocations: []
+			, subActorId: null
 			};
 
 	}
@@ -67,6 +68,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
 
 		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
+		this.memoryObject.subActorId = null;//oldMemory.subActorId;
 
 		for(let index in oldMemory.energyLocations)
 			this.addEnergyLocation(oldMemory.energyLocations[index]);
@@ -131,8 +133,15 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		let extensions = getId(spawn.room.find(FIND_STRUCTURES, FILTERS.EXTENSIONS));
 		let spawns = getId(spawn.room.find(FIND_STRUCTURES, FILTERS.SPAWNS));
 
-		let body = [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE];
-		this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP, (script)=>script.initiateActor("filler", {},
+		let energy = this.core.room(this.memoryObject.roomName).energyAvailable;
+
+		let body = new this.CreepBodyFactory()
+            .addPattern([CARRY, MOVE], 25)
+            .setSort([CARRY, MOVE])
+            .setMaxCost(energy)
+            .fabricate();
+
+		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP, (script)=>script.initiateActor("filler", {},
             [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,         [spawnId],   		body            ] //0
             , [CREEP_INSTRUCTION.PICKUP_AT_POS,               energyPoint,      RESOURCE_ENERGY ] //1
             , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  towers          ] //2
@@ -142,16 +151,20 @@ module.exports = class ActorRoomFill extends ActorWithMemory
             , [CREEP_INSTRUCTION.CALLBACK,                    this.actorId,     "fillerDied"    ] //6
             , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                 			  ] ] //7
         ));
+
+        this.memoryObject.subActorId = result.id;
 	}
 
 	fillerDied()
 	{
+		this.memoryObject.subActorId = null;
 		let parent = this.core.getActor(this.memoryObject.parentId);
 
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createFiller"
 			, priority: PRIORITY_NAMES.SPAWN.FILLER
+			, energyNeeded: 300
 			});
 	}
 
