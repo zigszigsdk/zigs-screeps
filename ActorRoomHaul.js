@@ -211,6 +211,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 				{ actorId: this.actorId
 				, functionName: "createHauler"
 				, priority: PRIORITY_NAMES.SPAWN.HAULER
+				, energyNeeded: CARRY_TO_LINK_RATIO * 100
 				});
 	}
 };
