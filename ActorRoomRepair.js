@@ -135,7 +135,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
         let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
         let body = new this.CreepBodyFactory()
-            .addPattern([MOVE, CARRY, WORK], 1)
+            .addPattern([MOVE, CARRY, WORK], 3)
             .setMaxCost(energy)
             .fabricate();
 
