@@ -225,16 +225,23 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     structs = pos.lookFor(LOOK_STRUCTURES);
 
                     let completed = false;
-                    structs.forEach((struct) =>
-                    {
-                        if(struct.structureType === STRUCTURE_ROAD)
-                            return;
+                    if(currentInstruction[2] !== STRUCTURE_ROAD && currentInstruction[2] !== STRUCTURE_RAMPART)
+                        structs.forEach((struct) =>
+                        {
+                            if(struct.structureType === STRUCTURE_ROAD || struct.structureType === STRUCTURE_RAMPART)
+                                return;
 
-                        if(struct.structureType !== currentInstruction[2])
-                            return struct.destroy();
+                            if(struct.structureType !== currentInstruction[2])
+                                return struct.destroy();
 
-                        completed = true;
-                    });
+                            completed = true;
+                        });
+                    else
+                        structs.forEach((struct) =>
+                        {
+                            if(struct.structureType === currentInstruction[2])
+                                completed = true;
+                        });
 
                     if(completed)
                         break;
