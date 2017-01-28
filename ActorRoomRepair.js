@@ -146,11 +146,12 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 	            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId], 		body 					] //0
 	            , [CREEP_INSTRUCTION.PICKUP_AT_POS, 		job.energyAt, 	RESOURCE_ENERGY			] //1
 	            , [CREEP_INSTRUCTION.FIX_AT, 				job.maintainAt, job.maintainType 		] //2
-	            , [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, 	job.maintainAt, job.maintainType,	1	] //3
-	            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId, 	"repairComplete"		] //4
-	            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		1										] //5
-	            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId, 	"fixerDied"				] //6
-	            , [CREEP_INSTRUCTION.DESTROY_SCRIPT												  ] ] //7
+	            , [CREEP_INSTRUCTION.GOTO_IF_DEAD,			7										] //3
+	            , [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, 	job.maintainAt, job.maintainType,	1	] //4
+	            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId, 	"repairComplete"		] //5
+	            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		1										] //6
+	            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId, 	"fixerDied"				] //7
+	            , [CREEP_INSTRUCTION.DESTROY_SCRIPT												  ] ] //8
         	)
         );
 
@@ -166,7 +167,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 
 		subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS, job.energyAt, RESOURCE_ENERGY ]);
 		subActor.replaceInstruction(2, [CREEP_INSTRUCTION.FIX_AT, job.maintainAt, job.maintainType ]);
-		subActor.replaceInstruction(3, [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, job.maintainAt, job.maintainType, 1 ]);
+		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, job.maintainAt, job.maintainType, 1 ]);
 		subActor.setPointer(2);
 	}
 
@@ -186,7 +187,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 
 		subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS, 	 job.energyAt, 	 RESOURCE_ENERGY	]);
 		subActor.replaceInstruction(2, [CREEP_INSTRUCTION.FIX_AT, 			 job.maintainAt, job.maintainType 	]);
-	    subActor.replaceInstruction(3, [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, job.maintainAt, job.maintainType, 1]);
+	    subActor.replaceInstruction(4, [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, job.maintainAt, job.maintainType, 1]);
 	    subActor.setPointer(2);
 	}
 
