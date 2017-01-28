@@ -26,6 +26,10 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
     removeActor()
     {
+        let creep = this.core.getCreep(this.memoryObject.creepName);
+        if(creep)
+            creep.suicide();
+
         this.core.unsubscribe("everyTick", this.actorId);
         super.removeActor();
     }
