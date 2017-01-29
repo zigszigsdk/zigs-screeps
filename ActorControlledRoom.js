@@ -43,11 +43,7 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 
 		resetActor()
 		{
-			let keys = Object.keys(this.memoryObject.subActorIds);
-			for(let index in keys)
-				this.core.removeActor(this.memoryObject.subActorIds[keys[index]]);
-
-			this.initiateActor(this.memoryObject.room.name);
+			this.core.logWarning("ActorControlledRoom cannot reset without sideeffects to other actors. Use hardReset if nessesary");
 		}
 
 		removeActor()

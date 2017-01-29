@@ -193,4 +193,9 @@ module.exports = class CoreInterface
 
 		return this.getRoomPosition([x, y, roomName]);
 	}
+
+	resetAllActors()
+	{
+		this.actors.resetAll();
+	}
 };

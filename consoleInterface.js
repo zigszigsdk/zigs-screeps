@@ -105,6 +105,11 @@ module.exports = class ConsoleInterface
         this.setCommand(4, actorId);
     }
 
+    resetAllActors()
+    {
+        this.setCommand(5, 0);
+    }
+
     setCommand(command, p1)
     {
         this.replaceMemory('{"consoleInterfaceHook":null}', '{"consoleInterfaceHook":' + command + ',"p1":' + p1 + '}');

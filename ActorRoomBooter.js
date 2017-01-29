@@ -17,6 +17,11 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
             , roomName: roomName};
     }
 
+    resetActor()
+    {
+        this.initiateActor(this.memoryObject.roomName);
+    }
+
     removeActor()
     {
         this.core.unsubscribe(EVENTS.EVERY_TICK_LATE, this.actorId);

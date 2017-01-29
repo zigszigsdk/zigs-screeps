@@ -32,6 +32,14 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 			parent.requestBuilding([STRUCTURE_TOWER], this.memoryObject.towerLocations[index], PRIORITY_NAMES.BUILD.TOWER);
 	}
 
+	resetActor()
+	{
+		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
+
+		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
+		this.lateInitiate();
+	}
+
 	removeActor()
 	{
 		this.core.unsubscribe("everyTick", this.actorId);

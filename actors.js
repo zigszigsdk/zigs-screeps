@@ -197,4 +197,12 @@ module.exports = class Actors
         if(actor !== null)
             actor.resetActor();
     }
+
+    resetAll()
+    {
+        let actorIds = Object.keys(this.memoryObject.scriptNameFromId);
+
+        for(let idIndex in actorIds)
+            this.resetActor(actorIds[idIndex]);
+    }
 };

@@ -24,6 +24,17 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
         this.onEveryTick(); //act or initiation tick
     }
 
+    resetActor()
+    {
+        let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
+
+        let creepNamePrefix = oldMemory.creepName.substring(0, oldMemory.creepName.length - (this.actorId + "").length);
+
+        this.initiateActor(creepNamePrefix, oldMemory.callbackStamp, oldMemory.instructions);
+
+        //don't copy over pointer. behaviour should start over from the top.
+    }
+
     removeActor()
     {
         let creep = this.core.getCreep(this.memoryObject.creepName);

@@ -10,16 +10,25 @@ module.exports = class ActorRoomOffense extends ActorWithMemory
 		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
 	}
 
-	initiateActor(parentId)
+	initiateActor(parentId, roomName)
 	{
 		this.memoryObject =
 			{ parentId: parentId
+			, roomName: roomName
 			};
 	}
 
 	lateInitiate()
 	{
 		this.requestCreep();
+	}
+
+	resetActor()
+	{
+		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
+		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
+
+		this.lateInitiate();
 	}
 
 	requestCreep()
