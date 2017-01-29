@@ -160,7 +160,7 @@ module.exports = class ActorRoomMine extends ActorWithMemory
     	if(callbackObj.role === MINER)
     		this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId = null;
     	else
-    		this.memoryObject.mines[callbackObj.sourceId].recoveryMiner = null;
+    		this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = null;
 
     	this.requestMinerFor(callbackObj.sourceId);
     }
