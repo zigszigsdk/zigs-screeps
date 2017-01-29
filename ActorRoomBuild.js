@@ -59,6 +59,8 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		for(let index in this.memoryObject.requests)
 		{
 			let request = this.memoryObject.requests[index];
+			if(request.priority === priority &&
+				request.pos[0] === at[0] && request.pos[1] === at[1] && request.pos[2] === at[2])
 				return;
 		}
 
