@@ -42,32 +42,33 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 
 	onEveryTick()
 	{
+        let room = this.core.room(this.memoryObject.roomName);
+
+        let enemies = room.find(FIND_HOSTILE_CREEPS);
+
+        if(enemies.length === 0)
+            return;
+
 		for(let index in this.memoryObject.towerLocations)
 		{
 			let towerPos = this.memoryObject.towerLocations[index];
 
-			let towerRp = this.core.getRoomPosition([towerPos[0], towerPos[1], this.memoryObject.roomName]);
+			let towerRp = this.core.getRoomPosition(towerPos);
 
 	        let structs = towerRp.lookFor(LOOK_STRUCTURES);
+
 	        if(structs.length === 0 || structs[0].structureType !== STRUCTURE_TOWER)
-	            return;
-
-	        let room = this.core.room(this.memoryObject.location[2]);
-
-	        let enemies = room.find(FIND_HOSTILE_CREEPS);
-
-	        if(enemies.length === 0)
-	            return;
-
-	        let targets = towerRp.findInRange(enemies, TOWER_MAX_DMG_RANGE);
+	            continue;
 
 	        let tower = structs[0];
 	        let target;
 
-	        if(targets.length === 0)
+	        let targets = towerRp.findInRange(enemies, TOWER_MAX_DMG_RANGE);
+
+	        if(targets.length !== 0)
 	        	target = targets[Math.floor(Math.random() * targets.length)];
 	        else
-	        	target = towerRp.closestByRange(enemies);
+	        	target = towerRp.findClosestByRange(enemies);
 
 	        tower.attack(target);
 	    }
