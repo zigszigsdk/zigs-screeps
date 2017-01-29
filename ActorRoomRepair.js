@@ -38,7 +38,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 			this.requestMaintain(oldMemory.maintainRequests[index].at, oldMemory.maintainRequests[index].type);
 
 		for(let index in oldMemory.energyLocations)
-			this.addEnergyLocation(oldMemory.maintainRequests[index]);
+			this.addEnergyLocation(oldMemory.energyLocations[index]);
 	}
 
 	requestMaintain(at, type)
