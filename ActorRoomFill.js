@@ -32,7 +32,6 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			, recoveryFillActorId: null
 			, regularFillActorId: null
 			};
-
 	}
 
 	lateInitiate()
@@ -51,7 +50,11 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			parent.requestBuilding([STRUCTURE_LINK], this.memoryObject.links[index], PRIORITY_NAMES.BUILD.FLOWER_LINK);
 
 		for(let index in this.memoryObject.containers)
+		{
 			parent.requestBuilding([STRUCTURE_CONTAINER], this.memoryObject.containers[index], PRIORITY_NAMES.BUILD.FLOWER_CONTAINER);
+			//there should be a road under the container since it's walkable
+			parent.requestBuilding([STRUCTURE_ROAD], this.memoryObject.containers[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
+		}
 
 		for(let index in this.memoryObject.storages)
 			parent.requestBuilding([STRUCTURE_STORAGE], this.memoryObject.storages[index], PRIORITY_NAMES.BUILD.STORAGE);
