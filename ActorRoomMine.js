@@ -74,8 +74,8 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 		let keys = Object.keys(oldMemory.mines);
 		for(let index in keys)
 		{
-			this.memoryObject.mines[keys[index]].regularFillActorId = oldMemory.mines[keys[index]].regularFillActorId;
-			this.memoryObject.mines[keys[index]].recoveryMinerActorId = oldMemory.mines[keys[index]].recoveryFillActorId;
+			this.memoryObject.mines[keys[index]].regularMinerActorId = oldMemory.mines[keys[index]].regularMinerActorId;
+			this.memoryObject.mines[keys[index]].recoveryMinerActorId = oldMemory.mines[keys[index]].recoveryMinerActorId;
 		}
 
 		this.lateInitiate();
@@ -96,7 +96,7 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 			, energyNeeded: 750
 			});
 
-		if(this.memoryObject.mines[mineKey].regularMinerActorId !== null)
+		if(this.memoryObject.mines[mineKey].recoveryMinerActorId !== null)
 			return;
 
 		parent.requestCreep(
