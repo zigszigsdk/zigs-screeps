@@ -235,9 +235,9 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 	findNearestEnergyPosition(buildPos)
 	{
-		let energyLocations = _.map(this.memoryObject.energyLocations, (pos)=>new RoomPosition(pos[0], pos[1], pos[2]));
+		let energyRps = _.map(this.memoryObject.energyLocations, (r)=>new RoomPosition(r.at[0], r.at[1], r.at[2]));
 		let buildRoomPos = new RoomPosition(buildPos[0], buildPos[1], buildPos[2]);
-		let closest = buildRoomPos.findClosestByPath(energyLocations, {ignoreCreeps: true, ignoreRoads: true});
+		let closest = buildRoomPos.findClosestByPath(energyRps, {ignoreCreeps: true, ignoreRoads: true});
 		return [closest.x, closest.y, closest.roomName];
 	}
 
