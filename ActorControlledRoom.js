@@ -13,14 +13,14 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 		{
 			let mapCalc = this.core.getService(SERVICE_NAMES.MAP_CALC);
 
-	        this.core.subscribe(EVENTS.EVERY_TICK, this.actorId, "onEveryTick");
-
 	        this.memoryObject =
 	            { room: mapCalc.parseRoomName(roomName)
 	            , creepRequests: []
 	            , controllerId: this.core.room(roomName).controller.id
 	            , subActorIds: {}
 	            };
+
+	        this.core.subscribe(EVENTS.EVERY_TICK, this.actorId, "onEveryTick");
 
 	        let subActorNames = [ ACTOR_NAMES.ROOM_REPAIR
 	        					, ACTOR_NAMES.ROOM_BUILD
