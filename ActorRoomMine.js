@@ -99,7 +99,7 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 			, functionName: "createMiner"
 			, priority: PRIORITY_NAMES.SPAWN.MINER
 			, callbackObj: { sourceId: this.memoryObject.mines[mineKey].sourceId }
-			, energyNeeded: 750
+			, energyNeeded: MAX_ENERGY_NEEDED
 			});
 
 		if(this.memoryObject.mines[mineKey].recoveryMinerActorId !== null)
@@ -122,7 +122,7 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 		let room = this.core.room(this.memoryObject.roomName);
         let energy = room.energyAvailable;
 
-        let role = room.energyAvailable === room.energyCapacityAvailable ? MINER : RECOVERY_MINER;
+        let role = energy === room.energyCapacityAvailable || energy >= MAX_ENERGY_NEEDED ? MINER : RECOVERY_MINER;
 
         if(role === RECOVERY_MINER && this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId !== null)
         	return;
