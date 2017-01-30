@@ -87,6 +87,8 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
     {
         let steps = 0;
 
+        let startingPointer = this.memoryObject.pointer;
+
         for(let stop = false; steps < maxSteps && !stop; steps++)
         {
             let currentInstruction = this.memoryObject.instructions[this.memoryObject.pointer];
@@ -575,9 +577,11 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
             if(this.memoryObject === null) //script was destroyed this iteration
                 break;
 
-
             if(stop === false)
                 this.memoryObject.pointer++;
+
+            if(this.memoryObject.pointer === startingPointer)
+                break; //script has gone for a full loop and shouldn't take any further action until next tick.
         }
 
         if(steps === maxSteps)
