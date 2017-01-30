@@ -3,6 +3,8 @@
 const bankDelimiter = "||";
 const kvpDelimiter = "|";
 
+const API_MEMORY_KEY = "apiMemory";
+
 module.exports = class MemoryBank
 {
     constructor(core)
@@ -29,14 +31,19 @@ module.exports = class MemoryBank
 
             banksKvp[kvp[0]] = kvp[1];
         });
+        let apiMemory = this.getMemory(API_MEMORY_KEY);
+        if(typeof apiMemory.creeps === UNDEFINED)
+            apiMemory.creeps = {};
 
         this.banksKvp = banksKvp;
-        RawMemory.set(JSON.stringify({creeps:{}}));
+        RawMemory.set(JSON.stringify(apiMemory));
     }
 
     unwindCore()
     {
         let rawMemory = "";
+
+        this.setMemory(API_MEMORY_KEY, JSON.parse(RawMemory.get()));
 
         for (let bankKey in this.banksKvp)
         {
@@ -57,7 +64,7 @@ module.exports = class MemoryBank
 
     getMemory(bankKey)
     {
-        if(typeof this.banksKvp !== 'undefined' && typeof this.banksKvp[bankKey] !== 'undefined')
+        if(typeof this.banksKvp !== UNDEFINED && typeof this.banksKvp[bankKey] !== UNDEFINED)
             return JSON.parse(this.banksKvp[bankKey]);
 
         return {};
@@ -65,7 +72,7 @@ module.exports = class MemoryBank
 
     setMemory(bankKey, value)
     {
-        if(bankKey === undefined || bankKey === null || bankKey === "")
+        if(typeof bankKey === UNDEFINED || bankKey === null || bankKey === "")
             return;
 
         this.banksKvp[bankKey] = JSON.stringify(value);
