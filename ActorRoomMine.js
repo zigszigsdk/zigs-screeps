@@ -2,6 +2,7 @@
 
 const MINER = "miner";
 const RECOVERY_MINER = "recoveryMiner";
+const MAX_ENERGY_NEEDED = 750;
 
 let ActorWithMemory = require('ActorWithMemory');
 
@@ -11,6 +12,7 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 	{
 		super(core);
 		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		this.ResourceRequest = core.getClass(CLASS_NAMES.RESOURCE_REQUEST);
 	}
 
 	initiateActor(parentId, roomName)
@@ -60,8 +62,12 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 									this.memoryObject.mines[keys[index]].miningSpot,
 									PRIORITY_NAMES.BUILD.DROP_MINING_CONTAINER);
 
-			parent.requestPickup(	this.memoryObject.mines[keys[index]].miningSpot,
-									RESOURCE_ENERGY);
+			parent.requestResource(
+				new this.ResourceRequest(this.memoryObject.mines[keys[index]].miningSpot, RESOURCE_ENERGY)
+					.setRate(10)
+					.setDesired(500)
+					.setMin(250)
+					.fabricate());
 		}
 	}
 

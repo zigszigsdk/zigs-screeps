@@ -26,6 +26,7 @@ module.exports = function()
 
 	global.CLASS_NAMES =
 		{ CREEP_BODY_FACTORY: "CreepBodyFactory"
+		, RESOURCE_REQUEST: "ResourceRequest"
 		};
 
 	global.EVENTS =
@@ -62,8 +63,24 @@ module.exports = function()
 		, EXTENSIONS: {filter: (x)=>x.structureType === STRUCTURE_EXTENSION}
 		, TOWERS: {filter: (x)=>x.structureType === STRUCTURE_TOWER}
 		, SPAWNS: {filter: (x)=>x.structureType === STRUCTURE_SPAWN}
+		, ANY_STORAGE: { filter: function(x)
+		{
+			switch(x.structureType)
+			{
+				case STRUCTURE_SPAWN:
+				case STRUCTURE_EXTENSION:
+				case STRUCTURE_LINK:
+				case STRUCTURE_STORAGE:
+				case STRUCTURE_TOWER:
+				case STRUCTURE_POWER_SPAWN:
+				case STRUCTURE_LAB:
+				case STRUCTURE_TERMINAL:
+				case STRUCTURE_CONTAINER:
+				case STRUCTURE_NUKER:
+					return true;
+				default:
+					return false;}}}
 		};
-
 	global.LEVEL_INDEX =
 		//  room level           0,   1,   2,   3,   4,   5,   6,   7,   8
 		{ MAX_EXTENSIONS:     [  0,   0,   5,  10,  20,  30,  40,  50,  60]
@@ -95,7 +112,9 @@ module.exports = function()
 			, STORAGE: "BUILD_STORAGE"
 			}
 		, RESOURCE:
-			{ UPGRADE: "RESOURCE_UPGRADE"
+			{ FILLER: "RESOURCE_FILLER"
+			, DEFAULT: "RESOURCE_DEFAULT"
+			, UPGRADE: "RESOURCE_UPGRADE"
 			}
 	};
 

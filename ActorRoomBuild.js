@@ -96,16 +96,22 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		this.update();
 	}
 
-	addEnergyLocation(at)
+	addEnergyLocation(energyRequest)
 	{
 		for(let index in this.memoryObject.energyLocations)
 		{
-			let location = this.memoryObject.energyLocations[index];
-			if(location[0] === at[0] && location[1] === at[1] && location[2] === at[2])
+			let existingRequest = this.memoryObject.energyLocations[index];
+
+			if(existingRequest.at[0] === energyRequest.at[0] &&
+				existingRequest.at[1] === energyRequest.at[1] &&
+				existingRequest.at[2] === energyRequest.at[2])
+			{
 				return;
+			}
 		}
 
-		this.memoryObject.energyLocations.push(at);
+		this.memoryObject.energyLocations.push(energyRequest);
+
 		this.update();
 	}
 

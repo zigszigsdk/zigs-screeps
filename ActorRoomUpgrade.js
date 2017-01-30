@@ -41,10 +41,14 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 								this.memoryObject.energyPos,
 								PRIORITY_NAMES.BUILD.UPGRADER_CONTAINER);
 
-		parent.requestResource(	this.memoryObject.energyPos,
-								RESOURCE_ENERGY,
-								PRIORITY_NAMES.RESOURCE.UPGRADE,
-								TARGET_RESOURCE_RESERVE);
+		parent.requestResource(
+			new this.ResourceRequest(this.memoryObject.energyPos, RESOURCE_ENERGY)
+					.setPriorityName(PRIORITY_NAMES.RESOURCE.UPGRADE)
+					.setRate(-15)
+					.setDesired(TARGET_RESOURCE_RESERVE)
+					.setMin(250)
+					.fabricate());
+
 		this.requestCreep();
 	}
 

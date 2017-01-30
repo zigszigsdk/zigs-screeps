@@ -70,34 +70,27 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 			roomBuild.requestBuilding(typeProgression, at, priority);
 		}
 
-		requestPickup(at, type)
+		requestResource(request)
 		{
 			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_HAUL])
-				.requestPickup(at, type);
+				.requestResource(request);
 
-			if(type === RESOURCE_ENERGY)
-				this.addEnergyLocation(at);
-		}
+			if(request.type === RESOURCE_ENERGY)
+			{
+				this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
+					.addEnergyLocation(request);
 
-		requestResource(at, type, priority, amount)
-		{
-			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_HAUL])
-				.requestResource(at, type, priority, amount);
+				this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD])
+					.addEnergyLocation(request);
 
-			if(type === RESOURCE_ENERGY)
-				this.addEnergyLocation(at);
+				this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
+					.addEnergyLocation(request);
+			}
 		}
 
 		addEnergyLocation(at)
 		{
-			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
-				.addEnergyLocation(at);
 
-			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD])
-				.addEnergyLocation(at);
-
-			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
-				.addEnergyLocation(at);
 		}
 
 		buildingCompleted(at, type)

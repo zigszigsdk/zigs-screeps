@@ -2,6 +2,7 @@
 
 const FILLER = "filler";
 const RECOVERY_FILLER = "recoveryFiller";
+const STORAGE_CAPACITY = 1000000;
 
 let ActorWithMemory = require('ActorWithMemory');
 
@@ -11,6 +12,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 	{
 		super(core);
 		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		this.ResourceRequest = core.getClass(CLASS_NAMES.RESOURCE_REQUEST);
 	}
 
 	initiateActor(parentId, roomName)
@@ -38,7 +40,6 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 	{
 		let parent = this.core.getActor(this.memoryObject.parentId);
 
-		this.requestFiller();
 
 		for(let index in this.memoryObject.extensions)
 			parent.requestBuilding([STRUCTURE_EXTENSION], this.memoryObject.extensions[index], PRIORITY_NAMES.BUILD.EXTENSION);
@@ -54,13 +55,35 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			parent.requestBuilding([STRUCTURE_CONTAINER], this.memoryObject.containers[index], PRIORITY_NAMES.BUILD.FLOWER_CONTAINER);
 			//there should be a road under the container since it's walkable
 			parent.requestBuilding([STRUCTURE_ROAD], this.memoryObject.containers[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
+
+			parent.requestResource(
+				new this.ResourceRequest(this.memoryObject.containers[index], RESOURCE_ENERGY)
+					.setPriorityName(PRIORITY_NAMES.RESOURCE.FILLER)
+					.setRate(-5)
+					.setDesired(1500)
+					.setMin(500)
+					.fabricate());
 		}
 
 		for(let index in this.memoryObject.storages)
+		{
+			/* not yet. handling of neutral storage facilities is required.
+
+			parent.requestResource(
+				new this.ResourceRequest(this.memoryObject.storages[index], RESOURCE_ENERGY)
+					.setPriorityName(PRIORITY_NAMES.RESOURCE.STORAGE)
+					.setDesired(0)
+					.setMin(0)
+					.setMax(STORAGE_CAPACITY)
+					.fabricate());*/
+
 			parent.requestBuilding([STRUCTURE_STORAGE], this.memoryObject.storages[index], PRIORITY_NAMES.BUILD.STORAGE);
+		}
 
 		for(let index in this.memoryObject.roads)
 			parent.requestBuilding([STRUCTURE_ROAD], this.memoryObject.roads[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
+
+		this.requestFiller();
 
 		//don't request towers. let ROOM_GUARD take care of that.
 	}
@@ -104,17 +127,24 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, spawns]);
 	}
 
-	addEnergyLocation(at)
+	addEnergyLocation(energyRequest)
 	{
+		if(energyRequest.rate <= 0)
+			return;
+
 		for(let index in this.memoryObject.energyLocations)
 		{
-			let location = this.memoryObject.energyLocations[index];
+			let existingRequest = this.memoryObject.energyLocations[index];
 
-			if(location[0] === at[0] && location[1] === at[1] && location[2] === at[2])
+			if(existingRequest.at[0] === energyRequest.at[0] &&
+				existingRequest.at[1] === energyRequest.at[1] &&
+				existingRequest.at[2] === energyRequest.at[2])
+			{
 				return;
+			}
 		}
 
-		this.memoryObject.energyLocations.push(at);
+		this.memoryObject.energyLocations.push(energyRequest);
 	}
 
 	requestFiller()
@@ -162,7 +192,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 		for(let index in this.memoryObject.energyLocations)
 		{
-			let candidate = this.memoryObject.energyLocations[index];
+			let candidate = this.memoryObject.energyLocations[index].at;
 			let score = - spawn.pos.findPathTo(candidate[0], candidate[1], candidate[2]).length;
 
 			if(score <= bestScore)
