@@ -74,9 +74,13 @@ module.exports = class CreepBodyFactory
 		let maxCost = this.data.maxCost;
 		let currentCost = 0;
 		let result = [];
+		let endPatterns = false;
 
 		this.data.patterns.forEach(function(patternObject)
 		{
+			if(endPatterns)
+				return;
+
 			for(let repeats = 0; repeats < patternObject.maxTimes; repeats++)
 			{
 				let addition = [];
@@ -87,7 +91,10 @@ module.exports = class CreepBodyFactory
 					let part = patternObject.pattern[index];
 					let price = bodypartPrice(part);
 					if(price + additionCost + currentCost > maxCost || result.length + addition.length >= MAX_BODYPARTS)
+					{
+						endPatterns = true;
 						return;
+					}
 
 					additionCost += price;
 					addition.push(part);
