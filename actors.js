@@ -62,7 +62,7 @@ module.exports = class Actors
         {
             this.core.startCpuLog("rewinding actor");
             let actor = this.localCache.outdatedActors[actorId];
-            actor.rewindActor(actorId);
+            actor.rewindActor(Number(actorId));
             this.localCache.actors[actorId] = actor;
             this.core.endCpuLog("rewinding actor");
             return actor;
@@ -108,7 +108,7 @@ module.exports = class Actors
 
         this.core.endCpuLog("instanciate actor script");
 
-        actor.rewindActor(actorId);
+        actor.rewindActor(Number(actorId));
 
         this.localCache.actors[actorId] = actor;
 
@@ -147,7 +147,7 @@ module.exports = class Actors
         this.memoryObject.scriptNameFromId[actorId] = scriptName;
         this.localCache.actors[actorId] = actor;
 
-        actor.rewindActor(actorId);
+        actor.rewindActor(Number(actorId));
 
         if(initFunc === null || initFunc === undefined)
             actor.initiateActor();
