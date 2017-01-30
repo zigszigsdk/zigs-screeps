@@ -125,7 +125,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                 case CREEP_INSTRUCTION.CALLBACK:
                     let callbackActor = this.core.actorFromId(currentInstruction[1]);
                     if(callbackActor && callbackActor[currentInstruction[2]])
-                        callbackActor[currentInstruction[2]](this.memoryObject.callbackStamp);
+                        callbackActor[currentInstruction[2]](this.memoryObject.callbackStamp, this.actorId);
                     else
                         this.core.logWarning("actorProcedualCreep: callback did not exist. ID: " +
                             currentInstruction[1] + " function: " + currentInstruction[2]);
