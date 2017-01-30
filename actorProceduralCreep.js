@@ -63,6 +63,11 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
         this.memoryObject.instructions[index] = instruction;
     }
 
+    replaceInstructions(instructions)
+    {
+        this.memoryObject.instructions = instructions;
+    }
+
     setPointer(val)
     {
         this.memoryObject.pointer = val;
