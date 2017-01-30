@@ -424,9 +424,18 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                             case STRUCTURE_TERMINAL:
                             case STRUCTURE_NUKER:
 
+                                switch(creep.transfer(structures[index], currentInstruction[2]))
+                                {
+                                    case ERR_NOT_IN_RANGE:
+                                        creep.moveTo(targetPos);
+                                        break;
+                                    case ERR_FULL:
+                                        stop = false;
+                                        break;
+                                    default:
+                                        break;
+                                }
                                 breakOut = true;
-                                if(creep.transfer(structures[index], currentInstruction[2]))
-                                    creep.moveTo(targetPos);
                                 break;
 
                             default:
