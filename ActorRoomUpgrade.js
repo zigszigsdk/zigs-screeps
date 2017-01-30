@@ -2,8 +2,8 @@
 
 let ActorWithMemory = require('ActorWithMemory');
 
-const TARGET_WORKPARTS = 15;
-const MAX_CREEPS = 3;
+const TARGET_WORKPARTS = 20;
+const MAX_CREEPS = 4;
 const TARGET_RESOURCE_RESERVE = 1500;
 
 module.exports = class ActorRoomUpgrade extends ActorWithMemory
@@ -12,6 +12,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 	{
 		super(core);
 		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		this.ResourceRequest = core.getClass(CLASS_NAMES.RESOURCE_REQUEST);
 	}
 
 	initiateActor(parentId, roomName)
@@ -80,10 +81,17 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		let energy = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
 
         let body = new this.CreepBodyFactory()
-            .addPattern([CARRY, WORK, MOVE], 1)
-            .addPattern([WORK], TARGET_WORKPARTS-1)
-            .addPattern([MOVE], TARGET_WORKPARTS-1)
-            .addPattern([CARRY], TARGET_WORKPARTS/2 -1)
+            .addPattern([CARRY, WORK, WORK, MOVE], 1)
+            .addPattern(Array(2).fill(WORK), 1)
+            .addPattern([MOVE], 3)
+            .addPattern(Array(1).fill(WORK), 1)
+            .addPattern([MOVE], 1)
+            .addPattern(Array(5).fill(WORK), 1)
+            .addPattern([MOVE], 5)
+            .addPattern([CARRY], 4)
+            .addPattern(Array(10).fill(WORK), 1)
+            .addPattern([MOVE], 10)
+            .addPattern([CARRY], 5)
             .setSort([MOVE, CARRY, WORK])
             .setMaxCost(energy)
             .fabricate();
