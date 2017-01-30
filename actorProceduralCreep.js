@@ -196,34 +196,65 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
                     creep = this.getCreep(creep);
 
-                    if(!creep || _.sum(creep.carry) === creep.carryCapacity)
+                    if(!creep)
                         break;
 
-                    stop = true;
+                    let carrySum = _.sum(creep.carry);
+
+                    if(carrySum === creep.carryCapacity)
+                        break;
+
                     let posList = currentInstruction[1];
                     pos = this.core.roomPosition(posList[0], posList[1], posList[2]);
 
-                    let energyList = pos.lookFor(currentInstruction[2]);
-                    let limit = 0;
 
+                    let limit = 0;
                     if(currentInstruction.length >= 4)
                         limit = currentInstruction[3];
 
-                    if(energyList.length !== 0 && energyList[0].amount >= limit)
-                    {
-                        if(creep.pickup(energyList[0]) === ERR_NOT_IN_RANGE)
-                            creep.moveTo(energyList[0]);
-
-                        break;
-                    }
-
+                    let resourceList = pos.lookFor(currentInstruction[2]);
                     let containers = pos.lookFor(LOOK_STRUCTURES, FILTERS.CONTAINERS);
 
-                    if(containers.length === 0 || containers[0].store[currentInstruction[2]] < limit)
-                        break;
+                    //if container
+                    //     take loose resource if any
+                    //     else take container content if it would still leave limit behind
+                    //else
+                    //    take loose resource if it would still leave limit behind.
 
-                    if(creep.withdraw(containers[0], currentInstruction[2]) === ERR_NOT_IN_RANGE)
-                        creep.moveTo(containers[0]);
+                    if(containers.length !== 0)
+                    {
+                        if(resourceList.length !== 0 && resourceList[0].amount + carrySum >= creep.carryCapacity)
+                        {
+                            if(creep.pickup(resourceList[0]) === ERR_NOT_IN_RANGE)
+                                creep.moveTo(resourceList[0]);
+
+                            stop = true;
+                        }
+                        else
+                        {
+                            let stored = containers[0].store[currentInstruction[2]];
+                            if(typeof stored === UNDEFINED)
+                                stored = 0;
+
+                            if(stored - (creep.carryCapacity - carrySum) >= limit)
+                            {
+                                if(creep.withdraw(containers[0], currentInstruction[2]) === ERR_NOT_IN_RANGE)
+                                    creep.moveTo(containers[0]);
+
+                                stop = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(resourceList.length !== 0 && resourceList[0].amount - (creep.carryCapacity - carrySum) >= limit)
+                        {
+                            if(creep.pickup(resourceList[0]) === ERR_NOT_IN_RANGE)
+                                creep.moveTo(resourceList[0]);
+
+                            stop = true;
+                        }
+                    }
 
                     break;
 
