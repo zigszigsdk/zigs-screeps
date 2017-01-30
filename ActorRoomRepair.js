@@ -144,7 +144,8 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
         let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
         let body = new this.CreepBodyFactory()
-            .addPattern([MOVE, CARRY, WORK], 3)
+            .addPattern([MOVE, CARRY, WORK], 5)
+            .addPattern([MOVE], 5)
             .setMaxCost(energy)
             .fabricate();
 
@@ -158,7 +159,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 	            , [CREEP_INSTRUCTION.GOTO_IF_DEAD,			7										] //3
 	            , [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, 	job.maintainAt, job.maintainType,	1	] //4
 	            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId, 	"repairComplete"		] //5
-	            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		1										] //6
+	            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		2										] //6
 	            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId, 	"fixerDied"				] //7
 	            , [CREEP_INSTRUCTION.DESTROY_SCRIPT												  ] ] //8
         	)
