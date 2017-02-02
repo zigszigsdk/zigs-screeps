@@ -10,10 +10,10 @@ module.exports = function()
 	global.IN_NOVICEAREA = true;
 
 	global.NOVICEAREA_BOX =
-		{ TOP: 	  {QUARD: NORTH, VALUE: 14}
-		, BOTTOM: {QUARD: NORTH, VALUE: 11}
-		, LEFT:   {QUARD: WEST,  VALUE: 74}
-		, RIGHT:  {QUARD: WEST,  VALUE: 71}
+		{ TOP: 	  {QUARD: SOUTH, VALUE: 86}
+		, BOTTOM: {QUARD: SOUTH, VALUE: 89}
+		, LEFT:   {QUARD: WEST,  VALUE: 24}
+		, RIGHT:  {QUARD: WEST,  VALUE: 21}
 		};
 
 	global.PRIORITIES =
