@@ -24,6 +24,12 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 			, subActorId: null
 			};
 
+		this.core.subscribe(EVENTS.ROOM_LEVEL_CHANGED + roomName, this.actorId, "onRoomLevelChange");
+	}
+
+	onRoomLevelChange()
+	{
+		this.update();
 	}
 
 	lateInitiate()

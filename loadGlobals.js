@@ -33,6 +33,7 @@ module.exports = function()
 		{ EVERY_TICK_EARLY: "everyTickEarly"
 		, EVERY_TICK: "everyTick"
 		, EVERY_TICK_LATE: "everyTickLate"
+		, ROOM_LEVEL_CHANGED: "roomLevelChanged"
 		};
 
 	global.NORTH = "N";
