@@ -43,7 +43,17 @@ module.exports = class MemoryBank
     {
         let rawMemory = "";
 
-        this.setMemory(API_MEMORY_KEY, JSON.parse(RawMemory.get()));
+        let apiMemory = RawMemory.get();
+
+        try //in case rawMemory memory isn't saved or stored correctly, don't lose permanent memory.
+        {
+            this.setMemory(API_MEMORY_KEY, JSON.parse(apiMemory));
+        }
+        catch(e)
+        {
+            this.setMemory(API_MEMORY_KEY, {});
+            this.core.logWarning("couldn't parse api memory: " + apiMemory);
+        }
 
         for (let bankKey in this.banksKvp)
         {
