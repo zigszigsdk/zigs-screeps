@@ -52,7 +52,7 @@ module.exports = class ActorRoomOffense extends ActorWithMemory
 
         let targetPos = Game.flags[targetKeys[0]].pos;
 
-        let energy = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
+        let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
         let body = new this.CreepBodyFactory()
             .addPattern([WORK, MOVE], 1)
