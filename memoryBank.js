@@ -1,7 +1,7 @@
 "use strict";
 
-const bankDelimiter = "||";
-const kvpDelimiter = "|";
+const bankDelimiter = "¤";
+const kvpDelimiter = "#";
 
 const API_MEMORY_KEY = "apiMemory";
 
