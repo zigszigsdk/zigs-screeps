@@ -52,16 +52,16 @@ module.exports = class ActorAdhocHauler extends ActorWithMemory
 
 		this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
         	(script)=>script.initiateActor("adhocHauler", {},
-        	    [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,   [spawnId],					body				] //0
-	            , [CREEP_INSTRUCTION.PICKUP_AT_POS,         this.memoryObject.fromPos,	RESOURCE_HYDROGEN	] //1
-	            , [CREEP_INSTRUCTION.DEPOSIT_AT,       		this.memoryObject.toPos,	RESOURCE_HYDROGEN	] //2
-	            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,       	1      											] //3
-	            , [CREEP_INSTRUCTION.CALLBACK,             	this.actorId,				"creepDied"      	] //4
-	            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                        				  ] ] //5
+        	    [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,   [spawnId],					body					] //0
+	            , [CREEP_INSTRUCTION.PICKUP_AT_POS,         this.memoryObject.fromPos,	this.memoryObject.type	] //1
+	            , [CREEP_INSTRUCTION.DEPOSIT_AT,       		this.memoryObject.toPos,	this.memoryObject.type	] //2
+	            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,       	1      												] //3
+	            , [CREEP_INSTRUCTION.CALLBACK,             	this.actorId,				"creepDied"      		] //4
+	            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                        					  ] ] //5
         ));
 	}
 
-	CreepDied(callbackObj)
+	creepDied(callbackObj)
 	{
 		this.removeActor();
 	}
