@@ -6,7 +6,7 @@ const MAX_ENERGY_NEEDED = 750;
 
 let ActorWithMemory = require('ActorWithMemory');
 
-module.exports = class ActorRoomMine extends ActorWithMemory
+module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 {
 	constructor(core)
 	{
@@ -19,28 +19,6 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 	{
 		let roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
 		let mines = roomScoring.getRoom(roomName).mines;
-
-		let room = this.core.getRoom(roomName);
-		let spawn = room.find(FIND_MY_SPAWNS)[0];
-
-		let keyOfNearest = null;
-		let bestScore = Number.NEGATIVE_INFINITY;
-
-		let keys = Object.keys(mines);
-		for(let index in keys)
-		{
-			mines[keys[index]].regularMinerActorId = null;
-			mines[keys[index]].recoveryMinerActorId = null;
-
-			let miningSpot = mines[keys[index]].miningSpot;
-			let score = spawn.pos.findPathTo(miningSpot[0], miningSpot[0], roomName).length;
-
-			if(score <= bestScore)
-				continue;
-
-			bestScore = score;
-			keyOfNearest = keys[index];
-		}
 
 		this.memoryObject =
 			{ parentId: parentId
@@ -60,14 +38,21 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 
 			parent.requestBuilding(	[STRUCTURE_CONTAINER],
 									this.memoryObject.mines[keys[index]].miningSpot,
-									PRIORITY_NAMES.BUILD.DROP_MINING_CONTAINER);
+									PRIORITY_NAMES.BUILD.ENERGY_MINING_CONTAINER);
 
-			parent.requestResource(
-				new this.ResourceRequest(this.memoryObject.mines[keys[index]].miningSpot, RESOURCE_ENERGY)
+			parent.requestBuilding(	[STRUCTURE_LINK],
+									this.memoryObject.mines[keys[index]].linkSpot,
+									PRIORITY_NAMES.BUILD.ENERGY_MINING_LINK);
+
+			let request = new this.ResourceRequest(this.memoryObject.mines[keys[index]].miningSpot, RESOURCE_ENERGY)
 					.setRate(10)
 					.setDesired(500)
 					.setMin(250)
-					.fabricate());
+					.setParking(this.memoryObject.mines[keys[index]].parkingSpot)
+					.fabricate();
+
+			parent.requestResource(request);
+			parent.registerEnergyLocation(request);
 		}
 	}
 
@@ -89,7 +74,7 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 
 	requestMinerFor(mineKey)
 	{
-		if(this.memoryObject.mines[mineKey].regularMinerActorId !== null)
+		if(!isNullOrUndefined(this.memoryObject.mines[mineKey].regularMinerActorId))
 			return;
 
 		let parent = this.core.getActor(this.memoryObject.parentId);
@@ -97,12 +82,12 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createMiner"
-			, priority: PRIORITY_NAMES.SPAWN.MINER
+			, priority: PRIORITY_NAMES.SPAWN.ENERGY_MINER
 			, callbackObj: { sourceId: this.memoryObject.mines[mineKey].sourceId }
 			, energyNeeded: MAX_ENERGY_NEEDED
 			});
 
-		if(this.memoryObject.mines[mineKey].recoveryMinerActorId !== null)
+		if(!isNullOrUndefined(this.memoryObject.mines[mineKey].recoveryMinerActorId))
 			return;
 
 		parent.requestCreep(
@@ -116,15 +101,15 @@ module.exports = class ActorRoomMine extends ActorWithMemory
 
 	createMiner(spawnId, callbackObj)
     {
-		if(this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId !== null)
+		if(!isNullOrUndefined(this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId))
 			return;
 
-		let room = this.core.room(this.memoryObject.roomName);
+		let room = this.core.getRoom(this.memoryObject.roomName);
         let energy = room.energyAvailable;
 
         let role = energy === room.energyCapacityAvailable || energy >= MAX_ENERGY_NEEDED ? MINER : RECOVERY_MINER;
 
-        if(role === RECOVERY_MINER && this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId !== null)
+        if(role === RECOVERY_MINER && !isNullOrUndefined(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId))
         	return;
 
         let body;
