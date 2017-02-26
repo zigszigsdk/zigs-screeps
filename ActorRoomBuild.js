@@ -2,7 +2,7 @@
 
 let ActorWithMemory = require('ActorWithMemory');
 
-let ENERGY_LIMIT = 1000;
+let ENERGY_LIMIT = 250;
 
 module.exports = class ActorRoomBuild extends ActorWithMemory
 {
