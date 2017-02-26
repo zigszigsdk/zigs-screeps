@@ -110,9 +110,22 @@ module.exports = class ConsoleInterface
         this.setCommand(5, 0);
     }
 
+    resetService(serviceName)
+    {
+        this.setCommand(7, serviceName);
+    }
+
+    manipulateCore(manipulationFunctionString)
+    {
+        this.setCommand(6, manipulationFunctionString);
+    }
+
     setCommand(command, p1)
     {
-        this.replaceMemory('{"consoleInterfaceHook":null}', '{"consoleInterfaceHook":' + command + ',"p1":' + p1 + '}');
+        this.replaceMemory('{"consoleInterfaceHook":null}', JSON.stringify(
+            { consoleInterfaceHook: command
+            , p1: p1
+            }));
     }
 
     clearFlags()

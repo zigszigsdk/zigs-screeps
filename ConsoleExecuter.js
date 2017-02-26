@@ -36,6 +36,21 @@ module.exports = class ConsoleExecuter
             case 5:
                 this.core.resetAllActors();
                 break;
+            case 6:
+                try
+                {
+                    console.log( ( eval(this.memoryObject.p1) )(this.core) );
+                    //allows console user to execute arbritrary commands DURING a cycle rather than at the end of it.
+                }
+                catch(e)
+                {
+                    console.log("failed " + e);
+                    this.core.logError("could not run consoleExecuter command\n" + this.memoryObject.p1, e);
+                }
+                break;
+            case 7:
+                this.core.resetService(this.memoryObject.p1);
+                break;
             default:
                 break;
         }
