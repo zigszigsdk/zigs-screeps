@@ -52,126 +52,115 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		{
 			let existingRequest = this.memoryObject.resourceRequests[index];
 
-			if(	existingRequest.type === newRequest.type &&
-				existingRequest.at[0] === newRequest.at[0] &&
-				existingRequest.at[1] === newRequest.at[1] &&
-				existingRequest.at[2] === newRequest.at[2])
-				return;
+			if(	existingRequest.type !== newRequest.type ||
+				existingRequest.at[0] !== newRequest.at[0] ||
+				existingRequest.at[1] !== newRequest.at[1] ||
+				existingRequest.at[2] !== newRequest.at[2])
+				continue;
+
+			this.memoryObject.resourceRequests[index] = newRequest;
+			this.update();
+
+			return;
 		}
+
 		this.memoryObject.resourceRequests.push(newRequest);
 		this.update();
 	}
 
+	removeRequestsAt(at)
+	{
+		let update = false;
+
+		for(let index = this.memoryObject.resourceRequests.length-1; index >= 0; index--)
+		{
+			let existingRequest = this.memoryObject.resourceRequests[index];
+
+			if(existingRequest.at[0] !== at[0] ||
+				existingRequest.at[1] !== at[1] ||
+				existingRequest.at[2] !== at[2])
+				continue;
+
+			this.memoryObject.resourceRequests.splice(index, 1);
+			update = true;
+		}
+
+		if(update)
+			this.update();
+	}
+
 	update()
 	{
-		this.saveSubActors();
+		for(let routeIndex in this.memoryObject.routes)
+			for(let subActorIndex in this.memoryObject.routes[routeIndex].subActorIds)
+				this.core.removeActor(this.memoryObject.routes[routeIndex].subActorIds[subActorIndex]);
+
 		this.recalculateRoutes();
-		this.redistributeSubActors();
+
+		for(let routeIndex in this.memoryObject.routes)
+			this.requestSpawn(routeIndex);
+
 	}
 
 	recalculateRoutes()
 	{
 		this.memoryObject.routes = [];
+		let inputRequests = {};
+		let outputRequests = {};
 
-		let inputRequests = [];
-		let outputRequests = [];
+		for(let index in RESOURCES_ALL)
+		{
+			inputRequests[RESOURCES_ALL[index]] = [];
+			outputRequests[RESOURCES_ALL[index]] = [];
+		}
 
 		for(let requestIndex in this.memoryObject.resourceRequests)
 		{
 			let resourceRequest = this.memoryObject.resourceRequests[requestIndex];
 			if(resourceRequest.rate > 0)
-				inputRequests.push(resourceRequest);
+				inputRequests[resourceRequest.type].push(resourceRequest);
 			else
-				outputRequests.push(resourceRequest);
+				outputRequests[resourceRequest.type].push(resourceRequest);
 		}
-
-		if(inputRequests.length === 0 || outputRequests.length === 0)
-			return;
 
 		let descendingByPriority = (a, b) => PRIORITIES[b.priorityName] - PRIORITIES[a.priorityName];
-		inputRequests.sort(descendingByPriority);
-		outputRequests.sort(descendingByPriority);
 
-		for(let inputIndex in inputRequests)
+		let routeIndex = 0;
+		for(let resourceIndex in RESOURCES_ALL)
 		{
-			let inputRequest = inputRequests[inputIndex];
-			let dropPoints = [];
+			inputRequests[RESOURCES_ALL[resourceIndex]].sort(descendingByPriority);
+			outputRequests[RESOURCES_ALL[resourceIndex]].sort(descendingByPriority);
 
-			for(let outputIndex in outputRequests)
-				dropPoints.push(
-					{ at: outputRequests[outputIndex].at
-					, desired: outputRequests[outputIndex].desired
-					, max: outputRequests[outputIndex].max
+			for(let inputIndex in inputRequests[RESOURCES_ALL[resourceIndex]])
+			{
+				let inputRequest = inputRequests[RESOURCES_ALL[resourceIndex]][inputIndex];
+				let dropPoints = [];
+
+				for(let outputIndex in outputRequests[RESOURCES_ALL[resourceIndex]])
+					dropPoints.push(
+						{ at: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at
+						, desired: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].desired
+						, max: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].max
+						});
+
+				let fillPoints = [{at: inputRequest.at, min: inputRequest.min, parking: inputRequest.parking}];
+
+				this.memoryObject.routes.push(
+					{ routeIndex: routeIndex++
+					, type: inputRequests[RESOURCES_ALL[resourceIndex]][inputIndex].type
+					, fillPoints: fillPoints
+					, dropPoints: dropPoints
+					, subActorIds: []
+					, carryParts: 0
 					});
-
-			let fillPoints = [{at: inputRequest.at, min: inputRequest.min}];
-
-			this.memoryObject.routes.push(
-				{ routeIndex: inputIndex
-				, type: inputRequests[inputIndex].type
-				, fillPoints: fillPoints
-				, dropPoints: dropPoints
-				, subActorIds: []
-				, carryParts: 0
-				});
+			}
 		}
-	}
-
-	saveSubActors()
-	{
-		this.detatchedSubActorIds = [];
-		for(let routeIndex in this.memoryObject.routes)
-			for(let subActorIndex in this.memoryObject.routes[routeIndex].subActorIds)
-				this.detatchedSubActorIds.push(this.memoryObject.routes[routeIndex].subActorIds[subActorIndex]);
-	}
-
-	redistributeSubActors()
-	{
-		let routeIndex;
-		for(routeIndex in this.memoryObject.routes)
-			if(this.detatchedSubActorIds.length > routeIndex)
-				this.reuseSubActor(this.detatchedSubActorIds[routeIndex], routeIndex);
-			else
-				this.requestSpawn(routeIndex);
-
-		for(let subActorIndex = routeIndex; subActorIndex < this.detatchedSubActorIds.length; subActorIndex++)
-			this.core.removeActor(this.detatchedSubActorIds[subActorIndex]);
-	}
-
-	reuseSubActor(subActorId, routeIndex)
-	{
-		let route = this.memoryObject.routes[routeIndex];
-		let subActor = this.core.getActor(subActorId);
-		let oldCallbackObj = subActor.getCallbackObj();
-
-		let dropPoint = this.getDropPoint(route);
-		let carryParts = this.getCarryParts(oldCallbackObj.body);
-		let instructions = this.getInstructions(
-			route.fillPoints[0],
-			dropPoint,
-			route.type,
-			oldCallbackObj.spawnId,
-			oldCallbackObj.body);
-
-		subActor.replaceInstructions(instructions);
-		subActor.setCallbackObj(
-			{ routeIndex: routeIndex
-			, fillPoint: route.fillPoints[0]
-			, dropPoint: dropPoint
-			, type: route.type
-			, spawnId: oldCallbackObj.spawnId
-			, body: oldCallbackObj.body
-			});
-
-		this.memoryObject.routes[routeIndex].subActorIds.push(subActorId);
-		this.memoryObject.routes[routeIndex].carryParts += carryParts;
-
-		this.requestSpawn(routeIndex);
 	}
 
 	createHauler(spawnId, callbackObj)
 	{
-		if(this.memoryObject.routes[callbackObj.routeIndex].subActorIds.length >= MAX_SUBACTORS_PER_ROUTE ||
+		if(isUndefinedOrNull(this.memoryObject.routes[callbackObj.routeIndex]) ||
+			this.memoryObject.routes[callbackObj.routeIndex].subActorIds.length >= MAX_SUBACTORS_PER_ROUTE ||
 			this.memoryObject.routes[callbackObj.routeIndex].carryParts >= TARGET_CARRY_PARTS)
 			return;
 
@@ -258,17 +247,21 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		return dropPoint;
 	}
 
-
 	getInstructions(from, to, type, spawnId, body)
 	{
-		return [  [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId],		body 					] //0
-            	, [CREEP_INSTRUCTION.PICKUP_AT_POS, 		from.at,		type,			from.min] //1
-            	, [CREEP_INSTRUCTION.DEPOSIT_AT, 			to.at,			type,			to.max	] //2
-				, [CREEP_INSTRUCTION.GOTO_IF_DEAD, 			6 										] //3
-            	, [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,	"haulCompleted"			] //4
-            	, [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		1 										] //5
-            	, [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,	"haulerDied" 			] //6
-            	, [CREEP_INSTRUCTION.DESTROY_SCRIPT 									  		  ] ];//7
+		return [  [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId],		body 					] //00
+				, [CREEP_INSTRUCTION.MOVE_TO_POSITION,		from.parking							] //01
+            	, [CREEP_INSTRUCTION.PICKUP_AT_POS, 		from.at,		type,			from.min] //02
+				, [CREEP_INSTRUCTION.GOTO_IF_TTL_LESS,		9,				175						] //03
+            	, [CREEP_INSTRUCTION.DEPOSIT_AT, 			to.at,			type,			to.max	] //04
+				, [CREEP_INSTRUCTION.GOTO_IF_DEAD, 			10 										] //05
+            	, [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,	"haulCompleted"			] //06
+            	, [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		1 										] //07
+            	, [CREEP_INSTRUCTION.GOTO, 					10										] //08
+
+            	, [CREEP_INSTRUCTION.DEPOSIT_AT,			from.at,		type 					] //09
+            	, [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,	"haulerDied" 			] //10
+            	, [CREEP_INSTRUCTION.DESTROY_SCRIPT 									  		  ] ];//11
 	}
 
 	haulCompleted(callbackObj, subActorId)
@@ -302,7 +295,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 	{
 		let maxRepeats = TARGET_CARRY_PARTS - this.memoryObject.routes[routeIndex].carryParts;
 
-		let energy = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
+		let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
 		return new this.CreepBodyFactory()
             .addPattern([CARRY, MOVE], maxRepeats)
