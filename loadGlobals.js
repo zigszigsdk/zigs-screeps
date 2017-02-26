@@ -57,6 +57,19 @@ module.exports = function()
 	global.BOOLEAN = 'boolean';
 	global.SYMBOL = 'symbol';
 
+	global.isUndefined = (x) => typeof x === UNDEFINED;
+	global.isNull = (x) => x === null;
+	global.isUndefinedOrNull = (x) => x === null || typeof x === UNDEFINED;
+	global.isNullOrUndefined = (x) => x === null || typeof x === UNDEFINED;
+	global.isString = (x) => typeof x === STRING;
+	global.isBoolean = (x) => typeof x === BOOLEAN;
+	global.isNumber = (x) => typeof x === NUMBER;
+	global.isSymbol = (x) => typeof x === SYMBOL;
+	global.isFunction = (x) => typeof x === FUNCTION;
+	global.isObject = (x) => x !== null && typeof x === OBJECT && typeof x.length === UNDEFINED;
+	global.isObjectOrArray = (x) => x !== null && typeof x === OBJECT;
+	global.isArray = (x) => x !== null && typeof x === OBJECT && typeof x.length !== UNDEFINED;
+
 	global.FIRST_OF_ROOM = 0;
 	global.FIRST_INSIDE_ROOM = 1;
 	global.LAST_INSIDE_ROOM = 48;
