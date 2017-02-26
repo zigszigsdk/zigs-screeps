@@ -29,6 +29,7 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 	        					, ACTOR_NAMES.ROOM_UPGRADE
 	        					, ACTOR_NAMES.ROOM_MINE_ENERGY
 	        					, ACTOR_NAMES.ROOM_MINE_MINERAL
+	        					, ACTOR_NAMES.ROOM_STORAGE_KEEPER
 	        					, ACTOR_NAMES.ROOM_GUARD
 	        					, ACTOR_NAMES.ROOM_OFFENSE
 	        					, ACTOR_NAMES.ROOM_EXPLORE
