@@ -27,6 +27,7 @@ module.exports = function()
 		, ROOM_SCORING: "ActorRoomScoring"
 		, ROOM_BOOTER: "ActorRoomBooter"
 		, ROOM_EXPLORE: "ActorRoomExplore"
+		, ROOM_STORAGE_KEEPER: "ActorRoomStorageKeeper"
 		, STRUCTURE_EVENTS: "ActorStructureEvents"
 		, TICK_EXPANDER: "ActorTickExpander"
 		};
@@ -124,6 +125,7 @@ module.exports = function()
 			, FIXER: "SPAWN_FIXER"
 			, OFFENSE: "SPAWN_OFFENSE"
 			, EXPLORER: "SPAWN_EXPLORER"
+			, STORAGE_KEEPER: "SPAWN_STORAGE_KEEPER"
 			}
 		, BUILD:
 			{ EXTENSION_FIRST_FIVE: "BUILD_EXTENSION_FIRST_FIVE"
