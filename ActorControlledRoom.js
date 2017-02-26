@@ -16,7 +16,7 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 	        this.memoryObject =
 	            { room: mapCalc.parseRoomName(roomName)
 	            , creepRequests: []
-	            , controllerId: this.core.room(roomName).controller.id
+	            , controllerId: this.core.getRoom(roomName).controller.id
 	            , subActorIds: {}
 	            };
 
@@ -30,6 +30,7 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 	        					, ACTOR_NAMES.ROOM_MINE
 	        					, ACTOR_NAMES.ROOM_GUARD
 	        					, ACTOR_NAMES.ROOM_OFFENSE
+	        					, ACTOR_NAMES.ROOM_EXPLORE
 	        					];
 
 	        for(let index in subActorNames)
@@ -116,7 +117,7 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 
 		onEveryTick()
 		{
-			let room = this.core.room(this.memoryObject.room.name);
+			let room = this.core.getRoom(this.memoryObject.room.name);
 
 			let spawns = room.find(FIND_MY_SPAWNS);
 			let spawn;
