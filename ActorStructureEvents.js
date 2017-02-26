@@ -29,7 +29,7 @@ module.exports = class ActorStructureEvents extends ActorWithMemory
         let newStructureIds = Object.keys(Game.structures);
         for(let idIndex in newStructureIds)
         {
-            let newStructureId = newStructureId[idIndex];
+            let newStructureId = newStructureIds[idIndex];
 
             if(this.memoryObject.structures[newStructureId])
                 continue;

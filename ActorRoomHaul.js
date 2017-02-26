@@ -44,6 +44,9 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 		for(let index in oldMemory.resourceRequests)
 			this.requestResource(oldMemory.resourceRequests[index]);
+
+		this.core.subscribe(EVENTS.STRUCTURE_DESTROYED, this.actorId, "structureDestroyed");
+		this.core.subscribe(EVENTS.STRUCTURE_BUILD, this.actorId, "structureBuild");
 	}
 
 	requestResource(newRequest)
@@ -101,6 +104,8 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			this.requestSpawn(routeIndex);
 
 	}
+	structureDestroyed() { this.update(); }
+	structureBuild() { this.update(); }
 
 	recalculateRoutes()
 	{
@@ -135,19 +140,42 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			{
 				let inputRequest = inputRequests[RESOURCES_ALL[resourceIndex]][inputIndex];
 				let dropPoints = [];
+				let resourceType = inputRequests[RESOURCES_ALL[resourceIndex]][inputIndex].type;
 
-				for(let outputIndex in outputRequests[RESOURCES_ALL[resourceIndex]])
-					dropPoints.push(
-						{ at: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at
-						, desired: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].desired
-						, max: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].max
-						});
+				if(resourceType === RESOURCE_ENERGY)
+					for(let outputIndex in outputRequests[RESOURCES_ALL[resourceIndex]])
+					{
+						dropPoints.push(
+							{ at: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at
+							, desired: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].desired
+							, max: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].max
+							});
+					}
+				else
+					for(let outputIndex in outputRequests[RESOURCES_ALL[resourceIndex]])
+					{
+						let rp = this.core.getRoomPosition(outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at);
+						let acceptedStructs = _.filter(rp.lookFor(LOOK_STRUCTURES),
+							(struct) =>	struct.structureType === STRUCTURE_CONTAINER ||
+										struct.structureType === STRUCTURE_STORAGE ||
+										struct.structureType === STRUCTURE_TERMINAL);
+
+						if(acceptedStructs.length !== 0)
+							dropPoints.push(
+								{ at: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at
+								, desired: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].desired
+								, max: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].max
+								});
+					}
+
+				if(dropPoints.length === 0)
+					continue;
 
 				let fillPoints = [{at: inputRequest.at, min: inputRequest.min, parking: inputRequest.parking}];
 
 				this.memoryObject.routes.push(
 					{ routeIndex: routeIndex++
-					, type: inputRequests[RESOURCES_ALL[resourceIndex]][inputIndex].type
+					, type: resourceType
 					, fillPoints: fillPoints
 					, dropPoints: dropPoints
 					, subActorIds: []
@@ -267,7 +295,12 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 	haulCompleted(callbackObj, subActorId)
 	{
 		let route = this.memoryObject.routes[callbackObj.routeIndex];
+
+		if(route === null) //the routes have been changed and the hauler is no longer needed
+			return this.core.removeActor(subActorId);
+
 		let dropPoint = this.getDropPoint(route);
+
 		let instructions = this.getInstructions(
 			route.fillPoints[0],
 			dropPoint,
