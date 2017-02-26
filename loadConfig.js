@@ -7,13 +7,13 @@ module.exports = function()
 
 	global.REQUIRED_BUCKET_FOR_LATE_TICK = 1000;
 
-	global.IN_NOVICEAREA = true;
+	global.IN_NOVICEAREA = false;
 
 	global.NOVICEAREA_BOX =
-		{ TOP: 	  {QUARD: SOUTH, VALUE: 86}
-		, BOTTOM: {QUARD: SOUTH, VALUE: 89}
-		, LEFT:   {QUARD: WEST,  VALUE: 24}
-		, RIGHT:  {QUARD: WEST,  VALUE: 21}
+		{ top: 	  {half: SOUTH, distance: 86}
+		, bottom: {half: SOUTH, distance: 89}
+		, left:   {half: WEST,  distance: 24}
+		, right:  {half: WEST,  distance: 21}
 		};
 
 	global.PRIORITIES =
