@@ -1,6 +1,6 @@
 "use strict";
 
-module.exports = class CoreInterface
+module.exports = class CoreFacade
 {
 	constructor()
 	{
@@ -153,6 +153,16 @@ module.exports = class CoreInterface
 	getService(serviceName, callerObj)
 	{
 		return this.locator.getService(serviceName, callerObj);
+	}
+
+	resetService(serviceName)
+	{
+		this.locator.resetService(serviceName);
+	}
+
+	resetAllServices()
+	{
+		this.locator.resetAllServices();
 	}
 
 	getSpawn(name)

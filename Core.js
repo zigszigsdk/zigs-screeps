@@ -15,8 +15,8 @@ module.exports = class Core
 
         this.recycleCount = 0;
 
-        let CoreInterface = require('CoreInterface');
-        let coreInterface = new CoreInterface();
+        let CoreFacade = require('CoreFacade');
+        let coreFacade = new CoreFacade();
 
 
         let Logger = require('Logger');
@@ -32,47 +32,47 @@ module.exports = class Core
         if(DEBUG)
         {
             DebugWrapperCore = require("DebugWrapperCore");
-            this.logger = new DebugWrapperCore(Logger, coreInterface);
-            coreInterface.setLogger(this.logger);
+            this.logger = new DebugWrapperCore(Logger, coreFacade);
+            coreFacade.setLogger(this.logger);
 
-            this.eventQueue = new DebugWrapperCore(EventQueue, coreInterface);
-            coreInterface.setEventQueue(this.eventQueue);
+            this.eventQueue = new DebugWrapperCore(EventQueue, coreFacade);
+            coreFacade.setEventQueue(this.eventQueue);
 
-            this.subscriptions = new DebugWrapperCore(Subscriptions, coreInterface);
-            coreInterface.setSubscriptions(this.subscriptions);
+            this.subscriptions = new DebugWrapperCore(Subscriptions, coreFacade);
+            coreFacade.setSubscriptions(this.subscriptions);
 
-            this.memoryBank = new DebugWrapperCore(MemoryBank, coreInterface);
-            coreInterface.setMemoryBank(this.memoryBank);
+            this.memoryBank = new DebugWrapperCore(MemoryBank, coreFacade);
+            coreFacade.setMemoryBank(this.memoryBank);
 
-            this.actors = new DebugWrapperCore(Actors, coreInterface);
-            coreInterface.setActors(this.actors);
+            this.actors = new DebugWrapperCore(Actors, coreFacade);
+            coreFacade.setActors(this.actors);
 
-            this.locator = new DebugWrapperCore(Locator, coreInterface);
-            coreInterface.setLocator(this.locator);
+            this.locator = new DebugWrapperCore(Locator, coreFacade);
+            coreFacade.setLocator(this.locator);
         }
         else
         {
-            this.logger = new Logger(coreInterface);
-            coreInterface.setLogger(this.logger);
+            this.logger = new Logger(coreFacade);
+            coreFacade.setLogger(this.logger);
 
-            this.eventQueue = new EventQueue(coreInterface);
-            coreInterface.setEventQueue(this.eventQueue);
+            this.eventQueue = new EventQueue(coreFacade);
+            coreFacade.setEventQueue(this.eventQueue);
 
-            this.subscriptions = new Subscriptions(coreInterface);
-            coreInterface.setSubscriptions(this.subscriptions);
+            this.subscriptions = new Subscriptions(coreFacade);
+            coreFacade.setSubscriptions(this.subscriptions);
 
-            this.memoryBank = new MemoryBank(coreInterface);
-            coreInterface.setMemoryBank(this.memoryBank);
+            this.memoryBank = new MemoryBank(coreFacade);
+            coreFacade.setMemoryBank(this.memoryBank);
 
-            this.actors = new Actors(coreInterface);
-            coreInterface.setActors(this.actors);
+            this.actors = new Actors(coreFacade);
+            coreFacade.setActors(this.actors);
 
-            this.locator = new Locator(coreInterface);
-            coreInterface.setLocator(this.locator);
+            this.locator = new Locator(coreFacade);
+            coreFacade.setLocator(this.locator);
         }
 
-        this.resetter = new Resetter(coreInterface);
-        this.consoleExecuter = new ConsoleExecuter(coreInterface);
+        this.resetter = new Resetter(coreFacade);
+        this.consoleExecuter = new ConsoleExecuter(coreFacade);
 	}
 
 	boot()
@@ -88,6 +88,7 @@ module.exports = class Core
 
         this.memoryBank.rewindCore();
         this.logger.rewindCore();
+        this.locator.rewindCore();
         this.subscriptions.rewindCore();
         this.eventQueue.rewindCore();
         this.actors.rewindCore();
