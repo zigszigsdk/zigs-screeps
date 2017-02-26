@@ -14,7 +14,8 @@ module.exports = class Resetter
 
         this.core.resetAllServices();
 
-        this.core.createActor("ActorTickExpander");
+        this.core.createActor(ACTOR_NAMES.TICK_EXPANDER);
+        this.core.createActor(ACTOR_NAMES.STRUCTURE_EVENTS);
 
         for(let roomName in Game.rooms)
         {

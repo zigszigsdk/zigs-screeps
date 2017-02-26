@@ -22,6 +22,9 @@ module.exports = function()
 		, CONTROLLED_ROOM: "ActorControlledRoom"
 		, ROOM_SCORING: "ActorRoomScoring"
 		, ROOM_BOOTER: "ActorRoomBooter"
+		, ROOM_EXPLORE: "ActorRoomExplore"
+		, STRUCTURE_EVENTS: "ActorStructureEvents"
+		, TICK_EXPANDER: "ActorTickExpander"
 		};
 
 	global.CLASS_NAMES =

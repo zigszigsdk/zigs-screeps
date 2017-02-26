@@ -250,6 +250,32 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		for(let requestIndex in this.memoryObject.requests)
 		{
 			let request = this.memoryObject.requests[requestIndex];
+			request.completeness = -1;
+
+			let roomPosition = this.core.getRoomPosition(request.pos);
+			let structs = roomPosition.lookFor(LOOK_STRUCTURES);
+
+			for(let progressionIndex = request.typeProgression.length-1; progressionIndex >= 0; progressionIndex--)
+			{
+				let found = false;
+
+				for(let structIndex = 0; structIndex < structs.length; structIndex++)
+					if(structs[structIndex].structureType === request.typeProgression[progressionIndex])
+					{
+						found = true;
+						break;
+					}
+
+				if(!found)
+					continue;
+
+				request.completeness = progressionIndex;
+				break;
+			}
+
+
+			this.memoryObject.requests[requestIndex] = request;
+
 			if(request.completeness + 1 >= request.typeProgression.length)
 				continue;
 
@@ -299,8 +325,8 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
         }
 
 		let body = new this.CreepBodyFactory()
-            .addPattern([WORK, CARRY, MOVE, MOVE], 12)
-            .setMaxCost(this.core.room(this.memoryObject.roomName).energyCapacityAvailable)
+            .addPattern([WORK, CARRY, MOVE, MOVE], 5)
+            .setMaxCost(this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable)
             .fabricate();
 
 
@@ -337,8 +363,24 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 	buildCompleted(callbackObj)
 	{
 		let parent = this.core.getActor(this.memoryObject.parentId);
-		parent.buildingCompleted(callbackObj.at, callbackObj.type);
 
+		let structs = this.core.getRoomPosition(callbackObj.at).lookFor(LOOK_STRUCTURES);
+		for(let index in structs)
+		{
+			if(structs[index].structureType !== callbackObj.type)
+				continue;
+
+			parent.buildingCompleted(callbackObj.at, callbackObj.type);
+			this.core.subscribe(EVENTS.STRUCTURE_DESTROYED + structs[index].id, this.actorId, "onStructureDestroyed");
+			break;
+		}
+
+
+		this.update();
+	}
+
+	onStructureDestroyed()
+	{
 		this.update();
 	}
 };
