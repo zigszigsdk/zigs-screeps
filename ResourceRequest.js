@@ -17,6 +17,7 @@ module.exports = class ResourceRequest
 			, min: DEFAULT_CONTAINER_ONE_QUARTER_FULL
 			, desired: DEFAULT_CONTAINER_THREE_QUARTER_FULL
 			, max: DEFAULT_CONTAINER_FULL
+			, parking: null
 			};
 	}
 
@@ -58,6 +59,12 @@ module.exports = class ResourceRequest
 	setRate(rate)
 	{
 		this.data.rate = rate;
+		return this;
+	}
+
+	setParking(at)
+	{
+		this.data.parking = at;
 		return this;
 	}
 
