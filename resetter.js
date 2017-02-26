@@ -5,6 +5,7 @@ module.exports = class Resetter
     constructor(core)
     {
         this.core = core;
+        this.mapStatus = core.getService(SERVICE_NAMES.MAP_STATUS);
     }
 
     hardResetCore()
@@ -29,6 +30,8 @@ module.exports = class Resetter
                 continue;
 
             this.core.createActor(ACTOR_NAMES.ROOM_BOOTER,(script)=>script.initiateActor(roomName));
+
+            this.mapStatus.setBelongingToOwn(roomName);
         }
     }
 };
