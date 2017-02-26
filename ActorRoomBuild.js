@@ -100,8 +100,26 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 		this.update();
 	}
+
+	removeAllRequestsWithType(type)
+	{
+		for(let requestIndex = this.memoryObject.requests.length-1; requestIndex >= 0; requestIndex--)
+		{
+			let typeAt = this.memoryObject.requests[requestIndex].typeProgression.indexOf(type);
+
+			if(typeAt === -1)
+				continue;
+
+			this.memoryObject.requests.splice(requestIndex, 1);
 		}
 
+		this.memoryObject.currentTask = null;
+
+		this.update();
+	}
+
+	_parseRequest(typeProgression, at, priority)
+	{
 		let rp = this.core.getRoomPosition(at);
 
 		let completeness = -1;
@@ -116,22 +134,11 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 			}
 		}
 
-		this.memoryObject.requests.push(
-			{ typeProgression: typeProgression
-			, pos: at
-			, priority: priority
-			, completeness: completeness
-			});
-
-		if(completeness !== -1)
-		{
-			let parent = this.core.getActor(this.memoryObject.parentId);
-			parent.buildingCompleted(at, typeProgression[completeness]);
-		}
-
-		this.memoryObject.requests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]); //sort decending
-
-		this.update();
+		return 	{ typeProgression: typeProgression
+				, pos: at
+				, priority: priority
+				, completeness: completeness
+				};
 	}
 
 	addEnergyLocation(energyRequest)
@@ -238,7 +245,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 	getNextTask()
 	{
 		let cachedLookups = {};
-		let room = this.core.room(this.memoryObject.roomName);
+		let room = this.core.getRoom(this.memoryObject.roomName);
 
 		for(let requestIndex in this.memoryObject.requests)
 		{
