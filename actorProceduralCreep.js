@@ -536,10 +536,13 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
                     stop = true;
 
-                    let others = targetPos.lookFor(LOOK_CREEPS);
-                    if(others.length === 1)
-                        if(others[0].my === true)
-                            others[0].suicide();
+                    if(creep.pos.getRangeTo(targetPos) === 1)
+                    {
+                        let others = targetPos.lookFor(LOOK_CREEPS);
+                        if(others.length === 1)
+                            if(others[0].my === true)
+                                others[0].suicide();
+                    }
 
                     creep.moveTo(targetPos);
                     break;
@@ -599,7 +602,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     pos = currentInstruction[1];
                     targetPos = this.core.getRoomPosition(pos);
 
-                    let structures = targetPos.lookFor(LOOK_STRUCTURES);
+                    structures = targetPos.lookFor(LOOK_STRUCTURES);
 
                     let breakOut = false;
 
