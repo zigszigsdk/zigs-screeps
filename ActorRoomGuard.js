@@ -50,7 +50,7 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 
 	onEveryTick()
 	{
-        let room = this.core.room(this.memoryObject.roomName);
+        let room = this.core.getRoom(this.memoryObject.roomName);
 
         let enemies = room.find(FIND_HOSTILE_CREEPS);
 
