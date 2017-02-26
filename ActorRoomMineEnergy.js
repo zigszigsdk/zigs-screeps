@@ -137,7 +137,10 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 		if(role === MINER)
 		{
 			this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId = result.id;
-			this.core.removeActor(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId);
+
+			if(!isNullOrUndefined(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId))
+				this.core.removeActor(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId);
+
 			this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = null;
 			return;
 		}
