@@ -33,7 +33,7 @@ module.exports = class Locator
 	getService(name)
 	{
 		if(typeof name === UNDEFINED)
-			throw "tried to get an unexisting service. name is undefined";
+			throw {msg: "tried to get an unexisting service. name is undefined"};
 
 		if(this.services[name])
 			return this.services[name];
@@ -53,6 +53,18 @@ module.exports = class Locator
 		this.services[name] = service;
 
 		return service;
+	}
+
+	resetService(name)
+	{
+		this.getService(name).resetService();
+	}
+
+	resetAllServices()
+	{
+		let keys = Object.keys(SERVICE_NAMES);
+		for(let index in keys)
+			this.resetService(SERVICE_NAMES[keys[index]]);
 	}
 
 	getClass(name)
