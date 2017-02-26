@@ -2,7 +2,9 @@
 
 const FILLER = "filler";
 const RECOVERY_FILLER = "recoveryFiller";
-const STORAGE_CAPACITY = 1000000;
+
+const FULL_FILLER_ENERGY_COST = 1000;
+const RECOVERY_FILLER_ENERGY_COST = 300;
 
 let ActorWithMemory = require('ActorWithMemory');
 
@@ -27,7 +29,6 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			, spawns: scoring.flower.spawn
 			, links: scoring.flower.link
 			, containers: scoring.flower.container
-			, storages: scoring.flower.storage
 			, roads: scoring.flower.road
 			, towers: scoring.flower.tower
 			, energyLocations: []
@@ -40,9 +41,26 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 	{
 		let parent = this.core.getActor(this.memoryObject.parentId);
 
+		//don't request towers. let ROOM_GUARD take care of that.
 
-		for(let index in this.memoryObject.extensions)
-			parent.requestBuilding([STRUCTURE_EXTENSION], this.memoryObject.extensions[index], PRIORITY_NAMES.BUILD.EXTENSION);
+		let extensions = JSON.parse(JSON.stringify(this.memoryObject.extensions));
+
+		let core = this.core;
+		let extensionExists = function(pos)
+		{
+			let structs = core.getRoomPosition(pos).lookFor(LOOK_STRUCTURES);
+
+			for(let structIndex = 0; structIndex < structs.length; structIndex++)
+					if(structs[structIndex].structureType === STRUCTURE_EXTENSION)
+						return 1;
+			return 0;
+		};
+
+		extensions.sort((a, b) => extensionExists(b) - extensionExists(a) );
+
+		for(let index in extensions)
+			parent.requestBuilding([STRUCTURE_EXTENSION], extensions[index],
+				index < 5 ? PRIORITY_NAMES.BUILD.EXTENSION_FIRST_FIVE : PRIORITY_NAMES.BUILD.EXTENSION_AFTER_FIVE);
 
 		for(let index in this.memoryObject.spawns)
 			parent.requestBuilding([STRUCTURE_SPAWN], this.memoryObject.spawns[index], PRIORITY_NAMES.BUILD.SPAWN);
@@ -52,7 +70,9 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 		for(let index in this.memoryObject.containers)
 		{
-			parent.requestBuilding([STRUCTURE_CONTAINER], this.memoryObject.containers[index], PRIORITY_NAMES.BUILD.FLOWER_CONTAINER);
+			parent.requestBuilding(	[STRUCTURE_CONTAINER],
+									this.memoryObject.containers[index],
+									PRIORITY_NAMES.BUILD.FLOWER_CONTAINER);
 			//there should be a road under the container since it's walkable
 			parent.requestBuilding([STRUCTURE_ROAD], this.memoryObject.containers[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
 
@@ -65,27 +85,11 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 					.fabricate());
 		}
 
-		for(let index in this.memoryObject.storages)
-		{
-			/* not yet. handling of neutral storage facilities is required.
-
-			parent.requestResource(
-				new this.ResourceRequest(this.memoryObject.storages[index], RESOURCE_ENERGY)
-					.setPriorityName(PRIORITY_NAMES.RESOURCE.STORAGE)
-					.setDesired(0)
-					.setMin(0)
-					.setMax(STORAGE_CAPACITY)
-					.fabricate());*/
-
-			parent.requestBuilding([STRUCTURE_STORAGE], this.memoryObject.storages[index], PRIORITY_NAMES.BUILD.STORAGE);
-		}
-
 		for(let index in this.memoryObject.roads)
 			parent.requestBuilding([STRUCTURE_ROAD], this.memoryObject.roads[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
 
 		this.requestFiller();
 
-		//don't request towers. let ROOM_GUARD take care of that.
 	}
 
 	resetActor()
@@ -122,9 +126,9 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		let extensions = getId(room.find(FIND_STRUCTURES, FILTERS.EXTENSIONS));
 		let spawns = getId(room.find(FIND_STRUCTURES, FILTERS.SPAWNS));
 
-		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, towers]);
-		subActor.replaceInstruction(5, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, extensions]);
-		subActor.replaceInstruction(6, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, spawns]);
+		subActor.replaceInstruction(3, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, towers]);
+		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, extensions]);
+		subActor.replaceInstruction(5, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, spawns]);
 	}
 
 	addEnergyLocation(energyRequest)
@@ -158,7 +162,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			{ actorId: this.actorId
 			, functionName: "createFiller"
 			, priority: PRIORITY_NAMES.SPAWN.FILLER
-			, energyNeeded: 2500
+			, energyNeeded: FULL_FILLER_ENERGY_COST
 			});
 
 		if(this.memoryObject.recoveryFillActorId !== null)
@@ -168,7 +172,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			{ actorId: this.actorId
 			, functionName: "createFiller"
 			, priority: PRIORITY_NAMES.SPAWN.RECOVERY_FILLER
-			, energyNeeded: 100
+			, energyNeeded: RECOVERY_FILLER_ENERGY_COST
 			});
 	}
 
@@ -177,30 +181,21 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		if(this.memoryObject.regularFillActorId !== null)
 			return;
 
-		let room = this.core.room(this.memoryObject.roomName);
+		let room = this.core.getRoom(this.memoryObject.roomName);
 		let energy = room.energyAvailable;
 
-        let role = room.energyAvailable === room.energyCapacityAvailable ? FILLER : RECOVERY_FILLER;
+        let role = (room.energyAvailable === room.energyCapacityAvailable ||
+        	room.energyAvailable >= FULL_FILLER_ENERGY_COST) ? FILLER : RECOVERY_FILLER;
 
 		if(role === RECOVERY_FILLER && this.memoryObject.recoveryFillActorId !== null)
 			return;
 
 		let spawn = this.core.getObjectById(spawnId);
 
-		let backupPoint;
-		let bestScore = Number.NEGATIVE_INFINITY;
+		let backupPoints = [];
 
 		for(let index in this.memoryObject.energyLocations)
-		{
-			let candidate = this.memoryObject.energyLocations[index].at;
-			let score = - spawn.pos.findPathTo(candidate[0], candidate[1], candidate[2]).length;
-
-			if(score <= bestScore)
-				continue;
-
-			bestScore = score;
-			backupPoint = candidate;
-		}
+			backupPoints.push(this.memoryObject.energyLocations[index].at);
 
 		let getId = (list) => _.map(list, (item)=>item.id);
 
@@ -217,29 +212,27 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 	            .setMaxCost(energy)
 	            .fabricate();
 	    else
-	    	body = [MOVE, CARRY];
-
-	    let storagePoint = this.memoryObject.storages[0];
+	    	body = [MOVE, MOVE, MOVE, CARRY, CARRY, CARRY];
 
 	    let containerPoint = this.memoryObject.containers[0];
 
 		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP, (script)=>script.initiateActor(role, {role: role},
             [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,         [spawnId],   		body            ] //0
             , [CREEP_INSTRUCTION.PICKUP_AT_POS,               containerPoint,   RESOURCE_ENERGY ] //1
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS,               storagePoint,     RESOURCE_ENERGY ] //2
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS,               backupPoint,      RESOURCE_ENERGY ] //3
-            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  towers          ] //4
-            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  extensions      ] //5
-            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  spawns  		] //6
-            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,               1                 				] //7
-            , [CREEP_INSTRUCTION.CALLBACK,                    this.actorId,     "fillerDied"    ] //8
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                 			  ] ] //9
+            , [CREEP_INSTRUCTION.PICKUP_AT_NEAREST,           backupPoints,     RESOURCE_ENERGY ] //2
+            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  towers          ] //3
+            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  extensions      ] //4
+            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  spawns  		] //5
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,               1                 				] //6
+            , [CREEP_INSTRUCTION.CALLBACK,                    this.actorId,     "fillerDied"    ] //7
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                 			  ] ] //8
         ));
 
         if(role === FILLER)
         {
         	this.memoryObject.regularFillActorId = result.id;
-        	this.core.removeActor(this.memoryObject.recoveryFillActorId);
+        	if(this.memoryObject.recoveryFillActorId !== null)
+        		this.core.removeActor(this.memoryObject.recoveryFillActorId);
         	this.memoryObject.recoveryFillActorId = null;
         	return;
         }
