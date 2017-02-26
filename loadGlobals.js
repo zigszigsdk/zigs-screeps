@@ -144,5 +144,8 @@ module.exports = function()
 	    , GOTO_IF_DEAD: "gotoIfDead"
 	    , GOTO: "goto"
 	    , CLAIM_AT: "claimAt"
+	    , MOVE_TO_ROOM: "moveToRoom"
+	    , WAIT_UNTIL_DEATH: "waitUntilDeath"
+	    , PICKUP_AT_NEAREST: "pickupAtNearest"
 	    };
 };

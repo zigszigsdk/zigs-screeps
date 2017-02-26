@@ -766,6 +766,50 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
                     break;
 
+                case CREEP_INSTRUCTION.MOVE_TO_ROOM:
+
+                    creep = this.getCreep(creep);
+
+                    if(!creep ||
+                        (creep.room.name === currentInstruction[1] &&
+                        creep.pos.x !== 0 && creep.pos.y !== 0 && creep.pos.x !== 49 && creep.pos.y !== 49))
+                        break;
+
+                    let roomPath;
+
+                    if(currentInstruction.length >= 2 && currentInstruction[2] === true)
+                        roomPath = this.mapNavigation.findSafePath(creep.room.name, currentInstruction[1]);
+                    else
+                        roomPath = this.mapNavigation.findPath(creep.room.name, currentInstruction[1]);
+
+                    if(roomPath === null || roomPath.length === 0)
+                        if(creep.pos.x !== 0 && creep.pos.y !== 0 && creep.pos.x !== 49 && creep.pos.y !== 49)
+                            break;
+                        else
+                            roomPath = [currentInstruction[1]];
+
+                    stop = true;
+
+                    if(creep.room.name === currentInstruction[1])
+                    {
+                        creep.moveTo(this.core.getRoomPosition([25, 25, roomPath[0]]));
+                        break;
+                    }
+
+                    let exitDir = Game.map.findExit(creep.room, roomPath[0]);
+                    let exit = creep.pos.findClosestByRange(exitDir);
+                    creep.moveTo(exit, {maxRooms: 1});
+                    break;
+
+                case CREEP_INSTRUCTION.WAIT_UNTIL_DEATH:
+
+                    creep = this.getCreep(creep);
+
+                    if(creep)
+                        stop = true;
+
+                    break;
+
                 default:
                     this.core.logWarning("actorProcedualCreep doesn't have a case called: " + currentInstruction[0]);
                     stop = true;
