@@ -1,14 +1,34 @@
 "use strict";
 
-module.exports = class ServiceRoomCalc
+const Service = require('Service');
+
+module.exports = class ServiceRoomCalc extends Service
 {
     constructor(core)
     {
-        this.core = core;
+        super(core);
     }
 
-    rewindService(){}
-    unwindService(){}
+    openPosAroundTakeNearestExcept(aroundThisPos, nearestThisPos, exceptThesePos)
+    {
+        let candidates =
+            _.filter(
+                this.filterBlockedPositions(
+                    this.getRoomPositionsInRange(aroundThisPos.x, aroundThisPos.y, aroundThisPos.roomName, 1)
+                ),
+                function(rp)
+                {
+                    for(let index in exceptThesePos)
+                        if( exceptThesePos[index][0] === rp.x &&
+                            exceptThesePos[index][1] === rp.y &&
+                            exceptThesePos[index][2] === rp.roomName)
+
+                            return false;
+                    return true;
+                }
+            );
+        return nearestThisPos.findClosestByPath(candidates, {ignoreCreeps: true, ignoreRoads: true});
+    }
 
     openPosAroundTakeNearest(aroundThisPos, nearestThisPos)
     {
@@ -16,7 +36,6 @@ module.exports = class ServiceRoomCalc
             this.getRoomPositionsInRange(aroundThisPos.x, aroundThisPos.y, aroundThisPos.roomName, 1));
         return nearestThisPos.findClosestByPath(candidates, {ignoreCreeps: true, ignoreRoads: true});
     }
-
 
     getRoomPositionsInRange(centerX, centerY, roomName, range)
     {
@@ -29,7 +48,7 @@ module.exports = class ServiceRoomCalc
 
             for(let y = centerY - range; y <= centerY + range; y++)
             {
-                if(! this.isOnRoomInside(y))
+                if(! this.isOnRoomInside(y) || (x === centerX && y === centerY))
                     continue;
 
                 results.push(this.core.getRoomPosition([x, y, roomName]));
