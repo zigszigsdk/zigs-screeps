@@ -9,6 +9,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
     constructor(core)
     {
         super(core);
+        this.mapNavigation = core.getService(SERVICE_NAMES.MAP_NAVIGATION);
     }
 
     initiateActor(creepNamePrefix, callbackStamp, instructions)
@@ -55,7 +56,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
         if(creep)
             return creep;
 
-        return this.core.creep(this.memoryObject.creepName);
+        return this.core.getCreep(this.memoryObject.creepName);
     }
 
     replaceInstruction(index, instruction)
@@ -85,6 +86,52 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
     onEveryTick(event)
     {
+        let getStoredOfTypeFromStruct = function(struct, resourceType)
+        {
+            switch(struct.structureType)
+            {
+                case STRUCTURE_SPAWN:
+                case STRUCTURE_EXTENSION:
+                case STRUCTURE_LINK:
+                case STRUCTURE_TOWER:
+                    if(resourceType !== RESOURCE_ENERGY)
+                        return 0;
+                    return struct.energy;
+
+                case STRUCTURE_STORAGE:
+                case STRUCTURE_CONTAINER:
+                case STRUCTURE_TERMINAL:
+                    let result = struct.store[resourceType];
+                    if(isUndefinedOrNull(result))
+                        return 0;
+                    return result;
+
+                case STRUCTURE_POWER_SPAWN:
+                    if(resourceType === RESOURCE_ENERGY)
+                        return struct.energy;
+                    if(resourceType === RESOURCE_POWER)
+                        return struct.power;
+                    return 0;
+
+                case STRUCTURE_LAB:
+                    if(resourceType === RESOURCE_ENERGY)
+                        return struct.energy;
+                    if(resourceType === struct.mineralType)
+                        return struct.mineralAmount;
+                    return 0;
+
+                case STRUCTURE_NUKER:
+                    if(resourceType === RESOURCE_ENERGY)
+                        return struct.energy;
+                    if(resourceType === RESOURCE_GHODIUM)
+                        return struct.ghodium;
+                    return 0;
+
+                default:
+                    return 0;
+            }
+        };
+
         let steps = 0;
 
         let startingPointer = this.memoryObject.pointer;
@@ -93,7 +140,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
         {
             let currentInstruction = this.memoryObject.instructions[this.memoryObject.pointer];
 
-            //switch cases share scope. Can't use the same let-variable name without doing this. Derp.
+            //switch cases share scope. Can't use the same let-variable name without doing this.
             let creep;
             let pos;
             let source;
@@ -102,6 +149,14 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
             let target;
             let filteredStructs;
             let filter;
+            let room;
+            let structures;
+            let carrySum;
+            let posList;
+            let limit;
+            let resourceList;
+            let indexOfResourceTypeInPool;
+            let struct;
 
             switch(currentInstruction[0])
             {
@@ -199,47 +254,66 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     if(!creep)
                         break;
 
-                    let carrySum = _.sum(creep.carry);
+                    carrySum = _.sum(creep.carry);
 
                     if(carrySum === creep.carryCapacity)
                         break;
 
-                    let posList = currentInstruction[1];
-                    pos = this.core.roomPosition(posList[0], posList[1], posList[2]);
+                    posList = currentInstruction[1];
+                    pos = this.core.getRoomPosition(posList);
 
 
-                    let limit = 0;
+                    limit = 0;
                     if(currentInstruction.length >= 4)
                         limit = currentInstruction[3];
 
-                    let resourceList = pos.lookFor(currentInstruction[2]);
-                    let containers = pos.lookFor(LOOK_STRUCTURES, FILTERS.CONTAINERS);
+                    resourceList = pos.lookFor(LOOK_RESOURCES);
+                    indexOfResourceTypeInPool = null;
 
+                    for(let index in resourceList)
+                        if(resourceList[index].resourceType === currentInstruction[2])
+                        {
+                            indexOfResourceTypeInPool = index;
+                            break;
+                        }
+
+                    structures = pos.lookFor(LOOK_STRUCTURES);
+                    struct = null;
+                    for(let index in structures)
+                    {
+                        if(structures[index].structureType === STRUCTURE_ROAD ||
+                            structures[index].structureType === STRUCTURE_RAMPART)
+                            continue;
+
+                        struct = structures[index];
+                        break;
+                    }
+
+                    //the following summerized
                     //if container
                     //     take loose resource if any
                     //     else take container content if it would still leave limit behind
                     //else
                     //    take loose resource if it would still leave limit behind.
 
-                    if(containers.length !== 0)
+                    if(struct !== null)
                     {
-                        if(resourceList.length !== 0 && resourceList[0].amount + carrySum >= creep.carryCapacity)
+                        if(indexOfResourceTypeInPool !== null &&
+                            resourceList[indexOfResourceTypeInPool].amount + carrySum >= creep.carryCapacity)
                         {
-                            if(creep.pickup(resourceList[0]) === ERR_NOT_IN_RANGE)
-                                creep.moveTo(resourceList[0]);
+                            if(creep.pickup(resourceList[indexOfResourceTypeInPool]) === ERR_NOT_IN_RANGE)
+                                creep.moveTo(resourceList[indexOfResourceTypeInPool]);
 
                             stop = true;
                         }
                         else
                         {
-                            let stored = containers[0].store[currentInstruction[2]];
-                            if(typeof stored === UNDEFINED)
-                                stored = 0;
+                            let stored = getStoredOfTypeFromStruct(struct, currentInstruction[2]);
 
                             if(stored - (creep.carryCapacity - carrySum) >= limit)
                             {
-                                if(creep.withdraw(containers[0], currentInstruction[2]) === ERR_NOT_IN_RANGE)
-                                    creep.moveTo(containers[0]);
+                                if(creep.withdraw(struct, currentInstruction[2]) === ERR_NOT_IN_RANGE)
+                                    creep.moveTo(struct);
 
                                 stop = true;
                             }
@@ -247,13 +321,101 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     }
                     else
                     {
-                        if(resourceList.length !== 0 && resourceList[0].amount - (creep.carryCapacity - carrySum) >= limit)
+                        if(indexOfResourceTypeInPool !== null &&
+                            resourceList[indexOfResourceTypeInPool].amount - (creep.carryCapacity - carrySum) >= limit)
                         {
-                            if(creep.pickup(resourceList[0]) === ERR_NOT_IN_RANGE)
-                                creep.moveTo(resourceList[0]);
+                            if(creep.pickup(resourceList[indexOfResourceTypeInPool]) === ERR_NOT_IN_RANGE)
+                                creep.moveTo(resourceList[indexOfResourceTypeInPool]);
 
                             stop = true;
                         }
+                    }
+
+                    break;
+
+                case CREEP_INSTRUCTION.PICKUP_AT_NEAREST:
+
+                    creep = this.getCreep(creep);
+
+                    if(!creep)
+                        break;
+
+                    carrySum = _.sum(creep.carry);
+
+                    if(carrySum === creep.carryCapacity)
+                        break;
+                    let positions = currentInstruction[1];
+
+                    //ascending
+                    positions.sort((a,b)=>creep.pos.getRangeTo(a[0], a[1]) - creep.pos.getRangeTo(b[0], b[1]));
+
+                    for(let positionIndex in positions)
+                    {
+                        posList = positions[positionIndex];
+                        pos = this.core.getRoomPosition(posList);
+
+                        limit = 0;
+                        if(currentInstruction.length >= 4)
+                            limit = currentInstruction[3];
+
+                        resourceList = pos.lookFor(LOOK_RESOURCES);
+                        indexOfResourceTypeInPool = null;
+
+                        for(let index in resourceList)
+                            if(resourceList[index].resourceType === currentInstruction[2])
+                            {
+                                indexOfResourceTypeInPool = index;
+                                break;
+                            }
+
+                        structures = pos.lookFor(LOOK_STRUCTURES);
+                        struct = null;
+                        for(let index in structures)
+                        {
+                            if(structures[index].structureType === STRUCTURE_ROAD ||
+                                structures[index].structureType === STRUCTURE_RAMPART)
+                                continue;
+
+                            struct = structures[index];
+                            break;
+                        }
+
+                        if(struct !== null)
+                        {
+                            if(indexOfResourceTypeInPool !== null &&
+                                resourceList[indexOfResourceTypeInPool].amount + carrySum >= creep.carryCapacity)
+                            {
+                                if(creep.pickup(resourceList[indexOfResourceTypeInPool]) === ERR_NOT_IN_RANGE)
+                                    creep.moveTo(resourceList[indexOfResourceTypeInPool]);
+
+                                stop = true;
+                            }
+                            else
+                            {
+                                let stored = getStoredOfTypeFromStruct(struct, currentInstruction[2]);
+
+                                if(stored - (creep.carryCapacity - carrySum) >= limit)
+                                {
+                                    if(creep.withdraw(struct, currentInstruction[2]) === ERR_NOT_IN_RANGE)
+                                        creep.moveTo(struct);
+
+                                    stop = true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if(indexOfResourceTypeInPool !== null &&
+                                resourceList[indexOfResourceTypeInPool].amount - (creep.carryCapacity - carrySum) >= limit)
+                            {
+                                if(creep.pickup(resourceList[indexOfResourceTypeInPool]) === ERR_NOT_IN_RANGE)
+                                    creep.moveTo(resourceList[indexOfResourceTypeInPool]);
+
+                                stop = true;
+                            }
+                        }
+                        if(stop)
+                            break;
                     }
 
                     break;
@@ -266,9 +428,9 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                         break;
 
                     let posArr = currentInstruction[1];
-                    pos = this.core.roomPosition(posArr[0], posArr[1], posArr[2]);
+                    pos = this.core.getRoomPosition(posArr);
 
-                    if(pos.isEqualTo(creep.pos))
+                    if(pos.isEqualTo(creep.pos)) //most structures can't be build if you're standing on
                     {
                         creep.move(Math.floor(Math.random()*8));
                         stop = true;
@@ -321,7 +483,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                         break;
 
                     let posInst = currentInstruction[1];
-                    pos = this.core.roomPosition(posInst[0], posInst[1], posInst[2]);
+                    pos = this.core.getRoomPosition(posInst);
 
                     structs = pos.lookFor(LOOK_STRUCTURES);
 
@@ -360,10 +522,11 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
                     creep = this.getCreep(creep);
 
-                    if(!creep)
+                    if(!creep || isNullOrUndefined(currentInstruction[1]))
                         break;
+
                     pos = currentInstruction[1];
-                    targetPos = this.core.roomPosition(pos[0], pos[1], pos[2]);
+                    targetPos = this.core.getRoomPosition(pos);
 
                     if(creep.pos.x === targetPos.x &&
                         creep.pos.y === targetPos.y &&
@@ -408,7 +571,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     {
                         let candidate = this.core.getObjectById(targetId);
 
-                        if(candidate.energy !== candidate.energyCapacity)
+                        if(candidate && candidate.energy !== candidate.energyCapacity)
                             candidates.push(candidate);
                     });
 
@@ -434,7 +597,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     stop = true;
 
                     pos = currentInstruction[1];
-                    targetPos = this.core.roomPosition(pos[0], pos[1], pos[2]);
+                    targetPos = this.core.getRoomPosition(pos);
 
                     let structures = targetPos.lookFor(LOOK_STRUCTURES);
 
@@ -500,9 +663,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     if(creep.hits !== creep.hitsMax)
                         creep.heal(creep);
 
-                    targetPos = this.core.roomPosition( currentInstruction[1][0],
-                                                        currentInstruction[1][1],
-                                                        currentInstruction[1][2]);
+                    targetPos = this.core.getRoomPosition(currentInstruction[1]);
 
                     if(creep.pos.roomName !== targetPos.roomName)
                     {
@@ -532,11 +693,10 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     if(!creep || _.sum(creep.carry) === 0)
                         break;
 
-                    pos = this.core.roomPosition(currentInstruction[1][0],
-                        currentInstruction[1][1], currentInstruction[1][2]);
+                    pos = this.core.getRoomPosition(currentInstruction[1]);
 
-                    filter = {filter: (x)=>x.structureType === currentInstruction[2]};
-                    filteredStructs = pos.lookFor(LOOK_STRUCTURES, filter);
+                    filteredStructs = _.filter(pos.lookFor(LOOK_STRUCTURES),
+                                        (s)=>(x)=>s.structureType === currentInstruction[2]);
 
                     if(filteredStructs.length === 0 || filteredStructs[0].hits === filteredStructs[0].hitsMax)
                         break;
@@ -554,8 +714,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
                     if(!creep)
                         break;
 
-                    pos = this.core.roomPosition(currentInstruction[1][0],
-                        currentInstruction[1][1], currentInstruction[1][2]);
+                    pos = this.core.getRoomPosition(currentInstruction[1]);
 
                     filter = {filter: (x)=>x.structureType === currentInstruction[2]};
                     filteredStructs = pos.lookFor(LOOK_STRUCTURES, filter);
@@ -569,11 +728,10 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
                 case CREEP_INSTRUCTION.REMOVE_FLAG_AT:
 
-                    if(! this.core.room(currentInstruction[1][2] ) )
+                    if(! this.core.getRoom(currentInstruction[1][2] ) )
                         break;
 
-                    pos = this.core.roomPosition(currentInstruction[1][0],
-                        currentInstruction[1][1], currentInstruction[1][2]);
+                    pos = this.core.getRoomPosition(currentInstruction[1]);
 
                     let flags = pos.lookFor(LOOK_FLAGS);
 
@@ -591,14 +749,11 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
                     stop = true;
 
-                    let room = this.core.room(currentInstruction[1][2]);
+                    room = this.core.getRoom(currentInstruction[1][2]);
 
                     if(typeof room === UNDEFINED)
                     {
-                        pos = this.core.roomPosition(
-                            currentInstruction[1][0],
-                            currentInstruction[1][1],
-                            currentInstruction[1][2]);
+                        pos = this.core.getRoomPosition(currentInstruction[1]);
                         creep.moveTo(pos);
                         break;
                     }
