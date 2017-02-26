@@ -28,6 +28,7 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 	        					, ACTOR_NAMES.ROOM_FILL
 	        					, ACTOR_NAMES.ROOM_UPGRADE
 	        					, ACTOR_NAMES.ROOM_MINE_ENERGY
+	        					, ACTOR_NAMES.ROOM_MINE_MINERAL
 	        					, ACTOR_NAMES.ROOM_GUARD
 	        					, ACTOR_NAMES.ROOM_OFFENSE
 	        					, ACTOR_NAMES.ROOM_EXPLORE
@@ -44,7 +45,8 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 
 		resetActor()
 		{
-			this.core.logWarning("ActorControlledRoom cannot reset without sideeffects to other actors. Use hardReset if nessesary");
+			this.core.logWarning(
+				"ActorControlledRoom cannot reset without sideeffects to other actors. Use hardReset if nessesary");
 		}
 
 		removeActor()
@@ -71,27 +73,28 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 			roomBuild.requestBuilding(typeProgression, at, priority);
 		}
 
+		removeAllBuildingRequestsWithType(type)
+		{
+			let roomBuild = this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD]);
+			roomBuild.removeAllRequestsWithType(type);
+		}
+
 		requestResource(request)
 		{
 			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_HAUL])
 				.requestResource(request);
-
-			if(request.type === RESOURCE_ENERGY)
-			{
-				this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
-					.addEnergyLocation(request);
-
-				this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD])
-					.addEnergyLocation(request);
-
-				this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
-					.addEnergyLocation(request);
-			}
 		}
 
-		addEnergyLocation(at)
+		registerEnergyLocation(request)
 		{
+			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
+				.addEnergyLocation(request);
 
+			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD])
+				.addEnergyLocation(request);
+
+			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
+				.addEnergyLocation(request);
 		}
 
 		buildingCompleted(at, type)

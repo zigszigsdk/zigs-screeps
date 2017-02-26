@@ -194,8 +194,9 @@ module.exports = class Actors
     {
         let actor = this.getFromId(actorId);
 
-        if(actor !== null)
-            actor.resetActor();
+        if(isUndefinedOrNull(actor))
+            return;
+        actor.resetActor();
     }
 
     resetAll()
