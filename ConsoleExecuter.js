@@ -51,6 +51,13 @@ module.exports = class ConsoleExecuter
             case 7:
                 this.core.resetService(this.memoryObject.p1);
                 break;
+            case 8:
+                this.core.createActor("ActorAdhocHauler", (script)=>script.initiateActor(this.memoryObject.p1,
+                                                                                        this.memoryObject.p2,
+                                                                                        this.memoryObject.p3,
+                                                                                        this.memoryObject.p4,
+                                                                                        this.memoryObject.p5));
+                break;
             default:
                 break;
         }

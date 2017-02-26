@@ -120,11 +120,20 @@ module.exports = class ConsoleInterface
         this.setCommand(6, manipulationFunctionString);
     }
 
-    setCommand(command, p1)
+    adhocHauler(from, to, type, controlledRoomId, size)
+    {
+        this.setCommand(8, from, to, type, controlledRoomId, size);
+    }
+
+    setCommand(command, p1, p2, p3, p4, p5)
     {
         this.replaceMemory('{"consoleInterfaceHook":null}', JSON.stringify(
             { consoleInterfaceHook: command
             , p1: p1
+            , p2: p2
+            , p3: p3
+            , p4: p4
+            , p5: p5
             }));
     }
 
