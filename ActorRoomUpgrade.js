@@ -18,15 +18,16 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 	initiateActor(parentId, roomName)
 	{
 		let roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
-		let upgradeContainerPos = roomScoring.getRoom(roomName).upgradeContainer;
+		let upgrade = roomScoring.getRoom(roomName).upgrade;
 
-		let room = this.core.room(roomName);
+		let room = this.core.getRoom(roomName);
 
 		this.memoryObject =
 			{ roomName: roomName
 			, parentId: parentId
 			, workParts: 0
-			, energyPos: upgradeContainerPos
+			, energyPos: upgrade.container
+			, linkPos: upgrade.linkSpot
 			, controllerId: room.controller.id
 			, creepCount: 0
 			};
@@ -38,17 +39,23 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		let parent = this.core.getActor(this.memoryObject.parentId);
 
 
-		parent.requestBuilding(	[STRUCTURE_CONTAINER, STRUCTURE_LINK],
+		parent.requestBuilding(	[STRUCTURE_CONTAINER],
 								this.memoryObject.energyPos,
 								PRIORITY_NAMES.BUILD.UPGRADER_CONTAINER);
 
-		parent.requestResource(
-			new this.ResourceRequest(this.memoryObject.energyPos, RESOURCE_ENERGY)
+		parent.requestBuilding(	[STRUCTURE_LINK],
+								this.memoryObject.linkPos,
+								PRIORITY_NAMES.BUILD.UPGRADER_LINK);
+
+		let request = new this.ResourceRequest(this.memoryObject.energyPos, RESOURCE_ENERGY)
 					.setPriorityName(PRIORITY_NAMES.RESOURCE.UPGRADE)
 					.setRate(-15)
 					.setDesired(TARGET_RESOURCE_RESERVE)
 					.setMin(250)
-					.fabricate());
+					.fabricate();
+
+		parent.requestResource(request);
+		parent.registerEnergyLocation(request);
 
 		this.requestCreep();
 	}
@@ -78,7 +85,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		if(this.memoryObject.workParts >= TARGET_WORKPARTS)
 			return;
 
-		let energy = this.core.room(this.memoryObject.roomName).energyCapacityAvailable;
+		let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
         let body = new this.CreepBodyFactory()
             .addPattern([CARRY, WORK, WORK, MOVE], 1)
