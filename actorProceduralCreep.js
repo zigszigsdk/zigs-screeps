@@ -837,9 +837,5 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
             if(this.memoryObject.pointer === startingPointer)
                 break; //script has gone for a full loop and shouldn't take any further action until next tick.
         }
-
-        if(steps === maxSteps)
-            this.core.logWarning("aborted actorProcedualCreep (" + this.memoryObject.creepName +
-                ") loop after " + steps + " steps");
     }
 };
