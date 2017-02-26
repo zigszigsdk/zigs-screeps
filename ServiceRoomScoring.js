@@ -23,12 +23,10 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 		super(core);
 	}
 
-	rewindService()
+	resetService()
 	{
-		super.rewindService();
-
-		if(typeof this.memoryObject.rooms === UNDEFINED)
-			this.memoryObject.rooms = {};
+		super.resetService();
+		this.memoryObject.rooms = {};
 	}
 
 	scoreRoom(roomName)

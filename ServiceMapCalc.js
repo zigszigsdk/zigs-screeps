@@ -4,15 +4,14 @@ function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-module.exports = class ServiceMapCalc
+const Service = require('Service');
+
+module.exports = class ServiceMapCalc extends Service
 {
 	constructor(core)
 	{
 		this.core = core;
 	}
-
-	rewindService(){}
-	unwindService(){}
 
 	parseRoomName(roomName)
 	{

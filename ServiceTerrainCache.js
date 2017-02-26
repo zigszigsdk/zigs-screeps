@@ -9,12 +9,10 @@ module.exports = class ServiceTerrainCache extends ServiceWithMemory
 		super(core);
 	}
 
-	rewindService()
+	resetService()
 	{
-		super.rewindService();
-
-		if(typeof this.memoryObject.terrains === UNDEFINED)
-			this.memoryObject.terrains = {};
+		super.resetService();
+		this.memoryObject.terrains = {};
 	}
 
 	cacheRoom(roomName)

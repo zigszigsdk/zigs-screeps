@@ -16,4 +16,10 @@ module.exports = class ServiceWithMemory
 	{
 		this.core.setMemory(this.constructor.name, this.memoryObject);
 	}
+
+	resetService()
+	{
+		this.memoryObject = {};
+		this.core.setMemory(this.constructor.name, {});
+	}
 };

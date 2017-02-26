@@ -12,6 +12,8 @@ module.exports = class Resetter
         for(let name in Game.creeps)
             Game.creeps[name].suicide();
 
+        this.core.resetAllServices();
+
         this.core.createActor("ActorTickExpander");
 
         for(let roomName in Game.rooms)
