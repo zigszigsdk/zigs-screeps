@@ -6,15 +6,24 @@ const SPOT_SCORE = 5;
 const DIST_SCORE = -2;
 const DIST_FROM_EDGE_SCORE = 1;
 
-const TERRAIN_SCORES =
+const WALKABLE_TERRAIN_SCORES =
 	{ [TERRAIN_SWAMP]: 10
 	, [TERRAIN_PLAIN]: 100
 	, [TERRAIN_WALL]: Number.NEGATIVE_INFINITY
 	, [TERRAIN_OUTSIDE_ROOM]: Number.NEGATIVE_INFINITY
 	};
 
+const BUILDING_TERRAIN_SCORES =
+	{ [TERRAIN_SWAMP]: 0
+	, [TERRAIN_PLAIN]: 0
+	, [TERRAIN_WALL]: Number.NEGATIVE_INFINITY
+	, [TERRAIN_OUTSIDE_ROOM]: Number.NEGATIVE_INFINITY
+	};
+
+const SCORE_WALL_TOUCH = -15;
+
 const NEGATIVE_INFINITY_MEMORY = "NegativeInfinity";
-const FLOWER_DIDNT_FIT = "flowerDidntFit";
+const DIDNT_FIT = "didntFit";
 
 module.exports = class ServiceRoomScoring extends ServiceWithMemory
 {
@@ -75,15 +84,48 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 		for(let index in sources)
         {
         	let miningPos = roomCalc.openPosAroundTakeNearest(sources[index].pos, room.controller.pos);
+        	let miningSpot = [miningPos.x, miningPos.y, miningPos.roomName];
+
+        	let linkPos = roomCalc.openPosAroundTakeNearestExcept(miningPos, room.controller.pos, [miningSpot]);
+        	let linkSpot = [linkPos.x, linkPos.y, linkPos.roomName];
+
+        	let parkingPos = roomCalc.openPosAroundTakeNearestExcept(miningPos, room.controller.pos, [miningSpot, linkSpot]);
+        	let parkingSpot = [parkingPos.x, parkingPos.y, parkingPos.roomName];
 
         	mines[sources[index].id] =
         		{ sourceId: sources[index].id
-        		, miningSpot: [miningPos.x, miningPos.y, miningPos.roomName]
+        		, miningSpot: miningSpot
+        		, linkSpot: linkSpot
+        		, parkingSpot: parkingSpot
         		};
 
     		_.each(roomCalc.getRoomPositionsInRange(miningPos.x, miningPos.y, miningPos.roomName, 1),
         		(rp) => addLocationScore(rp.x, rp.y, Number.NEGATIVE_INFINITY));
         }
+
+        let minerals = room.find(FIND_MINERALS);
+        let mineral = null;
+        if(minerals.length !== 0)
+		{
+			let miningPos = roomCalc.openPosAroundTakeNearest(minerals[0].pos, room.controller.pos);
+			let miningSpot = [miningPos.x, miningPos.y, miningPos.roomName];
+
+        	let parkingPos = roomCalc.openPosAroundTakeNearestExcept(miningPos, room.controller.pos, [miningSpot]);
+        	let parkingSpot = [parkingPos.x, parkingPos.y, parkingPos.roomName];
+
+	        mineral =
+	        	{ miningSpot: miningSpot
+	        	, parkingSpot: parkingSpot
+	        	, id: minerals[0].id
+	        	, mineralType: minerals[0].mineralType
+	        	};
+
+			_.each(roomCalc.getRoomPositionsInRange(mineral.miningSpot.x,
+													mineral.miningSpot.y,
+													mineral.miningSpot.roomName,
+													2),
+	    		(rp) => addLocationScore(rp.x, rp.y, Number.NEGATIVE_INFINITY));
+		}
 
         //upgrading location
         let nearestSource = room.controller.pos.findClosestByPath(FIND_SOURCES, {ignoreCreeps: true, ignoreRoads: true});
@@ -116,22 +158,16 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 				bestUpgradeScore = score;
 			}
 		}
+    	let upgradeLinkPos = roomCalc.openPosAroundTakeNearest(	this.core.getRoomPosition(upgradeContainer),
+    															nearestSource.pos);
+
+        let upgrade =
+        	{ container: upgradeContainer
+        	, linkSpot: [upgradeLinkPos.x, upgradeLinkPos.y, upgradeLinkPos.roomName]
+        	};
 
     	_.each(roomCalc.getRoomPositionsInRange(upgradeContainer[0], upgradeContainer[1], upgradeContainer[2], 1),
 			(rp) => addLocationScore(rp.x, rp.y, Number.NEGATIVE_INFINITY));
-
-		//flower scoring
-		let flowerRelativePositions = [];
-		let buildingKeys = Object.keys(FLOWER_PATTERN.buildings);
-		for(let buildingKeyIndex = buildingKeys.length-1; buildingKeyIndex >= 0; buildingKeyIndex--)
-		{
-			let key = buildingKeys[buildingKeyIndex];
-			for(let posIndex = FLOWER_PATTERN.buildings[key].pos.length-1; posIndex >= 0; posIndex--)
-			{
-				let pos = FLOWER_PATTERN.buildings[key].pos[posIndex];
-				flowerRelativePositions.push([pos.x, pos.y]);
-			}
-		}
 
 		//can't build on the edge
 		for(let x = FIRST_OF_ROOM; x <= LAST_OF_ROOM; x += LAST_OF_ROOM - FIRST_OF_ROOM)
@@ -146,78 +182,133 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 												LAST_OF_ROOM - x,
 												LAST_OF_ROOM - y) * DIST_FROM_EDGE_SCORE);
 
-		let bestFlowerScore = Number.NEGATIVE_INFINITY;
-		let flowerPos = FLOWER_DIDNT_FIT;
-
-		for(let x = FIRST_INSIDE_ROOM; x <= LAST_INSIDE_ROOM; x++)
-			for(let y = FIRST_INSIDE_ROOM; y <= LAST_INSIDE_ROOM; y++)
-			{
-				let score = 0;
-
-				for(let flowerPosIndex = flowerRelativePositions.length-1;
-					flowerPosIndex >= 0;
-					flowerPosIndex--)
-				{
-					let relative = flowerRelativePositions[flowerPosIndex];
-					let pos = 	{ x: x + relative[0]
-								, y: y + relative[1]
-								};
-
-					let terrainScore = TERRAIN_SCORES[terrainCache.getAt(pos.x, pos.y, roomName)];
-					let locationScore = getlLocationScore(pos.x, pos.y);
-
-					score += terrainScore + locationScore;
-					if(score === Number.NEGATIVE_INFINITY)
-						break;
-				}
-
-				if(score > bestFlowerScore)
-				{
-					flowerPos = [x, y];
-					bestFlowerScore = score;
-				}
-			}
-
-		//finalizing results
-		let scoring;
-		if(flowerPos === FLOWER_DIDNT_FIT)
+		let getTerrainScore = function(pos, buildingType)
 		{
-			scoring = 	{ roomScore: "unsuited"
-						};
-		}
-		else
-		{
-			scoring =	{ roomScore: bestFlowerScore
-						, mines: mines
-						, upgradeContainer: upgradeContainer
-						, flower: {}
-						};
+			let wallScore = 0;
+			_.each(roomCalc.getRoomPositionsInRange(pos[0], pos[1], pos[2], 1),
+				(rp) => {
+					if(terrainCache.getAt(rp.x, rp.y, rp.roomName) === TERRAIN_WALL)
+						wallScore += SCORE_WALL_TOUCH;
+				}
+			);
+			if(buildingType === STRUCTURE_ROAD || buildingType === STRUCTURE_CONTAINER)
+				return wallScore + WALKABLE_TERRAIN_SCORES[terrainCache.getAt(pos.x, pos.y, roomName)];
+			else
+				return wallScore + BUILDING_TERRAIN_SCORES[terrainCache.getAt(pos.x, pos.y, roomName)];
+		};
 
+		let fitAndScorePattern = function(pattern)
+		{
+			let relativePositions = [];
+			let buildingKeys = Object.keys(pattern.buildings);
 			for(let buildingKeyIndex = buildingKeys.length-1; buildingKeyIndex >= 0; buildingKeyIndex--)
 			{
 				let key = buildingKeys[buildingKeyIndex];
-				scoring.flower[key] = [];
-
-				for(let posIndex = FLOWER_PATTERN.buildings[key].pos.length-1; posIndex >= 0; posIndex--)
+				for(let posIndex = pattern.buildings[key].pos.length-1; posIndex >= 0; posIndex--)
 				{
-					let pos = FLOWER_PATTERN.buildings[key].pos[posIndex];
-					scoring.flower[key].push(
-						[ pos.x + flowerPos[0]
-						, pos.y + flowerPos[1]
-						, roomName
-						]);
+					let pos = pattern.buildings[key].pos[posIndex];
+					relativePositions.push(
+						{ x: pos.x
+						, y: pos.y
+						, type: key
+					});
 				}
 			}
+
+			let bestScore = Number.NEGATIVE_INFINITY;
+			let bestPos = DIDNT_FIT;
+
+			for(let x = FIRST_INSIDE_ROOM; x <= LAST_INSIDE_ROOM; x++)
+				for(let y = FIRST_INSIDE_ROOM; y <= LAST_INSIDE_ROOM; y++)
+				{
+					let score = 0;
+
+					for(let posIndex = relativePositions.length-1;
+						posIndex >= 0;
+						posIndex--)
+					{
+						let relativePosition = relativePositions[posIndex];
+						let pos = 	{ x: x + relativePosition.x
+									, y: y + relativePosition.y
+									};
+
+						let terrainScore = getTerrainScore(pos, relativePosition.type);
+						let locationScore = getlLocationScore(pos.x, pos.y);
+
+						score += terrainScore + locationScore;
+						if(score === Number.NEGATIVE_INFINITY)
+							break;
+					}
+
+					if(score > bestScore)
+					{
+						bestPos = [x, y];
+						bestScore = score;
+					}
+				}
+
+
+			if(bestPos === DIDNT_FIT)
+				return 	{ score: Number.NEGATIVE_INFINITY
+						, pattern: DIDNT_FIT
+						};
+
+			let absolutePattern = {};
+			for(let buildingKeyIndex = buildingKeys.length-1; buildingKeyIndex >= 0; buildingKeyIndex--)
+			{
+				let key = buildingKeys[buildingKeyIndex];
+				absolutePattern[key] = [];
+
+				for(let posIndex = pattern.buildings[key].pos.length-1; posIndex >= 0; posIndex--)
+				{
+					let relativePosition = pattern.buildings[key].pos[posIndex];
+					let pos = 	[ relativePosition.x + bestPos[0]
+								, relativePosition.y + bestPos[1]
+								, roomName
+								];
+
+					absolutePattern[key].push(pos);
+
+					_.each(roomCalc.getRoomPositionsInRange(pos[0], pos[1], pos[2], 1),
+			    		(rp) => addLocationScore(rp.x, rp.y, Number.NEGATIVE_INFINITY));
+				}
+			}
+
+			return 	{ score: bestScore
+					, pattern: absolutePattern
+					};
+
+		};
+
+		let flower = fitAndScorePattern(FLOWER_PATTERN);
+		let storage = fitAndScorePattern(STORAGE_PATTERN);
+
+		if(flower.score === Number.NEGATIVE_INFINITY)
+		{
+			this.memoryObject.rooms[roomName] =
+				{ roomScore: "unsuited"
+				};
+			return;
 		}
 
-		this.memoryObject.rooms[roomName] = scoring;
+		this.memoryObject.rooms[roomName] =
+			{ roomScore: flower.score + storage.score
+			, mines: mines
+			, upgrade: upgrade
+			, mineral: mineral
+			, flower: flower.pattern
+			, storage: storage.score === Number.NEGATIVE_INFINITY ? null : storage.pattern
+			};
+
+		return this.memoryObject.rooms[roomName];
 	}
 
 	getRoom(roomName)
 	{
 		if(typeof this.memoryObject.rooms[roomName] === UNDEFINED)
-			throw {msg: "tried to get result of unscored room: " + roomName};
+			throw new Error("tried to get result of unscored room: " + roomName);
 
 		return this.memoryObject.rooms[roomName];
 	}
+
 };
