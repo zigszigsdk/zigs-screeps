@@ -67,9 +67,39 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		for(let index in this.memoryObject.requests)
 		{
 			let request = this.memoryObject.requests[index];
-			if(request.priority === priority &&
+			if(
+				(
+					(
+						request.typeProgression[0] === typeProgression[0]
+					) ||
+					(	typeProgression[0] !== STRUCTURE_ROAD &&
+						typeProgression[0] !== STRUCTURE_RAMPART &&
+						request.typeProgression[0] !== STRUCTURE_ROAD &&
+						request.typeProgression[0] !== STRUCTURE_RAMPART
+					)
+				) &&
 				request.pos[0] === at[0] && request.pos[1] === at[1] && request.pos[2] === at[2])
-				return;
+				{
+					this.memoryObject.requests[index] = this._parseRequest(typeProgression, at, priority);
+					this.memoryObject.requests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]);
+					this.update();
+					return;
+				}
+		}
+
+		let newRequest = this._parseRequest(typeProgression, at, priority);
+		this.memoryObject.requests.push(newRequest);
+
+		if(newRequest.completeness !== -1)
+		{
+			let parent = this.core.getActor(this.memoryObject.parentId);
+			parent.buildingCompleted(at, typeProgression[newRequest.completeness]);
+		}
+
+		this.memoryObject.requests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]); //sort decending
+
+		this.update();
+	}
 		}
 
 		let rp = this.core.getRoomPosition(at);
