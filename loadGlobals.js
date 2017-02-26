@@ -112,6 +112,8 @@ module.exports = function()
 		, MAX_TOWERS:         [  0,   0,   0,   1,   1,   2,   2,   3,   6]
 		};
 
+	global.LEVEL_REQUIRED_TO_MINE_MINERALS = 6;
+
 	global.PRIORITY_NAMES =
 	{	SPAWN:
 			{ RECOVERY_FILLER: "SPAWN_RECOVERY_FILLER"
@@ -182,6 +184,7 @@ module.exports = function()
 	    , CLAIM_AT: "claimAt"
 	    , MOVE_TO_ROOM: "moveToRoom"
 	    , WAIT_UNTIL_DEATH: "waitUntilDeath"
+	    , GOTO_IF_TTL_LESS: "gotoIfTtlLess"
 	    , PICKUP_AT_NEAREST: "pickupAtNearest"
 	    };
 };
