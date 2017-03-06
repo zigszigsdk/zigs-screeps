@@ -58,6 +58,9 @@ module.exports = class ConsoleExecuter
                                                                                         this.memoryObject.p4,
                                                                                         this.memoryObject.p5));
                 break;
+            case 9:
+                this.core.eraseMemory(this.memoryObject.p1);
+                break;
             default:
                 break;
         }

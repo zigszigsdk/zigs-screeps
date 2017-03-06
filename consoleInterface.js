@@ -125,6 +125,11 @@ module.exports = class ConsoleInterface
         this.setCommand(8, from, to, type, controlledRoomId, size);
     }
 
+    deleteMemory(memoryBankName)
+    {
+        this.setCommand(9, memoryBankName);
+    }
+
     setCommand(command, p1, p2, p3, p4, p5)
     {
         this.replaceMemory('{"consoleInterfaceHook":null}', JSON.stringify(
