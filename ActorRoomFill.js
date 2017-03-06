@@ -126,9 +126,9 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		let extensions = getId(room.find(FIND_STRUCTURES, FILTERS.EXTENSIONS));
 		let spawns = getId(room.find(FIND_STRUCTURES, FILTERS.SPAWNS));
 
-		subActor.replaceInstruction(3, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, towers]);
-		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, extensions]);
-		subActor.replaceInstruction(5, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, spawns]);
+		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, towers]);
+		subActor.replaceInstruction(5, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, extensions]);
+		subActor.replaceInstruction(6, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, spawns]);
 	}
 
 	addEnergyLocation(energyRequest)
@@ -215,17 +215,19 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 	    	body = [MOVE, MOVE, MOVE, CARRY, CARRY, CARRY];
 
 	    let containerPoint = this.memoryObject.containers[0];
+	    let linkPoint = this.memoryObject.links[0];
 
 		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP, (script)=>script.initiateActor(role, {role: role},
             [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,         [spawnId],   		body            ] //0
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS,               containerPoint,   RESOURCE_ENERGY ] //1
-            , [CREEP_INSTRUCTION.PICKUP_AT_NEAREST,           backupPoints,     RESOURCE_ENERGY ] //2
-            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  towers          ] //3
-            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  extensions      ] //4
-            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  spawns  		] //5
-            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,               1                 				] //6
-            , [CREEP_INSTRUCTION.CALLBACK,                    this.actorId,     "fillerDied"    ] //7
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                 			  ] ] //8
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS,               linkPoint,   		RESOURCE_ENERGY ] //1
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS,               containerPoint,   RESOURCE_ENERGY ] //2
+            , [CREEP_INSTRUCTION.PICKUP_AT_NEAREST,           backupPoints,     RESOURCE_ENERGY ] //3
+            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  towers          ] //4
+            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  extensions      ] //5
+            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  spawns  		] //6
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,               1                 				] //7
+            , [CREEP_INSTRUCTION.CALLBACK,                    this.actorId,     "fillerDied"    ] //8
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                 			  ] ] //9
         ));
 
         if(role === FILLER)
