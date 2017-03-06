@@ -172,8 +172,13 @@ module.exports = class Core
                     continue;
 
                 let actor = this.actors.getFromId(actorId);
-                if(actor === null || actor === undefined)
+
+                if(isNullOrUndefined(actor))
+                {
+                    this.subscriptions.unsubscribe(event, actorId);
+                    this.logger.warning("actor " + actorId + " didn't exit cleanly.");
                     continue;
+                }
 
                 let callbackMethod = subscribers[actorId];
 
