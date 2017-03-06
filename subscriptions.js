@@ -21,10 +21,8 @@ module.exports = class Subscriptions
 
     subscribe(eventString, actor, callbackMethod)
     {
-        if(eventString === "" || eventString === undefined || eventString === undefined ||
-            actor === "" || actor === undefined || actor === undefined ||
-            callbackMethod === "" || callbackMethod === undefined || callbackMethod === undefined
-        )
+        if(eventString === "" || isNullOrUndefined(eventString) || isNullOrUndefined(actor) ||
+            isNullOrUndefined(callbackMethod))
             this.core.logWarning("Tried to subscribe with invalid parameters. eventString: " +
                 eventString +
                 ", actor: " +
