@@ -34,8 +34,13 @@ module.exports = class ActorStructureEvents extends ActorWithMemory
             if(this.memoryObject.structures[newStructureId])
                 continue;
 
+            let roomName = this.core.getObjectById(newStructureId).room.name;
+
             this.core.frontLoadEvent(EVENTS.STRUCTURE_BUILD + newStructureId);
-            this.memoryObject.structures[newStructureId] = true;
+            this.core.frontLoadEvent(EVENTS.STRUCTURE_BUILD + roomName);
+            this.memoryObject.structures[newStructureId] =
+                { roomName: roomName
+                };
         }
 
         let oldStructureIds = Object.keys(this.memoryObject.structures);
@@ -47,6 +52,7 @@ module.exports = class ActorStructureEvents extends ActorWithMemory
                 continue;
 
             this.core.frontLoadEvent(EVENTS.STRUCTURE_DESTROYED + oldStructureId);
+            this.core.frontLoadEvent(EVENTS.STRUCTURE_DESTROYED + this.memoryObject.structures[oldStructureId].roomName);
             delete this.memoryObject.structures[oldStructureId];
         }
 
