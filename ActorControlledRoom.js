@@ -86,6 +86,12 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 				.requestResource(request);
 		}
 
+		removeResourceRequestsAt(at)
+		{
+			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_HAUL])
+				.removeRequestsAt(at);
+		}
+
 		registerEnergyLocation(request)
 		{
 			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])

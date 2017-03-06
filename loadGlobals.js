@@ -10,6 +10,7 @@ module.exports = function()
 		, MAP_STATUS: "ServiceMapStatus"
 		, MAP_NAVIGATION: "ServiceMapNavigation"
 		, MAP_SEARCH: "ServiceMapSearch"
+		, CREEP_ACTIONS: "ServiceCreepActions"
 		};
 
 	global.ACTOR_NAMES =
@@ -30,6 +31,7 @@ module.exports = function()
 		, ROOM_STORAGE_KEEPER: "ActorRoomStorageKeeper"
 		, STRUCTURE_EVENTS: "ActorStructureEvents"
 		, TICK_EXPANDER: "ActorTickExpander"
+		, CREEP_ENERGY_MINER: "ActorCreepEnergyMiner"
 		};
 
 	global.CLASS_NAMES =

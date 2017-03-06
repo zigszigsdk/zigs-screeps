@@ -1,8 +1,7 @@
 "use strict";
 
-const MINER = "miner";
 const RECOVERY_MINER = "recoveryMiner";
-const MAX_ENERGY_NEEDED = 750;
+const MAX_ENERGY_NEEDED = 1200;
 
 let ActorWithMemory = require('ActorWithMemory');
 
@@ -51,8 +50,41 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 					.setParking(this.memoryObject.mines[keys[index]].parkingSpot)
 					.fabricate();
 
-			parent.requestResource(request);
 			parent.registerEnergyLocation(request);
+		}
+
+		this.core.subscribe(EVENTS.STRUCTURE_BUILD + this.memoryObject.roomName, this.actorId, "onStructuresChanged");
+		this.core.subscribe(EVENTS.STRUCTURE_DESTROYED + this.memoryObject.roomName, this.actorId, "onStructuresChanged");
+		this._updateRequests();
+	}
+
+	onStructuresChanged()
+	{
+		this._updateRequests();
+	}
+
+	_updateRequests()
+	{
+		let parent = this.core.getActor(this.memoryObject.parentId);
+
+		let keys = Object.keys(this.memoryObject.mines);
+		for(let index in keys)
+		{
+			let link = this.core.getStructureAt(this.memoryObject.mines[keys[index]].linkSpot, STRUCTURE_LINK);
+			if(isNullOrUndefined(link))
+			{
+				let request = new this.ResourceRequest(this.memoryObject.mines[keys[index]].miningSpot, RESOURCE_ENERGY)
+					.setRate(10)
+					.setDesired(500)
+					.setMin(250)
+					.setParking(this.memoryObject.mines[keys[index]].parkingSpot)
+					.fabricate();
+
+				parent.requestResource(request);
+				continue;
+			}
+
+			parent.removeResourceRequestsAt(this.memoryObject.mines[keys[index]].miningSpot);
 		}
 	}
 
@@ -65,8 +97,13 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 		let keys = Object.keys(oldMemory.mines);
 		for(let index in keys)
 		{
-			this.memoryObject.mines[keys[index]].regularMinerActorId = oldMemory.mines[keys[index]].regularMinerActorId;
-			this.memoryObject.mines[keys[index]].recoveryMinerActorId = oldMemory.mines[keys[index]].recoveryMinerActorId;
+			this.memoryObject.mines[keys[index]].regularMinerActorId =
+				isNullOrUndefined(this.core.getActor(oldMemory.mines[keys[index]].regularMinerActorId)) ?
+				null : oldMemory.mines[keys[index]].regularMinerActorId;
+
+			this.memoryObject.mines[keys[index]].recoveryMinerActorId =
+				isNullOrUndefined(this.core.getActor(oldMemory.mines[keys[index]].recoveryMinerActorId)) ?
+				null : oldMemory.mines[keys[index]].recoveryMinerActorId;
 		}
 
 		this.lateInitiate();
@@ -105,57 +142,81 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 			return;
 
 		let room = this.core.getRoom(this.memoryObject.roomName);
-        let energy = room.energyAvailable;
 
-        let role = energy === room.energyCapacityAvailable || energy >= MAX_ENERGY_NEEDED ? MINER : RECOVERY_MINER;
+        if(room.energyAvailable === room.energyCapacityAvailable || room.energyAvailable >= MAX_ENERGY_NEEDED)
+        	return this._createFullMiner(spawnId, callbackObj);
 
-        if(role === RECOVERY_MINER && !isNullOrUndefined(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId))
-        	return;
+       	if(isNullOrUndefined(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId))
+       		this._createRecoveryMiner(spawnId, callbackObj);
+    }
 
-        let body;
-        if(role === MINER)
-        	body = new this.CreepBodyFactory()
-	            .addPattern([MOVE], 1)
-	            .addPattern([WORK], 5)
-	            .addPattern([MOVE], 4)
-	            .setSort([MOVE, WORK])
-	            .setMaxCost(energy)
-	            .fabricate();
-	    else
-	    	body = [MOVE, WORK];
+    _createRecoveryMiner(spawnId, callbackObj)
+    {
+		let body = [MOVE, WORK];
 
         let pos = this.memoryObject.mines[callbackObj.sourceId].miningSpot;
 
 		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
-            (script)=>script.initiateActor(role, {sourceId: callbackObj.sourceId, role: role},
-            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [spawnId],   body            						  ]   //0
-            , [CREEP_INSTRUCTION.MOVE_TO_POSITION,        pos                                                 ]   //1
-            , [CREEP_INSTRUCTION.MINE_UNTIL_DEATH,        callbackObj.sourceId                                ]   //2
-            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId,                       "minerDied"     ]   //3
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                                             ] ]));//4
+            (script)=>script.initiateActor(RECOVERY_MINER, callbackObj,
+            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId],   			body            	]   //0
+            , [CREEP_INSTRUCTION.MOVE_TO_POSITION,    pos                                       ]   //1
+            , [CREEP_INSTRUCTION.MINE_UNTIL_DEATH,    callbackObj.sourceId                      ]   //2
+            , [CREEP_INSTRUCTION.CALLBACK,            this.actorId,			"recoveryMinerDied"	]   //3
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                               ] ]));//4
 
-		if(role === MINER)
-		{
-			this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId = result.id;
+		this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = result.id;
+
+		this.requestMinerFor(callbackObj.sourceId);
+    }
+
+    recoveryMinerDied(callbackObj)
+    {
+    	this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = null;
+    	this.requestMinerFor(callbackObj.sourceId);
+    }
+
+    _createFullMiner(spawnId, callbackObj)
+    {
+    	let core = this.core;
+    	let findAt = function(posArr, structureType)
+    	{
+   	 		let results = _.filter(core.getRoomPosition(posArr).lookFor(LOOK_STRUCTURES),
+    			(x)=>x.structureType === structureType);
+    		if(results.length === 0)
+    			return null;
+    		return results[0];
+    	};
+
+    	let minePos = this.memoryObject.mines[callbackObj.sourceId].miningSpot;
+    	let container = findAt(minePos, STRUCTURE_CONTAINER);
+    	let link = findAt(this.memoryObject.mines[callbackObj.sourceId].linkSpot, STRUCTURE_LINK);
+
+        let mineInfo =
+        	{ minePos: minePos
+        	, sourceId: callbackObj.sourceId
+        	, containerId: container === null ? null : container.id
+        	, linkId: link === null ? null : link.id
+        	};
+
+        let callbackTo =
+        	{ actorId: this.actorId
+        	, diedFunctionName: "fullMinerDied"
+        	};
+
+	    let result = this.core.createActor(ACTOR_NAMES.CREEP_ENERGY_MINER,
+	    	(script)=> script.initiateActor(callbackTo, mineInfo, spawnId));
+
+    	this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId = result.id;
 
 			if(!isNullOrUndefined(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId))
 				this.core.removeActor(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId);
 
 			this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = null;
-			return;
-		}
-
-		this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = result.id;
-		this.requestMinerFor(callbackObj.sourceId);
     }
 
-    minerDied(callbackObj)
+    fullMinerDied(sourceId)
     {
-    	if(callbackObj.role === MINER)
-    		this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId = null;
-    	else
-    		this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = null;
-
-    	this.requestMinerFor(callbackObj.sourceId);
+    	this.memoryObject.mines[sourceId].regularMinerActorId = null;
+    	this.requestMinerFor(sourceId);
     }
 };
