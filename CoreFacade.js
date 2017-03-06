@@ -110,6 +110,17 @@ module.exports = class CoreFacade
 		this.logger.endCpuLog(text);
 	}
 
+	getStructureAt(posArr, structureType)
+	{
+   		let structs = this.getRoomPosition(posArr).lookFor(LOOK_STRUCTURES);
+		for(let index in structs)
+		{
+			if(structs[index].structureType === structureType)
+				return structs[index];
+		}
+		return null;
+    }
+
 	getRoomPosition(list)
 	{
 		if(!DEBUG)
@@ -149,6 +160,8 @@ module.exports = class CoreFacade
 
 		return new this.DebugWrapperScreeps(this, Game.getObjectById(id), "(result of objectById)");
 	}
+
+	getObjectFromId(id){return this.getObjectById(id);}
 
 	getService(serviceName, callerObj)
 	{
