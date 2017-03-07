@@ -11,7 +11,7 @@ module.exports = class ServiceCreepActions extends Service
 
 	spawn(creepName, body, spawnId)
 	{
-		this.core.getObjectById(spawnId).createCreep(body, creepName);
+		return this.core.getObjectById(spawnId).createCreep(body, creepName);
 	}
 
 	moveTo(creepName, posArray, stomp=false)
@@ -21,35 +21,37 @@ module.exports = class ServiceCreepActions extends Service
 
 		let creep = this.core.getCreep(creepName);
 		let targetPos = this.core.getRoomPosition(posArray);
-		creep.moveTo(targetPos);
+		let result = creep.moveTo(targetPos);
 
 		if(creep.pos.getRangeTo(targetPos) !== 1)
-			return;
+			return result;
 
 		let creeps = targetPos.lookFor(LOOK_CREEPS);
 		if(creeps.length === 0 || creeps[0].my === false)
-			return;
+			return result;
 
 		creeps[0].suicide();
+
+		return result;
 	}
 
 	mine(creepName, sourceId)
 	{
-		this.core.getCreep(creepName).harvest(this.core.getObjectById(sourceId));
+		return this.core.getCreep(creepName).harvest(this.core.getObjectById(sourceId));
 	}
 
 	deposit(creepName, toId, resourceType, amount=undefined)
 	{
-		this.core.getCreep(creepName).transfer(this.core.getObjectById(toId), resourceType, amount);
+		return this.core.getCreep(creepName).transfer(this.core.getObjectById(toId), resourceType, amount);
 	}
 
 	withdraw(creepName, structureId, resourceType, amount=undefined)
 	{
-		this.core.getCreep(creepName).withdraw(this.core.getObjectById(structureId), resourceType, amount);
+		return this.core.getCreep(creepName).withdraw(this.core.getObjectById(structureId), resourceType, amount);
 	}
 
 	repair(creepName, structureId)
 	{
-		this.core.getCreep(creepName).repair(this.core.getObjectById(structureId));
+		return this.core.getCreep(creepName).repair(this.core.getObjectById(structureId));
 	}
 };
