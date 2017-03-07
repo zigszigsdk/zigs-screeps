@@ -1,7 +1,6 @@
 "use strict";
 
 const ActorWithMemory = require('ActorWithMemory');
-const LINK_CAPACITY = 800;
 const LINK_MAX_TRANSFER_FILL = 799;
 
 module.exports = class ActorRoomLink extends ActorWithMemory
