@@ -67,11 +67,17 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 	{
 		let parent = this.core.getActor(this.memoryObject.parentId);
 
+
+		let layout = this.core.getService(SERVICE_NAMES.ROOM_SCORING).getRoom(this.memoryObject.roomName);
+
+		let recieversReady = !(isNullOrUndefined(this.core.getStructureAt(layout.upgrade.container, STRUCTURE_LINK)) ||
+			isNullOrUndefined(this.core.getStructureAt(layout.upgrade.container, STRUCTURE_LINK)));
+
 		let keys = Object.keys(this.memoryObject.mines);
 		for(let index in keys)
 		{
 			let link = this.core.getStructureAt(this.memoryObject.mines[keys[index]].linkSpot, STRUCTURE_LINK);
-			if(isNullOrUndefined(link))
+			if(isNullOrUndefined(link) || !recieversReady)
 			{
 				let request = new this.ResourceRequest(this.memoryObject.mines[keys[index]].miningSpot, RESOURCE_ENERGY)
 					.setRate(10)
