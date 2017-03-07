@@ -44,7 +44,7 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 				parent.requestBuilding(	[type], posList[index], priorityName);
 		};
 
-		requestBuilding(this.memoryObject.links, STRUCTURE_LINK, PRIORITY_NAMES.BUILD.STORAGE_LINK, true);
+		requestBuilding(this.memoryObject.links, STRUCTURE_LINK, PRIORITY_NAMES.BUILD.STORAGE_LINK, false);
 		requestBuilding(this.memoryObject.powerSpawns, STRUCTURE_POWER_SPAWN, PRIORITY_NAMES.BUILD.POWER_SPAWN, true);
 		requestBuilding(this.memoryObject.storages, STRUCTURE_STORAGE, PRIORITY_NAMES.BUILD.STORAGE, true);
 		requestBuilding(this.memoryObject.nukers, STRUCTURE_NUKER, PRIORITY_NAMES.BUILD.NUKER, true);
