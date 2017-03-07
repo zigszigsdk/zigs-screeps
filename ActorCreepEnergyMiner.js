@@ -1,8 +1,7 @@
 "use strict";
 
 const STATES =
-	{ INIT: 			0
-	, SPAWNING: 		1
+	{ SPAWNING: 		1
 	, MOVE: 			2
 	, MINE: 			3
 	, UNLOAD: 			4
