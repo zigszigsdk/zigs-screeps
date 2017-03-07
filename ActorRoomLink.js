@@ -53,7 +53,7 @@ module.exports = class ActorRoomLink extends ActorWithMemory
     	let flowerLink = findAt(layout.flower.link[0], STRUCTURE_LINK);
     	this.memoryObject.flowerLinkId = flowerLink === null ? null : flowerLink.id;
 
-    	let upgraderLink = findAt(layout.upgrade.linkSpot, STRUCTURE_LINK);
+    	let upgraderLink = findAt(layout.upgrade.container, STRUCTURE_LINK);
     	this.memoryObject.upgraderLinkId = upgraderLink === null ? null : upgraderLink.id;
 
     	this.memoryObject.storageLinkIds = [];

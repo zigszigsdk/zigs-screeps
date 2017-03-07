@@ -158,12 +158,9 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 				bestUpgradeScore = score;
 			}
 		}
-    	let upgradeLinkPos = roomCalc.openPosAroundTakeNearest(	this.core.getRoomPosition(upgradeContainer),
-    															nearestSource.pos);
 
         let upgrade =
         	{ container: upgradeContainer
-        	, linkSpot: [upgradeLinkPos.x, upgradeLinkPos.y, upgradeLinkPos.roomName]
         	};
 
     	_.each(roomCalc.getRoomPositionsInRange(upgradeContainer[0], upgradeContainer[1], upgradeContainer[2], 1),

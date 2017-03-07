@@ -39,13 +39,9 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		let parent = this.core.getActor(this.memoryObject.parentId);
 
 
-		parent.requestBuilding(	[STRUCTURE_CONTAINER],
+		parent.requestBuilding(	[STRUCTURE_CONTAINER, STRUCTURE_LINK],
 								this.memoryObject.energyPos,
 								PRIORITY_NAMES.BUILD.UPGRADER_CONTAINER);
-
-		parent.requestBuilding(	[STRUCTURE_LINK],
-								this.memoryObject.linkPos,
-								PRIORITY_NAMES.BUILD.UPGRADER_LINK);
 
 		let request = new this.ResourceRequest(this.memoryObject.energyPos, RESOURCE_ENERGY)
 					.setPriorityName(PRIORITY_NAMES.RESOURCE.UPGRADE)
@@ -112,12 +108,11 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
         this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
             (script)=>script.initiateActor("upgrader", {workParts: workParts},
             [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId], 						body 					] //0
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS, 		this.memoryObject.linkPos,		RESOURCE_ENERGY 		] //1
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS, 		this.memoryObject.energyPos,	RESOURCE_ENERGY,	500 ] //2
-            , [CREEP_INSTRUCTION.UPGRADE_UNTIL_EMPTY, 	this.memoryObject.controllerId 							] //3
-            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		1 														] //4
-            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,					"upgraderDied" 			] //5
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT 													  		  ] ] //6
+            , [CREEP_INSTRUCTION.PICKUP_AT_POS, 		this.memoryObject.energyPos,	RESOURCE_ENERGY			] //1
+            , [CREEP_INSTRUCTION.UPGRADE_UNTIL_EMPTY, 	this.memoryObject.controllerId 							] //2
+            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		1 														] //3
+            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,					"upgraderDied" 			] //4
+            , [CREEP_INSTRUCTION.DESTROY_SCRIPT 													  		  ] ] //5
             ));
 
         this.memoryObject.creepCount++;
