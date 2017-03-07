@@ -2,7 +2,7 @@
 
 let ActorWithMemory = require("ActorWithMemory");
 
-module.exports = class ActorProcedualCreep extends ActorWithMemory
+module.exports = class ActorRoomBooter extends ActorWithMemory
 {
     constructor(core)
     {
