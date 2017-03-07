@@ -32,6 +32,7 @@ module.exports = function()
 		, STRUCTURE_EVENTS: "ActorStructureEvents"
 		, TICK_EXPANDER: "ActorTickExpander"
 		, CREEP_ENERGY_MINER: "ActorCreepEnergyMiner"
+		, CREEP_FILLER: "ActorCreepFiller"
 		, ROOM_LINK: "ActorRoomLink"
 		};
 
