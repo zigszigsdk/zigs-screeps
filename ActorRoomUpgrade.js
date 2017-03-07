@@ -17,19 +17,13 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 
 	initiateActor(parentId, roomName)
 	{
-		let roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
-		let upgrade = roomScoring.getRoom(roomName).upgrade;
-
-		let room = this.core.getRoom(roomName);
-
 		this.memoryObject =
 			{ roomName: roomName
 			, parentId: parentId
 			, workParts: 0
-			, energyPos: upgrade.container
-			, linkPos: upgrade.linkSpot
-			, controllerId: room.controller.id
 			, creepCount: 0
+			, energyPos: this.core.getService(SERVICE_NAMES.ROOM_SCORING).getRoom(roomName).upgrade.container
+			, controllerId: this.core.getRoom(roomName).controller.id
 			};
 	}
 
@@ -51,7 +45,6 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 					.fabricate();
 
 		parent.requestResource(request);
-		parent.registerEnergyLocation(request);
 
 		this.requestCreep();
 	}
