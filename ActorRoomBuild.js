@@ -45,7 +45,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		for(let index in sites)
 			sites[index].remove();
 
-		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject)); //copy
+		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
 
 		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
 		this.memoryObject.subActorId = oldMemory.subActorId;
