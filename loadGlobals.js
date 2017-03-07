@@ -32,6 +32,7 @@ module.exports = function()
 		, STRUCTURE_EVENTS: "ActorStructureEvents"
 		, TICK_EXPANDER: "ActorTickExpander"
 		, CREEP_ENERGY_MINER: "ActorCreepEnergyMiner"
+		, ROOM_LINK: "ActorRoomLink"
 		};
 
 	global.CLASS_NAMES =

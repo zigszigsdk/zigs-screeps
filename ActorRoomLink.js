@@ -11,10 +11,11 @@ module.exports = class ActorRoomLink extends ActorWithMemory
 		super(core);
 	}
 
-	initiateActor(roomName)
+	initiateActor(parentId, roomName)
 	{
 	    this.memoryObject =
 		    { roomName: roomName
+		    , parentId: parentId
 		    , mineLinkIds: null
 		    , storageLinkIds: null
 		    , upgraderLinkId: null
@@ -27,6 +28,8 @@ module.exports = class ActorRoomLink extends ActorWithMemory
 
 		this._updateLinkIds();
 	}
+
+	lateInitiate(){}
 
 	onStructureUpdate()
 	{
@@ -107,6 +110,6 @@ module.exports = class ActorRoomLink extends ActorWithMemory
 	resetActor()
 	{
 		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
-		this.initiateActor(oldMemory.roomName);
+		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
 	}
 };

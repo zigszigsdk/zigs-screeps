@@ -33,6 +33,7 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 	        					, ACTOR_NAMES.ROOM_GUARD
 	        					, ACTOR_NAMES.ROOM_OFFENSE
 	        					, ACTOR_NAMES.ROOM_EXPLORE
+	        					, ACTOR_NAMES.ROOM_LINK
 	        					];
 
 	        for(let index in subActorNames)
