@@ -58,18 +58,18 @@ module.exports = class CreepBodyFactory
 	fabricate()
 	{
 		let bodypartPrice = ((part) =>
-        {
-            switch(part)
-            {
-                case MOVE:          return  50;
-                case CARRY:         return  50;
-                case WORK:          return 100;
-                case ATTACK:        return  80;
-                case RANGED_ATTACK: return 150;
-                case HEAL:          return 250;
-                case CLAIM:         return 600;
-                case TOUGH:         return  10;
-                default: 			return Number.MAX_SAFE_INTEGER;}});
+		{
+			switch(part)
+			{
+				case MOVE: return 50;
+				case CARRY:return 50;
+				case WORK: return 100;
+				case ATTACK: return 80;
+				case RANGED_ATTACK:return 150;
+				case HEAL: return 250;
+				case CLAIM: return 600;
+				case TOUGH: return 10;
+				default: return Number.MAX_SAFE_INTEGER;}});
 
 		let maxCost = this.data.maxCost;
 		let currentCost = 0;

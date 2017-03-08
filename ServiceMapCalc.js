@@ -1,7 +1,8 @@
 "use strict";
 
-function isNumeric(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
+function isNumeric(n)
+{
+	return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
 const Service = require('Service');
@@ -24,7 +25,7 @@ module.exports = class ServiceMapCalc extends Service
 			{ name: roomName
 			, horizontal:
 				{ half: roomName[0] //"E" or "W", matching the globals EAST and WEST
-			    , distance: roomName.substr(1, indexOfSecondLetter-1)
+				, distance: roomName.substr(1, indexOfSecondLetter-1)
 				}
 			, vertical:
 				{ half: roomName[indexOfSecondLetter] //"N" or "S", matching the globals NORTH and SOUTH

@@ -112,14 +112,14 @@ module.exports = class CoreFacade
 
 	getStructureAt(posArr, structureType)
 	{
-   		let structs = this.getRoomPosition(posArr).lookFor(LOOK_STRUCTURES);
+		let structs = this.getRoomPosition(posArr).lookFor(LOOK_STRUCTURES);
 		for(let index in structs)
 		{
 			if(structs[index].structureType === structureType)
 				return structs[index];
 		}
 		return null;
-    }
+	}
 
 	getRoomPosition(list)
 	{

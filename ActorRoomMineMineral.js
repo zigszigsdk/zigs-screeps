@@ -102,26 +102,26 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 			return;
 
 		let room = this.core.getRoom(this.memoryObject.roomName);
-        let energy = room.energyAvailable;
+		let energy = room.energyAvailable;
 
-        let	body = new this.CreepBodyFactory()
-	            .addPattern([MOVE], 1)
-	            .addPattern([WORK], 5)
-	            .addPattern([MOVE], 4)
-	            .setSort([MOVE, WORK])
-	            .setMaxCost(energy)
-	            .fabricate();
+		let	body = new this.CreepBodyFactory()
+				.addPattern([MOVE], 1)
+				.addPattern([WORK], 5)
+				.addPattern([MOVE], 4)
+				.setSort([MOVE, WORK])
+				.setMaxCost(energy)
+				.fabricate();
 
-	    let mineralId = this.memoryObject.mineral.id;
-        let miningSpot = this.memoryObject.mineral.miningSpot;
+		let mineralId = this.memoryObject.mineral.id;
+		let miningSpot = this.memoryObject.mineral.miningSpot;
 
 		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
-            (script)=>script.initiateActor(ROLE_NAME, {},
-	            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [spawnId],	body            ]   //0
-    	        , [CREEP_INSTRUCTION.MOVE_TO_POSITION,        miningSpot                 	]   //1
-        	    , [CREEP_INSTRUCTION.MINE_UNTIL_DEATH,        mineralId                     ]   //2
-            	, [CREEP_INSTRUCTION.CALLBACK,                this.actorId,	"minerDied"     ]   //3
-            	, [CREEP_INSTRUCTION.DESTROY_SCRIPT 									  ] ]));//4
+			(script)=>script.initiateActor(ROLE_NAME, {},
+				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	 [spawnId],	body			]   //0
+				, [CREEP_INSTRUCTION.MOVE_TO_POSITION,		miningSpot				 	]   //1
+				, [CREEP_INSTRUCTION.MINE_UNTIL_DEATH,		mineralId					 ]   //2
+				, [CREEP_INSTRUCTION.CALLBACK,				this.actorId,	"minerDied"	 ]   //3
+				, [CREEP_INSTRUCTION.DESTROY_SCRIPT 									  ] ]));//4
 
 		this.memoryObject.subActorId = result.id;
 	}

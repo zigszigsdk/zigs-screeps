@@ -209,10 +209,10 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			, body: body
 			};
 
-        let actorResult = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
-            (script)=>script.initiateActor("hauler", actorCallbackObj, instructions));
+		let actorResult = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+			(script)=>script.initiateActor("hauler", actorCallbackObj, instructions));
 
-        this.memoryObject.routes[callbackObj.routeIndex].subActorIds.push(actorResult.id);
+		this.memoryObject.routes[callbackObj.routeIndex].subActorIds.push(actorResult.id);
 		this.memoryObject.routes[callbackObj.routeIndex].carryParts += carryParts;
 
 		this.requestSpawn(callbackObj.routeIndex);
@@ -279,17 +279,17 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 	{
 		return [  [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId],		body 					] //00
 				, [CREEP_INSTRUCTION.MOVE_TO_POSITION,		from.parking							] //01
-            	, [CREEP_INSTRUCTION.PICKUP_AT_POS, 		from.at,		type,			from.min] //02
+				, [CREEP_INSTRUCTION.PICKUP_AT_POS, 		from.at,		type,			from.min] //02
 				, [CREEP_INSTRUCTION.GOTO_IF_TTL_LESS,		9,				175						] //03
-            	, [CREEP_INSTRUCTION.DEPOSIT_AT, 			to.at,			type,			to.max	] //04
+				, [CREEP_INSTRUCTION.DEPOSIT_AT, 			to.at,			type,			to.max	] //04
 				, [CREEP_INSTRUCTION.GOTO_IF_DEAD, 			10 										] //05
-            	, [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,	"haulCompleted"			] //06
-            	, [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		1 										] //07
-            	, [CREEP_INSTRUCTION.GOTO, 					10										] //08
+				, [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,	"haulCompleted"			] //06
+				, [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		1 										] //07
+				, [CREEP_INSTRUCTION.GOTO, 					10										] //08
 
-            	, [CREEP_INSTRUCTION.DEPOSIT_AT,			from.at,		type 					] //09
-            	, [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,	"haulerDied" 			] //10
-            	, [CREEP_INSTRUCTION.DESTROY_SCRIPT 									  		  ] ];//11
+				, [CREEP_INSTRUCTION.DEPOSIT_AT,			from.at,		type 					] //09
+				, [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,	"haulerDied" 			] //10
+				, [CREEP_INSTRUCTION.DESTROY_SCRIPT 									  		  ] ];//11
 	}
 
 	haulCompleted(callbackObj, subActorId)
@@ -331,10 +331,10 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
 		return new this.CreepBodyFactory()
-            .addPattern([CARRY, MOVE], maxRepeats)
-            .setSort([CARRY, MOVE])
-            .setMaxCost(energy)
-            .fabricate();
+			.addPattern([CARRY, MOVE], maxRepeats)
+			.setSort([CARRY, MOVE])
+			.setMaxCost(energy)
+			.fabricate();
 	}
 
 	haulerDied(callbackObj, subActorId)

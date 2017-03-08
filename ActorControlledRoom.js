@@ -13,36 +13,36 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 		{
 			let mapCalc = this.core.getService(SERVICE_NAMES.MAP_CALC);
 
-	        this.memoryObject =
-	            { room: mapCalc.parseRoomName(roomName)
-	            , creepRequests: []
-	            , controllerId: this.core.getRoom(roomName).controller.id
-	            , subActorIds: {}
-	            };
+			this.memoryObject =
+				{ room: mapCalc.parseRoomName(roomName)
+				, creepRequests: []
+				, controllerId: this.core.getRoom(roomName).controller.id
+				, subActorIds: {}
+				};
 
-	        this.core.subscribe(EVENTS.EVERY_TICK, this.actorId, "onEveryTick");
+			this.core.subscribe(EVENTS.EVERY_TICK, this.actorId, "onEveryTick");
 
-	        let subActorNames = [ ACTOR_NAMES.ROOM_REPAIR
-	        					, ACTOR_NAMES.ROOM_BUILD
-	        					, ACTOR_NAMES.ROOM_HAUL
-	        					, ACTOR_NAMES.ROOM_FILL
-	        					, ACTOR_NAMES.ROOM_UPGRADE
-	        					, ACTOR_NAMES.ROOM_MINE_ENERGY
-	        					, ACTOR_NAMES.ROOM_MINE_MINERAL
-	        					, ACTOR_NAMES.ROOM_STORAGE_KEEPER
-	        					, ACTOR_NAMES.ROOM_GUARD
-	        					, ACTOR_NAMES.ROOM_OFFENSE
-	        					, ACTOR_NAMES.ROOM_EXPLORE
-	        					, ACTOR_NAMES.ROOM_LINK
-	        					];
+			let subActorNames = [ ACTOR_NAMES.ROOM_REPAIR
+								, ACTOR_NAMES.ROOM_BUILD
+								, ACTOR_NAMES.ROOM_HAUL
+								, ACTOR_NAMES.ROOM_FILL
+								, ACTOR_NAMES.ROOM_UPGRADE
+								, ACTOR_NAMES.ROOM_MINE_ENERGY
+								, ACTOR_NAMES.ROOM_MINE_MINERAL
+								, ACTOR_NAMES.ROOM_STORAGE_KEEPER
+								, ACTOR_NAMES.ROOM_GUARD
+								, ACTOR_NAMES.ROOM_OFFENSE
+								, ACTOR_NAMES.ROOM_EXPLORE
+								, ACTOR_NAMES.ROOM_LINK
+								];
 
-	        for(let index in subActorNames)
-	        	this.memoryObject.subActorIds[subActorNames[index]] =
-	        		this.core.createActor(subActorNames[index], (script)=>
+			for(let index in subActorNames)
+				this.memoryObject.subActorIds[subActorNames[index]] =
+					this.core.createActor(subActorNames[index], (script)=>
 						script.initiateActor(this.actorId, roomName) ).id;
 
-	        for(let index in subActorNames)
-		        this.core.getActor(this.memoryObject.subActorIds[subActorNames[index]]).lateInitiate();
+			for(let index in subActorNames)
+				this.core.getActor(this.memoryObject.subActorIds[subActorNames[index]]).lateInitiate();
 		}
 
 		resetActor()

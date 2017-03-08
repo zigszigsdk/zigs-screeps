@@ -9,7 +9,7 @@ module.exports = class ServiceWithMemory
 
 	rewindService()
 	{
-        this.memoryObject = this.core.getMemory(this.constructor.name);
+		this.memoryObject = this.core.getMemory(this.constructor.name);
 	}
 
 	unwindService()

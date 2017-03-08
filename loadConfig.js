@@ -10,10 +10,10 @@ module.exports = function()
 	global.IN_NOVICEAREA = false;
 
 	global.NOVICEAREA_BOX =
-		{ top: 	  {half: SOUTH, distance: 86}
+		{ top: {half: SOUTH, distance: 86}
 		, bottom: {half: SOUTH, distance: 89}
-		, left:   {half: WEST,  distance: 24}
-		, right:  {half: WEST,  distance: 21}
+		, left: {half: WEST,  distance: 24}
+		, right: {half: WEST,  distance: 21}
 		};
 
 	global.PRIORITIES =

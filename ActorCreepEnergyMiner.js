@@ -1,15 +1,15 @@
 "use strict";
 
 const STATES =
-	{ SPAWNING: 		1
-	, MOVE: 			2
-	, MINE: 			3
-	, UNLOAD: 			4
+	{ SPAWNING:			1
+	, MOVE:				2
+	, MINE:				3
+	, UNLOAD:			4
 	, REPAIR_CONTAINER: 5
 	, REPAIR_LINK:		6
-	, REPAIR_PICKUP:    7
-	, WAIT_FOR_REGEN: 	8
-	, END: 				9
+	, REPAIR_PICKUP:	7
+	, WAIT_FOR_REGEN:	8
+	, END:				9
 	};
 
 const NAME_PREFIX = "energyMiner";
@@ -24,7 +24,7 @@ module.exports = class ActorCreepEnergyMiner extends ActorWithMemory
 	{
 		super(core);
 
-	    this.creepActions = core.getService(SERVICE_NAMES.CREEP_ACTIONS);
+		this.creepActions = core.getService(SERVICE_NAMES.CREEP_ACTIONS);
 	}
 
 	rewindActor(actorId)
@@ -36,11 +36,11 @@ module.exports = class ActorCreepEnergyMiner extends ActorWithMemory
 
 	initiateActor(callbackTo, mineInfo, spawnId)
 	{
-	    this.memoryObject =
-		    { callbackTo: callbackTo
-		    , mineInfo: mineInfo
-		    , state: STATES.SPAWNING
-		    };
+		this.memoryObject =
+			{ callbackTo: callbackTo
+			, mineInfo: mineInfo
+			, state: STATES.SPAWNING
+			};
 
 		this.creepName = NAME_PREFIX + this.memoryObject.mineInfo.sourceId;
 
@@ -51,16 +51,16 @@ module.exports = class ActorCreepEnergyMiner extends ActorWithMemory
 
 		let CreepBodyFactory = this.core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
 
-        let body = new CreepBodyFactory()
-	        .addPattern([MOVE], 1)
-	        .addPattern([WORK], 6)
-	        .addPattern([CARRY], 6)
-	        .addPattern([MOVE], 5)
-	        .setSort([MOVE, CARRY, WORK])
-	        .setMaxCost(this.core.getObjectById(spawnId).room.energyAvailable)
-	        .fabricate();
+		let body = new CreepBodyFactory()
+			.addPattern([MOVE], 1)
+			.addPattern([WORK], 6)
+			.addPattern([CARRY], 6)
+			.addPattern([MOVE], 5)
+			.setSort([MOVE, CARRY, WORK])
+			.setMaxCost(this.core.getObjectById(spawnId).room.energyAvailable)
+			.fabricate();
 
-	    this.creepActions.spawn(this.creepName, body, spawnId);
+		this.creepActions.spawn(this.creepName, body, spawnId);
 	}
 
 	onEveryTick()

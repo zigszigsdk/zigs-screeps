@@ -141,32 +141,32 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 
 	createFixer(spawnId)
 	{
-        let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
+		let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
-        let body = new this.CreepBodyFactory()
-            .addPattern([MOVE, CARRY, WORK], 5)
-            .addPattern([MOVE], 5)
-            .setMaxCost(energy)
-            .fabricate();
+		let body = new this.CreepBodyFactory()
+			.addPattern([MOVE, CARRY, WORK], 5)
+			.addPattern([MOVE], 5)
+			.setMaxCost(energy)
+			.fabricate();
 
-        let job = this.memoryObject.jobs[this.memoryObject.jobPointer];
+		let job = this.memoryObject.jobs[this.memoryObject.jobPointer];
 
 		let actorRes = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
-            (script)=>script.initiateActor("fixer", {},
-	            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId], 		body 					] //0
-	            , [CREEP_INSTRUCTION.PICKUP_AT_POS, 		job.energyAt, 	RESOURCE_ENERGY			] //1
-	            , [CREEP_INSTRUCTION.FIX_AT, 				job.maintainAt, job.maintainType 		] //2
-	            , [CREEP_INSTRUCTION.GOTO_IF_DEAD,			7										] //3
-	            , [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, 	job.maintainAt, job.maintainType,	1	] //4
-	            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId, 	"repairComplete"		] //5
-	            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		2										] //6
-	            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId, 	"fixerDied"				] //7
-	            , [CREEP_INSTRUCTION.DESTROY_SCRIPT												  ] ] //8
-        	)
-        );
+			(script)=>script.initiateActor("fixer", {},
+				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId],		body					] //0
+				, [CREEP_INSTRUCTION.PICKUP_AT_POS,			job.energyAt,	RESOURCE_ENERGY			] //1
+				, [CREEP_INSTRUCTION.FIX_AT,				job.maintainAt,	job.maintainType		] //2
+				, [CREEP_INSTRUCTION.GOTO_IF_DEAD,			7										] //3
+				, [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED,		job.maintainAt,	job.maintainType,	1	] //4
+				, [CREEP_INSTRUCTION.CALLBACK,				this.actorId,	"repairComplete"		] //5
+				, [CREEP_INSTRUCTION.GOTO_IF_ALIVE,			2										] //6
+				, [CREEP_INSTRUCTION.CALLBACK,				this.actorId,	"fixerDied"				] //7
+				, [CREEP_INSTRUCTION.DESTROY_SCRIPT												  ] ] //8
+			)
+		);
 
 		this.memoryObject.creepRequested = false;
-        this.memoryObject.subActorId = actorRes.id;
+		this.memoryObject.subActorId = actorRes.id;
 	}
 
 	updateSubActor()
@@ -193,12 +193,12 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 		if(subActor === null) //died on same tick as completed
 			return;
 
-        let job = this.memoryObject.jobs[this.memoryObject.jobPointer];
+		let job = this.memoryObject.jobs[this.memoryObject.jobPointer];
 
 		subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS, 	 job.energyAt, 	 RESOURCE_ENERGY	]);
 		subActor.replaceInstruction(2, [CREEP_INSTRUCTION.FIX_AT, 			 job.maintainAt, job.maintainType 	]);
-	    subActor.replaceInstruction(4, [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, job.maintainAt, job.maintainType, 1]);
-	    subActor.setPointer(2);
+		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, job.maintainAt, job.maintainType, 1]);
+		subActor.setPointer(2);
 	}
 
 	fixerDied()

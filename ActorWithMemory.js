@@ -10,27 +10,27 @@ module.exports = class ActorWithMemory
 	rewindActor(actorId)
 	{
 		this.actorId = actorId;
-        this.bankKey = this.constructor.name + ":" + actorId;
+		this.bankKey = this.constructor.name + ":" + actorId;
 
-        this.memoryObject = this.core.getMemory(this.bankKey);
+		this.memoryObject = this.core.getMemory(this.bankKey);
 	}
 
 	initiateActor(roomName)
-    {
-    	this.memoryObject = {};
-    }
+	{
+		this.memoryObject = {};
+	}
 
-    resetActor(){}
+	resetActor(){}
 
-    unwindActor()
-    {
-        this.core.setMemory(this.bankKey, this.memoryObject);
-    }
+	unwindActor()
+	{
+		this.core.setMemory(this.bankKey, this.memoryObject);
+	}
 
-    removeActor()
-    {
-        this.core.eraseMemory(this.bankKey);
-        this.memoryObject = null;
-    }
+	removeActor()
+	{
+		this.core.eraseMemory(this.bankKey);
+		this.memoryObject = null;
+	}
 
 };

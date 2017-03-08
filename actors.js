@@ -4,206 +4,206 @@ const MEMORY_KEYWORD = "core:actors";
 
 module.exports = class Actors
 {
-    constructor(core)
-    {
-        this.core = core;
-        this.localCache =
-            { actors: {}
-            , classes: {}
-            , outdatedActors: {}
-            };
-    }
+	constructor(core)
+	{
+		this.core = core;
+		this.localCache =
+			{ actors: {}
+			, classes: {}
+			, outdatedActors: {}
+			};
+	}
 
-    rewindCore()
-    {
-        this.memoryObject = this.core.getMemory(MEMORY_KEYWORD);
+	rewindCore()
+	{
+		this.memoryObject = this.core.getMemory(MEMORY_KEYWORD);
 
-        for(let actorId in this.localCache.actors)
-            this.localCache.outdatedActors[actorId] = this.localCache.actors[actorId];
+		for(let actorId in this.localCache.actors)
+			this.localCache.outdatedActors[actorId] = this.localCache.actors[actorId];
 
-        this.localCache.actors = {};
-    }
+		this.localCache.actors = {};
+	}
 
-    hardResetCore()
-    {
-        this.memoryObject =
-            { actorIdCounter: 0
-            , scriptNameFromId: {}
-            , aliases: {}
-            , debugWrap: false
-            };
+	hardResetCore()
+	{
+		this.memoryObject =
+			{ actorIdCounter: 0
+			, scriptNameFromId: {}
+			, aliases: {}
+			, debugWrap: false
+			};
 
-        this.localCache =
-            { actors: {}
-            , classes: {}
-            , outdatedActors: {}
-            };
-    }
+		this.localCache =
+			{ actors: {}
+			, classes: {}
+			, outdatedActors: {}
+			};
+	}
 
-    unwindCore()
-    {
-        for (let actorId in this.localCache.actors)
-        {
-            if (!this.localCache.actors.hasOwnProperty(actorId))
-                continue;
+	unwindCore()
+	{
+		for (let actorId in this.localCache.actors)
+		{
+			if (!this.localCache.actors.hasOwnProperty(actorId))
+				continue;
 
-             this.localCache.actors[actorId].unwindActor();
-        }
+			 this.localCache.actors[actorId].unwindActor();
+		}
 
-        this.core.setMemory(MEMORY_KEYWORD, this.memoryObject);
-    }
+		this.core.setMemory(MEMORY_KEYWORD, this.memoryObject);
+	}
 
-    getFromId(actorId)
-    {
-        if(this.localCache.actors[actorId])
-            return this.localCache.actors[actorId];
+	getFromId(actorId)
+	{
+		if(this.localCache.actors[actorId])
+			return this.localCache.actors[actorId];
 
-        if(this.localCache.outdatedActors[actorId])
-        {
-            this.core.startCpuLog("rewinding actor");
-            let actor = this.localCache.outdatedActors[actorId];
-            actor.rewindActor(Number(actorId));
-            this.localCache.actors[actorId] = actor;
-            this.core.endCpuLog("rewinding actor");
-            return actor;
-        }
+		if(this.localCache.outdatedActors[actorId])
+		{
+			this.core.startCpuLog("rewinding actor");
+			let actor = this.localCache.outdatedActors[actorId];
+			actor.rewindActor(Number(actorId));
+			this.localCache.actors[actorId] = actor;
+			this.core.endCpuLog("rewinding actor");
+			return actor;
+		}
 
-        let scriptName = this.getScriptname(actorId);
+		let scriptName = this.getScriptname(actorId);
 
-        if(typeof scriptName === UNDEFINED || scriptName === null)
-        {
-            this.core.logWarning("attempted to actors.getFromId with invalid details. Scriptname: " +
-                scriptName + ", actorId: " + actorId);
-            return null;
-        }
+		if(typeof scriptName === UNDEFINED || scriptName === null)
+		{
+			this.core.logWarning("attempted to actors.getFromId with invalid details. Scriptname: " +
+				scriptName + ", actorId: " + actorId);
+			return null;
+		}
 
-        if(!this.localCache.classes[scriptName])
-        {
-            this.core.startCpuLog("load actor class script");
-            try //insure that one failing actor can't take the core and thus all actors down.
-            {
-                this.localCache.classes[scriptName] = require(scriptName);
-            }
-            catch(error)
-            {
-                this.core.endCpuLog("load actor class script");
-                this.core.logError("error requiring script " + scriptName, error);
-                return;
-            }
-            this.core.endCpuLog("load actor class script");
-        }
+		if(!this.localCache.classes[scriptName])
+		{
+			this.core.startCpuLog("load actor class script");
+			try //insure that one failing actor can't take the core and thus all actors down.
+			{
+				this.localCache.classes[scriptName] = require(scriptName);
+			}
+			catch(error)
+			{
+				this.core.endCpuLog("load actor class script");
+				this.core.logError("error requiring script " + scriptName, error);
+				return;
+			}
+			this.core.endCpuLog("load actor class script");
+		}
 
-        this.core.startCpuLog("instanciate actor script");
+		this.core.startCpuLog("instanciate actor script");
 
-        let ActorClass = this.localCache.classes[scriptName];
-        let actor;
+		let ActorClass = this.localCache.classes[scriptName];
+		let actor;
 
-        if(DEBUG)
-        {
-            let DebugWrapperActor = require("DebugWrapperActor");
-            actor = new DebugWrapperActor(ActorClass, actorId, this.core);
-        }
-        else
-            actor = new ActorClass(this.core);
+		if(DEBUG)
+		{
+			let DebugWrapperActor = require("DebugWrapperActor");
+			actor = new DebugWrapperActor(ActorClass, actorId, this.core);
+		}
+		else
+			actor = new ActorClass(this.core);
 
-        this.core.endCpuLog("instanciate actor script");
+		this.core.endCpuLog("instanciate actor script");
 
-        actor.rewindActor(Number(actorId));
+		actor.rewindActor(Number(actorId));
 
-        this.localCache.actors[actorId] = actor;
+		this.localCache.actors[actorId] = actor;
 
-        return actor;
-    }
+		return actor;
+	}
 
-    createNew(scriptName, initFunc)
-    {
-        if(!this.localCache.classes[scriptName])
-        {
-            try //insure that one failing actor can't take the core and thus all actors down.
-            {
-                this.localCache.classes[scriptName] = require(scriptName);
-            }
-            catch(error)
-            {
-                this.core.logError("error requiring script " + scriptName, error);
-                return;
-            }
-        }
+	createNew(scriptName, initFunc)
+	{
+		if(!this.localCache.classes[scriptName])
+		{
+			try //insure that one failing actor can't take the core and thus all actors down.
+			{
+				this.localCache.classes[scriptName] = require(scriptName);
+			}
+			catch(error)
+			{
+				this.core.logError("error requiring script " + scriptName, error);
+				return;
+			}
+		}
 
-        let actor;
+		let actor;
 
-        let ActorClass = this.localCache.classes[scriptName];
+		let ActorClass = this.localCache.classes[scriptName];
 
-        let actorId = this.memoryObject.actorIdCounter++;
+		let actorId = this.memoryObject.actorIdCounter++;
 
-        if(DEBUG)
-        {
-            let DebugWrapperActor = require("DebugWrapperActor");
-            actor = new DebugWrapperActor(ActorClass, actorId, this.core);
-        }
-        else
-            actor = new ActorClass(this.core);
+		if(DEBUG)
+		{
+			let DebugWrapperActor = require("DebugWrapperActor");
+			actor = new DebugWrapperActor(ActorClass, actorId, this.core);
+		}
+		else
+			actor = new ActorClass(this.core);
 
-        this.memoryObject.scriptNameFromId[actorId] = scriptName;
-        this.localCache.actors[actorId] = actor;
+		this.memoryObject.scriptNameFromId[actorId] = scriptName;
+		this.localCache.actors[actorId] = actor;
 
-        actor.rewindActor(Number(actorId));
+		actor.rewindActor(Number(actorId));
 
-        if(initFunc === null || initFunc === undefined)
-            actor.initiateActor();
-        else
-            initFunc(actor);
+		if(initFunc === null || initFunc === undefined)
+			actor.initiateActor();
+		else
+			initFunc(actor);
 
-        return  { actor: actor
-                , id: actorId
-                };
-    }
+		return  { actor: actor
+				, id: actorId
+				};
+	}
 
-    removeActor(actorId)
-    {
-        let actor = this.getFromId(actorId);
-        if(actor)
-            actor.removeActor();
+	removeActor(actorId)
+	{
+		let actor = this.getFromId(actorId);
+		if(actor)
+			actor.removeActor();
 
-        delete this.localCache.actors[actorId];
-        delete this.localCache.outdatedActors[actorId];
-        delete this.memoryObject.scriptNameFromId[actorId];
-    }
+		delete this.localCache.actors[actorId];
+		delete this.localCache.outdatedActors[actorId];
+		delete this.memoryObject.scriptNameFromId[actorId];
+	}
 
-    registerAlias(actorId, alias)
-    {
-        this.memoryObject.aliases[alias] = actorId;
-    }
+	registerAlias(actorId, alias)
+	{
+		this.memoryObject.aliases[alias] = actorId;
+	}
 
-    getFromAlias(alias)
-    {
-        return this.getFromId(this.memoryObject.aliases[alias]);
-    }
+	getFromAlias(alias)
+	{
+		return this.getFromId(this.memoryObject.aliases[alias]);
+	}
 
-    removeAlias(alias)
-    {
-        delete this.memoryObject.aliases[alias];
-    }
+	removeAlias(alias)
+	{
+		delete this.memoryObject.aliases[alias];
+	}
 
-    getScriptname(actorId)
-    {
-        return this.memoryObject.scriptNameFromId[actorId];
-    }
+	getScriptname(actorId)
+	{
+		return this.memoryObject.scriptNameFromId[actorId];
+	}
 
-    resetActor(actorId)
-    {
-        let actor = this.getFromId(actorId);
+	resetActor(actorId)
+	{
+		let actor = this.getFromId(actorId);
 
-        if(isUndefinedOrNull(actor))
-            return;
-        actor.resetActor();
-    }
+		if(isUndefinedOrNull(actor))
+			return;
+		actor.resetActor();
+	}
 
-    resetAll()
-    {
-        let actorIds = Object.keys(this.memoryObject.scriptNameFromId);
+	resetAll()
+	{
+		let actorIds = Object.keys(this.memoryObject.scriptNameFromId);
 
-        for(let idIndex in actorIds)
-            this.resetActor(actorIds[idIndex]);
-    }
+		for(let idIndex in actorIds)
+			this.resetActor(actorIds[idIndex]);
+	}
 };

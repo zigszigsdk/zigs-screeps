@@ -22,7 +22,7 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 	constructor(core)
 	{
 		super(core);
-	    this.creepActions = core.getService(SERVICE_NAMES.CREEP_ACTIONS);
+		this.creepActions = core.getService(SERVICE_NAMES.CREEP_ACTIONS);
 	}
 
 	rewindActor(actorId)
@@ -62,10 +62,10 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 		}
 
 
-	    this.memoryObject =
-		    { callbackTo: callbackTo
-		    , roomName: roomName
-		    , state: STATES.SPAWNING
+		this.memoryObject =
+			{ callbackTo: callbackTo
+			, roomName: roomName
+			, state: STATES.SPAWNING
 			, containerId: isNullOrUndefined(container) ? null : container.id
 			, linkId: isNullOrUndefined(link) ? null : link.id
 			, storageId: isNullOrUndefined(storage) ? null : storage.id
@@ -73,7 +73,7 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 			, linkPos: [link.pos.x, link.pos.y, link.room.name]
 			, storagePos: [storage.pos.x, storage.pos.y, storage.room.name]
 			, targetIds: targetIds
-		    };
+			};
 
 		this.creepName = NAME_PREFIX + roomName;
 
@@ -84,15 +84,15 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 
 		let CreepBodyFactory = this.core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
 
-        let body = new CreepBodyFactory()
-	        .addPattern([CARRY, MOVE], 4)
-	        .addPattern([WORK], 1)
-	        .addPattern([CARRY], 7)
-	        .setSort([WORK, CARRY, MOVE])
-	        .setMaxCost(this.core.getObjectById(spawnHereId).room.energyAvailable)
-	        .fabricate();
+		let body = new CreepBodyFactory()
+			.addPattern([CARRY, MOVE], 4)
+			.addPattern([WORK], 1)
+			.addPattern([CARRY], 7)
+			.setSort([WORK, CARRY, MOVE])
+			.setMaxCost(this.core.getObjectById(spawnHereId).room.energyAvailable)
+			.fabricate();
 
-	    this.creepActions.spawn(this.creepName, body, spawnHereId);
+		this.creepActions.spawn(this.creepName, body, spawnHereId);
 	}
 
 	onEveryTick()
@@ -242,26 +242,26 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 			}
 			case STATES.FILL_ROOM:
 			{
-                let candidates = [];
+				let candidates = [];
 
-                this.memoryObject.targetIds.forEach((targetId) =>
-                {
-                    let candidate = this.core.getObjectById(targetId);
+				this.memoryObject.targetIds.forEach((targetId) =>
+				{
+					let candidate = this.core.getObjectById(targetId);
 
-                    if(candidate && candidate.energy !== candidate.energyCapacity)
-                        candidates.push(candidate);
-                });
+					if(candidate && candidate.energy !== candidate.energyCapacity)
+						candidates.push(candidate);
+				});
 
-                if(candidates.length === 0)
-                    return;
+				if(candidates.length === 0)
+					return;
 
-                let creep = this.core.getCreep(this.creepName);
-                let target = creep.pos.findClosestByPath(candidates);
+				let creep = this.core.getCreep(this.creepName);
+				let target = creep.pos.findClosestByPath(candidates);
 
-                if(creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
-                    creep.moveTo(target);
+				if(creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+					creep.moveTo(target);
 
-                break;
+				break;
 
 			}
 			case STATES.OFFDUTY_FILL_SELF:

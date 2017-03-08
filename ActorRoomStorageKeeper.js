@@ -88,8 +88,8 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 		let energy = room.energyAvailable;
 
 		let body = new this.CreepBodyFactory()
-	        .addPattern([CARRY, CARRY, MOVE], 8)
-            .setMaxCost(energy)
-            .fabricate();
+			.addPattern([CARRY, CARRY, MOVE], 8)
+			.setMaxCost(energy)
+			.fabricate();
 	}
 };

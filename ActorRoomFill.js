@@ -178,11 +178,11 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 		let room = this.core.getRoom(this.memoryObject.roomName);
 
-        if(room.energyAvailable === room.energyCapacityAvailable ||
-        	room.energyAvailable >= FULL_FILLER_ENERGY_COST)
-        	this._createFiller(spawnId);
-        else
-        	this._createRecoveryFiller(spawnId);
+		if(room.energyAvailable === room.energyCapacityAvailable ||
+			room.energyAvailable >= FULL_FILLER_ENERGY_COST)
+			this._createFiller(spawnId);
+		else
+			this._createRecoveryFiller(spawnId);
 	}
 	_createRecoveryFiller(spawnId)
 	{
@@ -202,27 +202,27 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		let extensions = getId(spawn.room.find(FIND_STRUCTURES, FILTERS.EXTENSIONS));
 		let spawns = getId(spawn.room.find(FIND_STRUCTURES, FILTERS.SPAWNS));
 
-	    let body = [MOVE, MOVE, MOVE, CARRY, CARRY, CARRY];
+		let body = [MOVE, MOVE, MOVE, CARRY, CARRY, CARRY];
 
-	    let containerPoint = this.memoryObject.containers[0];
-	    let linkPoint = this.memoryObject.links[0];
+		let containerPoint = this.memoryObject.containers[0];
+		let linkPoint = this.memoryObject.links[0];
 
 		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor("recoveryFiller", {},
-            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,         [spawnId],   		body            ] //0
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS,               linkPoint,   		RESOURCE_ENERGY ] //1
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS,               containerPoint,   RESOURCE_ENERGY ] //2
-            , [CREEP_INSTRUCTION.PICKUP_AT_NEAREST,           backupPoints,     RESOURCE_ENERGY ] //3
-            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  towers          ] //4
-            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  extensions      ] //5
-            , [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,    RESOURCE_ENERGY,  spawns  		] //6
-            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,               1                 				] //7
-            , [CREEP_INSTRUCTION.CALLBACK,                    this.actorId,     "fillerDied"    ] //8
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                 			  ] ] //9
-        ));
+			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,		[spawnId],			body			] //0
+			, [CREEP_INSTRUCTION.PICKUP_AT_POS,				linkPoint,			RESOURCE_ENERGY	] //1
+			, [CREEP_INSTRUCTION.PICKUP_AT_POS,				containerPoint,		RESOURCE_ENERGY	] //2
+			, [CREEP_INSTRUCTION.PICKUP_AT_NEAREST,			backupPoints,		RESOURCE_ENERGY	] //3
+			, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,	RESOURCE_ENERGY,	towers			] //4
+			, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,	RESOURCE_ENERGY,extensions			] //5
+			, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY,	RESOURCE_ENERGY,spawns				] //6
+			, [CREEP_INSTRUCTION.GOTO_IF_ALIVE,				1									] //7
+			, [CREEP_INSTRUCTION.CALLBACK,					this.actorId,	"fillerDied"		] //8
+			, [CREEP_INSTRUCTION.DESTROY_SCRIPT												  ] ] //9
+		));
 
-    	this.memoryObject.recoveryFillActorId = result.id;
-    	this.requestFiller();
+		this.memoryObject.recoveryFillActorId = result.id;
+		this.requestFiller();
 	}
 
 	_createFiller(spawnId)
@@ -236,11 +236,11 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			(script)=>script.initiateActor(callbackTo, this.memoryObject.roomName, spawnId));
 
 		this.memoryObject.regularFillActorId = result.id;
-       	if(this.memoryObject.recoveryFillActorId !== null)
-       	{
-       		this.core.removeActor(this.memoryObject.recoveryFillActorId);
-       		this.memoryObject.recoveryFillActorId = null;
-       	}
+		if(this.memoryObject.recoveryFillActorId !== null)
+		{
+			this.core.removeActor(this.memoryObject.recoveryFillActorId);
+			this.memoryObject.recoveryFillActorId = null;
+		}
 
 	}
 

@@ -218,8 +218,8 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 		let subActor = this.core.getActor(this.memoryObject.subActorId);
 
-		subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS,        energyPos, RESOURCE_ENERGY, ENERGY_LIMIT]);
-		subActor.replaceInstruction(2, [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,    buildPos,  structureType     			]);
+		subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS,		energyPos, RESOURCE_ENERGY, ENERGY_LIMIT]);
+		subActor.replaceInstruction(2, [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,	buildPos,  structureType	 			]);
 		subActor.replaceInstruction(3, [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, buildPos,  structureType,   6			]);
 		subActor.setPointer(1);
 
@@ -317,17 +317,17 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		if(this.memoryObject.subActorId !== null)
 			return;
 
-        if(this.memoryObject.currentTask === null)
-        {
-        	this.update();
-        	if(this.memoryObject.currentTask === null)
-        		return;
-        }
+		if(this.memoryObject.currentTask === null)
+		{
+			this.update();
+			if(this.memoryObject.currentTask === null)
+				return;
+		}
 
 		let body = new this.CreepBodyFactory()
-            .addPattern([WORK, CARRY, MOVE, MOVE], 5)
-            .setMaxCost(this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable)
-            .fabricate();
+			.addPattern([WORK, CARRY, MOVE, MOVE], 5)
+			.setMaxCost(this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable)
+			.fabricate();
 
 
 		let structureType = this.memoryObject.currentTask.structureType;
@@ -338,18 +338,18 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		callbackObj.type = structureType;
 
 		let actorObj = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
-        	(script)=>script.initiateActor("builder", callbackObj,
-        	    [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,     [spawnId],	body               				] //0
-	            , [CREEP_INSTRUCTION.PICKUP_AT_POS,           energyPos,	RESOURCE_ENERGY,  ENERGY_LIMIT	] //1
-	            , [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,       buildPos,		structureType      				] //2
-	            , [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT,    buildPos,     structureType,    6				] //3
-	            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE,           1             				   				] //4
-	            , [CREEP_INSTRUCTION.GOTO,                    7             				   				] //5
-	            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId, "buildCompleted"   				] //6
-	            , [CREEP_INSTRUCTION.RECYCLE_CREEP                          				   				] //7
-	            , [CREEP_INSTRUCTION.CALLBACK,                this.actorId, "builderDied"      				] //8
-	            , [CREEP_INSTRUCTION.DESTROY_SCRIPT                                        				  ] ] //9
-        ));
+			(script)=>script.initiateActor("builder", callbackObj,
+				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId],		body						] //0
+				, [CREEP_INSTRUCTION.PICKUP_AT_POS,			energyPos,		RESOURCE_ENERGY,ENERGY_LIMIT] //1
+				, [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,		buildPos,		structureType				] //2
+				, [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT,	buildPos,		structureType,	6			] //3
+				, [CREEP_INSTRUCTION.GOTO_IF_ALIVE,			1											] //4
+				, [CREEP_INSTRUCTION.GOTO,					7											] //5
+				, [CREEP_INSTRUCTION.CALLBACK,				this.actorId,	"buildCompleted"			] //6
+				, [CREEP_INSTRUCTION.RECYCLE_CREEP														] //7
+				, [CREEP_INSTRUCTION.CALLBACK,				this.actorId,	"builderDied"				] //8
+				, [CREEP_INSTRUCTION.DESTROY_SCRIPT													  ] ] //9
+		));
 
 		this.memoryObject.subActorId = actorObj.id;
 	}

@@ -76,42 +76,42 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 
 		let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
-        let body = new this.CreepBodyFactory()
-            .addPattern([CARRY, WORK, WORK, MOVE], 1)
-            .addPattern(Array(2).fill(WORK), 1)
-            .addPattern([MOVE], 3)
-            .addPattern(Array(1).fill(WORK), 1)
-            .addPattern([MOVE], 1)
-            .addPattern(Array(5).fill(WORK), 1)
-            .addPattern([MOVE], 5)
-            .addPattern([CARRY], 4)
-            .addPattern(Array(10).fill(WORK), 1)
-            .addPattern([MOVE], 10)
-            .addPattern([CARRY], 5)
-            .setSort([MOVE, CARRY, WORK])
-            .setMaxCost(energy)
-            .fabricate();
+		let body = new this.CreepBodyFactory()
+			.addPattern([CARRY, WORK, WORK, MOVE], 1)
+			.addPattern(Array(2).fill(WORK), 1)
+			.addPattern([MOVE], 3)
+			.addPattern(Array(1).fill(WORK), 1)
+			.addPattern([MOVE], 1)
+			.addPattern(Array(5).fill(WORK), 1)
+			.addPattern([MOVE], 5)
+			.addPattern([CARRY], 4)
+			.addPattern(Array(10).fill(WORK), 1)
+			.addPattern([MOVE], 10)
+			.addPattern([CARRY], 5)
+			.setSort([MOVE, CARRY, WORK])
+			.setMaxCost(energy)
+			.fabricate();
 
-        let workParts = 0;
+		let workParts = 0;
 
-        for(let index in body)
-        	if(body[index] === WORK)
-        		workParts++;
+		for(let index in body)
+			if(body[index] === WORK)
+				workParts++;
 
-        this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
-            (script)=>script.initiateActor("upgrader", {workParts: workParts},
-            [ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId], 						body 					] //0
-            , [CREEP_INSTRUCTION.PICKUP_AT_POS, 		this.memoryObject.energyPos,	RESOURCE_ENERGY			] //1
-            , [CREEP_INSTRUCTION.UPGRADE_UNTIL_EMPTY, 	this.memoryObject.controllerId 							] //2
-            , [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 		1 														] //3
-            , [CREEP_INSTRUCTION.CALLBACK, 				this.actorId,					"upgraderDied" 			] //4
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT 													  		  ] ] //5
-            ));
+		this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+			(script)=>script.initiateActor("upgrader", {workParts: workParts},
+			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId],						body					] //0
+			, [CREEP_INSTRUCTION.PICKUP_AT_POS,			this.memoryObject.energyPos,	RESOURCE_ENERGY			] //1
+			, [CREEP_INSTRUCTION.UPGRADE_UNTIL_EMPTY,	this.memoryObject.controllerId							] //2
+			, [CREEP_INSTRUCTION.GOTO_IF_ALIVE,			1														] //3
+			, [CREEP_INSTRUCTION.CALLBACK,				this.actorId,					"upgraderDied"			] //4
+			, [CREEP_INSTRUCTION.DESTROY_SCRIPT																  ] ] //5
+			));
 
-        this.memoryObject.creepCount++;
+		this.memoryObject.creepCount++;
 		this.memoryObject.workParts += workParts;
 
-        if(this.memoryObject.workParts < TARGET_WORKPARTS && this.memoryObject.creepCount < MAX_CREEPS)
+		if(this.memoryObject.workParts < TARGET_WORKPARTS && this.memoryObject.creepCount < MAX_CREEPS)
 			this.requestCreep();
 	}
 

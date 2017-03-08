@@ -133,10 +133,10 @@ module.exports = class DebugWrapperScreeps
 							{
 								return new DebugWrapperScreeps(core, apiObj[propertyName], propertyName);
 							}
-             			, "set": function() { return; }
-        				};
+			 			, "set": function() { return; }
+						};
 
-				    Object.defineProperties(this, definitionObj);
+					Object.defineProperties(this, definitionObj);
 
 					break;
 

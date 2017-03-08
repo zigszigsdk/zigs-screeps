@@ -77,9 +77,9 @@ module.exports = class ActorRoomExplore extends ActorWithMemory
 
 		let result = this._createSubactor(spawnId, this.memoryObject.nextRoomName);
 
-        this.memoryObject.subActorIds.push(result.id);
+		this.memoryObject.subActorIds.push(result.id);
 
-        this._setupNextRoom();
+		this._setupNextRoom();
 	}
 
 	_reRequestCreep()
@@ -101,7 +101,7 @@ module.exports = class ActorRoomExplore extends ActorWithMemory
 
 		let result = this._createSubactor(spawnId, this.memoryObject.roomsForRespawn.shift());
 
-        this.memoryObject.subActorIds.push(result.id);
+		this.memoryObject.subActorIds.push(result.id);
 	}
 
 	_createSubactor(spawnId, roomName)
@@ -111,19 +111,19 @@ module.exports = class ActorRoomExplore extends ActorWithMemory
 		let callbackObj = {roomName: roomName};
 
 		let instructions =
-			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId],   	body            			] //0
-            , [CREEP_INSTRUCTION.MOVE_TO_ROOM,    		roomName,		true						] //1
-            , [CREEP_INSTRUCTION.GOTO_IF_DEAD,			7											] //2
-            , [CREEP_INSTRUCTION.CALLBACK,            	this.actorId, 	"explorerArrived"     		] //3
-            , [CREEP_INSTRUCTION.WAIT_UNTIL_DEATH                                                   ] //4
-            , [CREEP_INSTRUCTION.CALLBACK,				this.actorId,	"explorerDiedAfterArrival"	] //5
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT													    ] //6
+			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	[spawnId],		body						] //0
+			, [CREEP_INSTRUCTION.MOVE_TO_ROOM,			roomName,		true						] //1
+			, [CREEP_INSTRUCTION.GOTO_IF_DEAD,			7											] //2
+			, [CREEP_INSTRUCTION.CALLBACK,				this.actorId,	"explorerArrived"			] //3
+			, [CREEP_INSTRUCTION.WAIT_UNTIL_DEATH													] //4
+			, [CREEP_INSTRUCTION.CALLBACK,				this.actorId,	"explorerDiedAfterArrival"	] //5
+			, [CREEP_INSTRUCTION.DESTROY_SCRIPT														] //6
 
-            , [CREEP_INSTRUCTION.CALLBACK,            	this.actorId,	"explorerDiedBeforeArrival"	] //7
-            , [CREEP_INSTRUCTION.DESTROY_SCRIPT													  ] ];//8
+			, [CREEP_INSTRUCTION.CALLBACK,				this.actorId,	"explorerDiedBeforeArrival"	] //7
+			, [CREEP_INSTRUCTION.DESTROY_SCRIPT													  ] ];//8
 
-        return this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
-            (script)=>script.initiateActor(ROLE_NAME, callbackObj, instructions));
+		return this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+			(script)=>script.initiateActor(ROLE_NAME, callbackObj, instructions));
 	}
 
 	explorerArrived(callbackObj)
@@ -158,9 +158,9 @@ module.exports = class ActorRoomExplore extends ActorWithMemory
 
 	_removeSubactor(subActorId)
 	{
-    	let index = this.memoryObject.subActorIds.indexOf(subActorId);
+		let index = this.memoryObject.subActorIds.indexOf(subActorId);
 		if(index !== -1)
-    		this.memoryObject.subActorIds.splice(index, 1);
+			this.memoryObject.subActorIds.splice(index, 1);
 
 	}
 };

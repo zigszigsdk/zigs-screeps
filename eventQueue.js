@@ -2,29 +2,29 @@
 
 module.exports = class EventQueue
 {
-    rewindCore()
-    {
-        this.queue = [EVENTS.EVERY_TICK, EVENTS.EVERY_TICK_EARLY];
+	rewindCore()
+	{
+		this.queue = [EVENTS.EVERY_TICK, EVENTS.EVERY_TICK_EARLY];
 
-        if(Game.cpu.bucket >= REQUIRED_BUCKET_FOR_LATE_TICK)
-            this.rearLoad(EVENTS.EVERY_TICK_LATE);
-    }
+		if(Game.cpu.bucket >= REQUIRED_BUCKET_FOR_LATE_TICK)
+			this.rearLoad(EVENTS.EVERY_TICK_LATE);
+	}
 
-    frontLoad(item)
-    {
-        this.queue.push(item);
-    }
+	frontLoad(item)
+	{
+		this.queue.push(item);
+	}
 
-    rearLoad(item)
-    {
-        this.queue.unshift(item);
-    }
+	rearLoad(item)
+	{
+		this.queue.unshift(item);
+	}
 
-    next()
-    {
-        if(this.queue.length === 0)
-            return null;
+	next()
+	{
+		if(this.queue.length === 0)
+			return null;
 
-        return this.queue.pop();
-    }
+		return this.queue.pop();
+	}
 };

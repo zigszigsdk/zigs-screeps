@@ -50,12 +50,12 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 
 	onEveryTick()
 	{
-        let room = this.core.getRoom(this.memoryObject.roomName);
+		let room = this.core.getRoom(this.memoryObject.roomName);
 
-        let enemies = room.find(FIND_HOSTILE_CREEPS);
+		let enemies = room.find(FIND_HOSTILE_CREEPS);
 
-        if(enemies.length === 0)
-            return;
+		if(enemies.length === 0)
+			return;
 
 		for(let index in this.memoryObject.towerLocations)
 		{
@@ -63,22 +63,22 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 
 			let towerRp = this.core.getRoomPosition(towerPos);
 
-	        let structs = towerRp.lookFor(LOOK_STRUCTURES);
+			let structs = towerRp.lookFor(LOOK_STRUCTURES);
 
-	        if(structs.length === 0 || structs[0].structureType !== STRUCTURE_TOWER)
-	            continue;
+			if(structs.length === 0 || structs[0].structureType !== STRUCTURE_TOWER)
+				continue;
 
-	        let tower = structs[0];
-	        let target;
+			let tower = structs[0];
+			let target;
 
-	        let targets = towerRp.findInRange(enemies, TOWER_MAX_DMG_RANGE);
+			let targets = towerRp.findInRange(enemies, TOWER_MAX_DMG_RANGE);
 
-	        if(targets.length !== 0)
-	        	target = targets[Math.floor(Math.random() * targets.length)];
-	        else
-	        	target = towerRp.findClosestByRange(enemies);
+			if(targets.length !== 0)
+				target = targets[Math.floor(Math.random() * targets.length)];
+			else
+				target = towerRp.findClosestByRange(enemies);
 
-	        tower.attack(target);
-	    }
+			tower.attack(target);
+		}
 	}
 };
