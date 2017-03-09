@@ -164,11 +164,11 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 
 		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor(RECOVERY_MINER, callbackObj,
-			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId],   			body				]   //0
-			, [CREEP_INSTRUCTION.MOVE_TO_POSITION,	pos									   ]   //1
-			, [CREEP_INSTRUCTION.MINE_UNTIL_DEATH,	callbackObj.sourceId					  ]   //2
-			, [CREEP_INSTRUCTION.CALLBACK,			this.actorId,			"recoveryMinerDied"	]   //3
-			, [CREEP_INSTRUCTION.DESTROY_SCRIPT											   ] ]));//4
+			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body]   //0
+			, [CREEP_INSTRUCTION.MOVE_TO_POSITION, pos]   //1
+			, [CREEP_INSTRUCTION.MINE_UNTIL_DEATH, callbackObj.sourceId]   //2
+			, [CREEP_INSTRUCTION.CALLBACK, this.actorId, "recoveryMinerDied"]   //3
+			, [CREEP_INSTRUCTION.DESTROY_SCRIPT] ]));//4
 
 		this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = result.id;
 
