@@ -117,11 +117,11 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 
 		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor(ROLE_NAME, {},
-				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS,	 [spawnId],	body			]   //0
-				, [CREEP_INSTRUCTION.MOVE_TO_POSITION,		miningSpot				 	]   //1
-				, [CREEP_INSTRUCTION.MINE_UNTIL_DEATH,		mineralId					 ]   //2
-				, [CREEP_INSTRUCTION.CALLBACK,				this.actorId,	"minerDied"	 ]   //3
-				, [CREEP_INSTRUCTION.DESTROY_SCRIPT 									  ] ]));//4
+				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
+				, [CREEP_INSTRUCTION.MOVE_TO_POSITION, miningSpot] //1
+				, [CREEP_INSTRUCTION.MINE_UNTIL_DEATH, mineralId] //2
+				, [CREEP_INSTRUCTION.CALLBACK, this.actorId, "minerDied"] //3
+				, [CREEP_INSTRUCTION.DESTROY_SCRIPT] ])); //4
 
 		this.memoryObject.subActorId = result.id;
 	}

@@ -66,12 +66,12 @@ module.exports = class ActorRoomOffense extends ActorWithMemory
 
 		this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor("soloDismantler", {},
-			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId],   body		] //0
-			, [CREEP_INSTRUCTION.DISMANTLE_AT,		targetPos									   ] //1
-			, [CREEP_INSTRUCTION.GOTO_IF_DEAD,		4											   ] //2
-			, [CREEP_INSTRUCTION.REMOVE_FLAG_AT,	  targetPos									   ] //3
-			, [CREEP_INSTRUCTION.RECYCLE_CREEP														] //4
-			, [CREEP_INSTRUCTION.DESTROY_SCRIPT													 ] ] //5
+			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
+			, [CREEP_INSTRUCTION.DISMANTLE_AT, targetPos] //1
+			, [CREEP_INSTRUCTION.GOTO_IF_DEAD, 4] //2
+			, [CREEP_INSTRUCTION.REMOVE_FLAG_AT, targetPos] //3
+			, [CREEP_INSTRUCTION.RECYCLE_CREEP] //4
+			, [CREEP_INSTRUCTION.DESTROY_SCRIPT] ] //5
 			));
 
 		this.requestCreep();
