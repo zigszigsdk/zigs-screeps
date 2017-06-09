@@ -50,6 +50,11 @@ module.exports = class ServiceCreepActions extends Service
 		return this.core.getCreep(creepName).withdraw(this.core.getObjectById(structureId), resourceType, amount);
 	}
 
+	pickup(creepName, pileId)
+	{
+		return this.core.getCreep(creepName).pickup(this.core.getObjectById(pileId));
+	}
+
 	repair(creepName, structureId)
 	{
 		return this.core.getCreep(creepName).repair(this.core.getObjectById(structureId));

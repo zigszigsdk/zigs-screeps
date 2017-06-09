@@ -69,9 +69,9 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 			, containerId: isNullOrUndefined(container) ? null : container.id
 			, linkId: isNullOrUndefined(link) ? null : link.id
 			, storageId: isNullOrUndefined(storage) ? null : storage.id
-			, containerPos: [container.pos.x, container.pos.y, container.room.name]
-			, linkPos: [link.pos.x, link.pos.y, link.room.name]
-			, storagePos: [storage.pos.x, storage.pos.y, storage.room.name]
+			, containerPos: layout.flower.container[0]
+			, linkPos: layout.flower.link[0]
+			, storagePos: layout.storage.storage[0]
 			, targetIds: targetIds
 			};
 
@@ -210,6 +210,7 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 
 			case STATES.FILL_SELF:
 			{
+				//look for flower-link
 				let link = this.core.getObjectById(this.memoryObject.linkId);
 				if(!isUndefinedOrNull(link) && link.energy !== 0)
 				{
@@ -218,6 +219,7 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 					return;
 				}
 
+				//look for flower-container
 				let container = this.core.getObjectById(this.memoryObject.containerId);
 				if(!isUndefinedOrNull(container) && !isUndefinedOrNull(container.store[RESOURCE_ENERGY]) &&
 					container.store[RESOURCE_ENERGY] !== 0
@@ -228,6 +230,16 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 					return;
 				}
 
+				//look for loose energy at flower-container position
+				let energiesAtContainerPos = this.core.getRoomPosition(this.memoryObject.containerPos).lookFor(LOOK_ENERGY);
+				if(energiesAtContainerPos.length !== 0)
+				{
+					if(this.creepActions.pickup(this.creepName, energiesAtContainerPos[0].id) === ERR_NOT_IN_RANGE)
+						this.creepActions.moveTo(this.creepName, this.memoryObject.containerPos);
+					return;
+				}
+
+				//look for energy at storage
 				let storage = this.core.getObjectById(this.memoryObject.storageId);
 				if(!isUndefinedOrNull(storage) && !isUndefinedOrNull(storage.store[RESOURCE_ENERGY]) &&
 					storage.store[RESOURCE_ENERGY] !== 0
