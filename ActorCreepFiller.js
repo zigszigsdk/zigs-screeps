@@ -264,10 +264,22 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 						candidates.push(candidate);
 				});
 
-				if(candidates.length === 0)
-					return;
-
 				let creep = this.core.getCreep(this.creepName);
+
+				if(candidates.length === 0)
+				{
+					//look for manually placed first spawn that has not yet been automatically relocated.
+					creep.room.find(FIND_STRUCTURES, (x)=>x.structureType === STRUCTURE_SPAWN)
+						.forEach((candidate)=>
+						{
+							if(candidate && candidate.energy !== candidate.energyCapacity)
+								candidates.push(candidate);
+						});
+
+					if(candidates.length === 0)
+						return;
+				}
+
 				let target = creep.pos.findClosestByPath(candidates);
 
 				if(creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
