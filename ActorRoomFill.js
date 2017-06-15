@@ -1,8 +1,5 @@
 "use strict";
 
-const FILLER = "filler";
-const RECOVERY_FILLER = "recoveryFiller";
-
 const FULL_FILLER_ENERGY_COST = 1000;
 const RECOVERY_FILLER_ENERGY_COST = 300;
 
