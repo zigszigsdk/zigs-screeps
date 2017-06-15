@@ -11,6 +11,7 @@ module.exports = function()
 		, MAP_NAVIGATION: "ServiceMapNavigation"
 		, MAP_SEARCH: "ServiceMapSearch"
 		, CREEP_ACTIONS: "ServiceCreepActions"
+		, BODYPART_PREDICTER: "ServiceBodypartPredicter"
 		};
 
 	global.ACTOR_NAMES =

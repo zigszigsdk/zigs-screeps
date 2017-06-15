@@ -2,7 +2,6 @@
 
 let ActorWithMemory = require('ActorWithMemory');
 
-const TARGET_CARRY_PARTS = 10;
 const MAX_SUBACTORS_PER_ROUTE = 1;
 
 const SCORE_NONE = 0;
@@ -16,6 +15,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 	{
 		super(core);
 		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		this.bodypartPredicter = core.getService(SERVICE_NAMES.BODYPART_PREDICTER);
 	}
 
 	initiateActor(parentId, roomName)
@@ -104,6 +104,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			this.requestSpawn(routeIndex);
 
 	}
+
 	structureDestroyed() { this.update(); }
 	structureBuild() { this.update(); }
 
@@ -140,13 +141,16 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			{
 				let inputRequest = inputRequests[RESOURCES_ALL[resourceIndex]][inputIndex];
 				let dropPoints = [];
+				let dropPointsAt = [];
 				let resourceType = inputRequests[RESOURCES_ALL[resourceIndex]][inputIndex].type;
 
 				if(resourceType === RESOURCE_ENERGY)
 					for(let outputIndex in outputRequests[RESOURCES_ALL[resourceIndex]])
 					{
+						let at = outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at;
+						dropPointsAt.push(at);
 						dropPoints.push(
-							{ at: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at
+							{ at: at
 							, desired: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].desired
 							, max: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].max
 							});
@@ -161,11 +165,15 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 										struct.structureType === STRUCTURE_TERMINAL);
 
 						if(acceptedStructs.length !== 0)
+						{
+							let at = outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at;
+							dropPointsAt.push(at);
 							dropPoints.push(
-								{ at: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at
+								{ at: at
 								, desired: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].desired
 								, max: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].max
 								});
+						}
 					}
 
 				if(dropPoints.length === 0)
@@ -180,6 +188,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 					, dropPoints: dropPoints
 					, subActorIds: []
 					, carryParts: 0
+					, targetCarryParts: this.bodypartPredicter.haulerCarry(fillPoints[0].at, dropPointsAt, 10)
 					});
 			}
 		}
@@ -187,12 +196,11 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 	createHauler(spawnId, callbackObj)
 	{
-		if(isUndefinedOrNull(this.memoryObject.routes[callbackObj.routeIndex]) ||
-			this.memoryObject.routes[callbackObj.routeIndex].subActorIds.length >= MAX_SUBACTORS_PER_ROUTE ||
-			this.memoryObject.routes[callbackObj.routeIndex].carryParts >= TARGET_CARRY_PARTS)
-			return;
-
 		let route = this.memoryObject.routes[callbackObj.routeIndex];
+		if(isUndefinedOrNull(route) ||
+			route.subActorIds.length >= MAX_SUBACTORS_PER_ROUTE ||
+			route.carryParts >= route.targetCarryParts)
+			return;
 
 		let dropPoint = this.getDropPoint(route);
 		let body = this.getBody(callbackObj.routeIndex);
@@ -326,7 +334,8 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 	getBody(routeIndex)
 	{
-		let maxRepeats = TARGET_CARRY_PARTS - this.memoryObject.routes[routeIndex].carryParts;
+		let route = this.memoryObject.routes[routeIndex];
+		let maxRepeats = route.targetCarryParts - route.carryParts;
 
 		let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
@@ -350,8 +359,9 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 	requestSpawn(routeIndex)
 	{
-		if(this.memoryObject.routes[routeIndex].subActorIds.length >= MAX_SUBACTORS_PER_ROUTE ||
-			this.memoryObject.routes[routeIndex].carryParts >= TARGET_CARRY_PARTS)
+		let route = this.memoryObject.routes[routeIndex];
+		if(route.subActorIds.length >= MAX_SUBACTORS_PER_ROUTE ||
+			route.carryParts >= route.targetCarryParts)
 			return;
 
 		let parent = this.core.getActor(this.memoryObject.parentId);
@@ -359,7 +369,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 				{ actorId: this.actorId
 				, functionName: "createHauler"
 				, priority: PRIORITY_NAMES.SPAWN.HAULER
-				, energyNeeded: (TARGET_CARRY_PARTS - this.memoryObject.routes[routeIndex].carryParts) * 100
+				, energyNeeded: (route.targetCarryParts - route.carryParts) * 100
 				, callbackObj:
 					{ routeIndex: routeIndex
 					}
