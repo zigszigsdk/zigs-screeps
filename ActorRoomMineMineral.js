@@ -24,7 +24,6 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 			, mineral: roomScoring.getRoom(roomName).mineral
 			, subActorId: null
 			};
-
 	}
 
 	lateInitiate()
@@ -33,10 +32,6 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 			return this.core.removeActor(this.actorId);
 
 		let room = this.core.getRoom(this.memoryObject.roomName);
-		if(room.controller.level >= LEVEL_REQUIRED_TO_MINE_MINERALS)
-			this._requestMiner();
-		else
-			this.core.subscribe(EVENTS.ROOM_LEVEL_CHANGED + this.memoryObject.roomName, this.actorId, "onRoomLevelChanged");
 
 		let parent = this.core.getActor(this.memoryObject.parentId);
 
@@ -59,16 +54,44 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 				.setMin(0)
 				.setParking(this.memoryObject.mineral.parkingSpot)
 				.fabricate());
+
+		this._update();
+
 	}
 
 	onRoomLevelChanged()
 	{
+		this.core.unsubscribe(EVENTS.ROOM_LEVEL_CHANGED + this.memoryObject.roomName, this.actorId);
+		this._update();
+
+	}
+
+	onMineralRegenerated()
+	{
+		this._update();
+	}
+
+	onBuildingCompleted()
+	{
+		this.core.unsubscribe(EVENTS.STRUCTURE_BUILD + this.memoryObject.roomName, this.actorId);
+		this._update();
+	}
+
+	_update()
+	{
 		let room = this.core.getRoom(this.memoryObject.roomName);
-		if(room.controller.level >= LEVEL_REQUIRED_TO_MINE_MINERALS)
-		{
-			this._requestMiner();
-			this.core.unsubscribe(EVENTS.ROOM_LEVEL_CHANGED + this.memoryObject.roomName, this.actorId);
-		}
+		let mineral = this.core.getObjectById(this.memoryObject.mineral.id);
+
+		if(room.controller.level < LEVEL_REQUIRED_TO_MINE_MINERALS)
+			return this.core.subscribe(EVENTS.ROOM_LEVEL_CHANGED + room.name, this.actorId, "onRoomLevelChanged");
+
+		let extractor = this.core.getStructureAt([mineral.pos.x, mineral.pos.y, mineral.pos.roomName],
+												STRUCTURE_EXTRACTOR);
+
+		if(isNullOrUndefined(extractor))
+			return this.core.subscribe(EVENTS.STRUCTURE_BUILD + room.name, this.actorId, "onBuildingCompleted");
+
+		this._requestMiner();
 	}
 
 	resetActor()
@@ -129,7 +152,7 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 	minerDied(callbackObj)
 	{
 		this.memoryObject.subActorId = null;
-		this._requestMiner();
+		this._update();
 	}
 
 
