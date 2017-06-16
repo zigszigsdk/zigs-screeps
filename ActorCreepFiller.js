@@ -269,10 +269,10 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 				if(candidates.length === 0)
 				{
 					//look for manually placed first spawn that has not yet been automatically relocated.
-					creep.room.find(FIND_STRUCTURES, (x)=>x.structureType === STRUCTURE_SPAWN)
+					creep.room.find(FIND_STRUCTURES)
 						.forEach((candidate)=>
 						{
-							if(candidate && candidate.energy !== candidate.energyCapacity)
+							if(candidate.structureType === STRUCTURE_SPAWN && candidate && candidate.energy !== candidate.energyCapacity)
 								candidates.push(candidate);
 						});
 
