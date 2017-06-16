@@ -4,6 +4,8 @@ let ActorWithMemory = require('ActorWithMemory');
 
 const MAX_SUBACTORS_PER_ROUTE = 1;
 
+const MIN_RESOURCE_ADDITION_IF_ENERGY = 500;
+
 const SCORE_NONE = 0;
 const SCORE_ABOVE_MAX = 1;
 const SCORE_ABOVE_DESIRED = 2;
@@ -285,9 +287,13 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 	getInstructions(from, to, type, spawnId, body)
 	{
+		const min = type === RESOURCE_ENERGY ?
+			MIN_RESOURCE_ADDITION_IF_ENERGY + from.min :
+			from.min;
+
 		return [  [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //00
 				, [CREEP_INSTRUCTION.MOVE_TO_POSITION, from.parking] //01
-				, [CREEP_INSTRUCTION.PICKUP_AT_POS, from.at, type, from.min] //02
+				, [CREEP_INSTRUCTION.PICKUP_AT_POS, from.at, type, min] //02
 				, [CREEP_INSTRUCTION.GOTO_IF_TTL_LESS, 9, 175] //03
 				, [CREEP_INSTRUCTION.DEPOSIT_AT, to.at, type, to.max] //04
 				, [CREEP_INSTRUCTION.GOTO_IF_DEAD, 10] //05
