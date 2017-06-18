@@ -85,6 +85,9 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 		if(room.controller.level < LEVEL_REQUIRED_TO_MINE_MINERALS)
 			return this.core.subscribe(EVENTS.ROOM_LEVEL_CHANGED + room.name, this.actorId, "onRoomLevelChanged");
 
+		if(isUndefined(mineral.mineralAmount) || mineral.mineralAmount === 0)
+			return this.core.callbackAfter(mineral.ticksToRegeneration, this.actorId, "onMineralRegenerated");
+
 		let extractor = this.core.getStructureAt([mineral.pos.x, mineral.pos.y, mineral.pos.roomName],
 												STRUCTURE_EXTRACTOR);
 

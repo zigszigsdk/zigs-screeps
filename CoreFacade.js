@@ -40,6 +40,11 @@ module.exports = class CoreFacade
 		this.subscriptions.subscribe(eventName, actorId, callbackMethodName);
 	}
 
+	callbackAfter(afterTick, actorId, callbackMethodName)
+	{
+		this.subscriptions.callbackAfter(afterTick, actorId, callbackMethodName);
+	}
+
 	actorFromId(actorId)
 	{
 		return this.actors.getFromId(actorId);
