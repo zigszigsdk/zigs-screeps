@@ -250,11 +250,21 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			let resourceHere = 0;
 
 			let storages = rp.lookFor(LOOK_STRUCTURES, FILTERS.ANY_STORAGE);
+			let storageFull = false;
 			for(let storageIndex in storages)
 				if(storages[storageIndex].store && storages[storageIndex].store[route.type])
-					resourceHere += storages[storageIndex].store[route.type];
+					if(_.sum(storages[storageIndex].store) === storages[storageIndex].storeCapacity)
+						storageFull = true;
+					else
+						resourceHere += storages[storageIndex].store[route.type];
 				else if(route.type === RESOURCE_ENERGY && storages[storageIndex].energy)
-					resourceHere += storages[storageIndex].energy;
+					if(storages[storageIndex].energy === storages[storageIndex].energyCapacity)
+						storageFull = true;
+					else
+						resourceHere += storages[storageIndex].energy;
+
+			if(storageFull)
+				continue;
 
 			let resourcePools = rp.lookFor(LOOK_RESOURCES);
 			for(let resourceIndex in resourcePools)
