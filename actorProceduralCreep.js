@@ -822,6 +822,18 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 					break;
 
+				case CREEP_INSTRUCTION.GOTO_IF_CREEP_EMPTY:
+
+					creep = this.getCreep(creep);
+
+					if(!creep || creep.spawning || _.sum(creep.carry) !== 0)
+						break;
+
+					//easier to subtract 1 than set a flag to not increase by 1 at end of loop
+					this.memoryObject.pointer = currentInstruction[1]-1;
+
+					break;
+
 				default:
 					this.core.logWarning("actorProcedualCreep doesn't have a case called: " + currentInstruction[0]);
 					stop = true;

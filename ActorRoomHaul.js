@@ -295,11 +295,12 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 				, [CREEP_INSTRUCTION.MOVE_TO_POSITION, from.parking] //01
 				, [CREEP_INSTRUCTION.PICKUP_AT_POS, from.at, type, min] //02
 				, [CREEP_INSTRUCTION.GOTO_IF_TTL_LESS, 9, 175] //03
+
 				, [CREEP_INSTRUCTION.DEPOSIT_AT, to.at, type, to.max] //04
 				, [CREEP_INSTRUCTION.GOTO_IF_DEAD, 10] //05
 				, [CREEP_INSTRUCTION.CALLBACK, this.actorId, "haulCompleted"] //06
-				, [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 1] //07
-				, [CREEP_INSTRUCTION.GOTO, 10] //08
+				, [CREEP_INSTRUCTION.GOTO_IF_CREEP_EMPTY, 1] //07
+				, [CREEP_INSTRUCTION.GOTO, 4] //08
 
 				, [CREEP_INSTRUCTION.DEPOSIT_AT, from.at, type] //09
 				, [CREEP_INSTRUCTION.CALLBACK, this.actorId, "haulerDied"] //10

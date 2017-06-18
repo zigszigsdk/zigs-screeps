@@ -194,5 +194,6 @@ module.exports = function()
 		, WAIT_UNTIL_DEATH: "waitUntilDeath"
 		, GOTO_IF_TTL_LESS: "gotoIfTtlLess"
 		, PICKUP_AT_NEAREST: "pickupAtNearest"
+		, GOTO_IF_CREEP_EMPTY: "gotoIfCreepEmpty"
 		};
 };
