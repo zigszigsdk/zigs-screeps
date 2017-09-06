@@ -23,6 +23,7 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 	{
 		super(core);
 		this.creepActions = core.getService(SERVICE_NAMES.CREEP_ACTIONS);
+		this.roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
 	}
 
 	rewindActor(actorId)
@@ -34,46 +35,21 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 
 	initiateActor(callbackTo, roomName, spawnHereId)
 	{
-		let layout = this.core.getService(SERVICE_NAMES.ROOM_SCORING).getRoom(roomName);
-
-		let container = this.core.getStructureAt(layout.flower.container[0], STRUCTURE_CONTAINER);
-		let link = this.core.getStructureAt(layout.flower.link[0], STRUCTURE_LINK);
-		let storage = this.core.getStructureAt(layout.storage.storage[0], STRUCTURE_STORAGE);
-
-		let targetIds = [];
-
-		for(let index in layout.flower.spawn)
-		{
-			let target = this.core.getStructureAt(layout.flower.spawn[index], STRUCTURE_SPAWN);
-			if(!isNullOrUndefined(target))
-				targetIds.push(target.id);
-		}
-		for(let index in layout.flower.extension)
-		{
-			let target = this.core.getStructureAt(layout.flower.extension[index], STRUCTURE_EXTENSION);
-			if(!isNullOrUndefined(target))
-				targetIds.push(target.id);
-		}
-		for(let index in layout.flower.tower)
-		{
-			let target = this.core.getStructureAt(layout.flower.tower[index], STRUCTURE_TOWER);
-			if(!isNullOrUndefined(target))
-				targetIds.push(target.id);
-		}
-
 
 		this.memoryObject =
 			{ callbackTo: callbackTo
 			, roomName: roomName
 			, state: STATES.SPAWNING
-			, containerId: isNullOrUndefined(container) ? null : container.id
-			, linkId: isNullOrUndefined(link) ? null : link.id
-			, storageId: isNullOrUndefined(storage) ? null : storage.id
-			, containerPos: layout.flower.container[0]
-			, linkPos: layout.flower.link[0]
-			, storagePos: layout.storage.storage[0]
-			, targetIds: targetIds
+			, containerId: undefined
+			, linkId: undefined
+			, storageId: undefined
+			, containerPos: undefined
+			, linkPos: undefined
+			, storagePos: undefined
+			, targetIds: undefined
 			};
+
+		this.updateBuildings();
 
 		this.creepName = NAME_PREFIX + roomName;
 
@@ -99,6 +75,45 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 	{
 		this._updateState();
 		this._executeState();
+	}
+
+	updateBuildings()
+	{
+		let layout = this.roomScoring.getRoom(this.memoryObject.roomName);
+
+		let container = this.core.getStructureAt(layout.flower.container[0], STRUCTURE_CONTAINER);
+		this.memoryObject.containerId = isNullOrUndefined(container) ? null : container.id;
+		this.memoryObject.containerPos = layout.flower.container[0];
+
+		let link = this.core.getStructureAt(layout.flower.link[0], STRUCTURE_LINK);
+		this.memoryObject.linkId = isNullOrUndefined(link) ? null : link.id;
+		this.memoryObject.linkPos = layout.flower.link[0];
+
+		let storage = this.core.getStructureAt(layout.storage.storage[0], STRUCTURE_STORAGE);
+		this.memoryObject.storageId = isNullOrUndefined(storage) ? null : storage.id;
+		this.memoryObject.storagePos = layout.storage.storage[0];
+
+		this.memoryObject.targetIds = [];
+
+		for(let index in layout.flower.spawn)
+		{
+			let target = this.core.getStructureAt(layout.flower.spawn[index], STRUCTURE_SPAWN);
+			if(!isNullOrUndefined(target))
+				this.memoryObject.targetIds.push(target.id);
+		}
+		for(let index in layout.flower.extension)
+		{
+			let target = this.core.getStructureAt(layout.flower.extension[index], STRUCTURE_EXTENSION);
+			if(!isNullOrUndefined(target))
+				this.memoryObject.targetIds.push(target.id);
+		}
+		for(let index in layout.flower.tower)
+		{
+			let target = this.core.getStructureAt(layout.flower.tower[index], STRUCTURE_TOWER);
+			if(!isNullOrUndefined(target))
+				this.memoryObject.targetIds.push(target.id);
+		}
+
 	}
 
 	_updateState()
@@ -291,15 +306,26 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 			case STATES.OFFDUTY_FILL_SELF:
 			{
 				let creep = this.core.getCreep(this.creepName);
-				if(creep.pos.x !== this.memoryObject.containerPos[0] ||
-					creep.pos.y !== this.memoryObject.containerPos[1] ||
-					creep.room.name !== this.memoryObject.containerPos[2]
-				)
+				let containerPos = this.memoryObject.containerPos;
+				let parkingDistance = isNullOrUndefined(this.memoryObject.containerId) ? 1 : 0;
+
+				if(creep.pos.getRangeTo(containerPos[0], containerPos[1]) > parkingDistance)
 					return this.creepActions.moveTo(this.creepName, this.memoryObject.containerPos);
 
 				let link = this.core.getObjectById(this.memoryObject.linkId);
-				if(!isUndefinedOrNull(link) && link.energy !== 0)
-					this.creepActions.withdraw(this.creepName, link.id, RESOURCE_ENERGY);
+				if(!isUndefinedOrNull(link))
+				{
+					if(link.energy !== 0)
+						this.creepActions.withdraw(this.creepName, link.id, RESOURCE_ENERGY);
+					return;
+				}
+
+				let energiesAtContainerPos = this.core.getRoomPosition(this.memoryObject.containerPos).lookFor(LOOK_ENERGY);
+				if(energiesAtContainerPos.length !== 0)
+				{
+					if(this.creepActions.pickup(this.creepName, energiesAtContainerPos[0].id))
+					return;
+				}
 
 				return;
 			}

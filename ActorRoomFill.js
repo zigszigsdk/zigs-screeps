@@ -106,6 +106,19 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 	buildingCompleted(at, type)
 	{
+
+		if(!isNullOrUndefined(this.memoryObject.regularFillActorId))
+		{
+			let subActorId = this.memoryObject.recoveryFillActorId;
+			let subActor = this.core.getActor(subActorId);
+			subActor.updateBuildings();
+			return;
+		}
+
+		let subActorId = this.memoryObject.recoveryFillActorId;
+		if(isNullOrUndefined(subActorId))
+			return;
+
 		let room = this.core.getRoom(this.memoryObject.roomName);
 
 		let getId = (list) => _.map(list, (item)=>item.id);
@@ -113,14 +126,12 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		let extensions = getId(room.find(FIND_STRUCTURES, FILTERS.EXTENSIONS));
 		let spawns = getId(room.find(FIND_STRUCTURES, FILTERS.SPAWNS));
 
-		let subActorId = this.memoryObject.recoveryFillActorId;
-		if(isNullOrUndefined(subActorId))
-			return;
 		let subActor = this.core.getActor(subActorId);
 
 		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, towers]);
 		subActor.replaceInstruction(5, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, extensions]);
 		subActor.replaceInstruction(6, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, spawns]);
+
 	}
 
 	addEnergyLocation(energyRequest)
