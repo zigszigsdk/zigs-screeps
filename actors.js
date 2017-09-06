@@ -1,5 +1,5 @@
 "use strict";
- 
+
 const MEMORY_KEYWORD = "core:actors";
 
 module.exports = class Actors

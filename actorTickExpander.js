@@ -1,5 +1,5 @@
 "use strict";
- 
+
 const ActorWithMemory = require('ActorWithMemory');
 const NO_CONTROLLER_IN_ROOM = -1;
 
