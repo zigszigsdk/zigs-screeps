@@ -291,15 +291,26 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 			case STATES.OFFDUTY_FILL_SELF:
 			{
 				let creep = this.core.getCreep(this.creepName);
-				if(creep.pos.x !== this.memoryObject.containerPos[0] ||
-					creep.pos.y !== this.memoryObject.containerPos[1] ||
-					creep.room.name !== this.memoryObject.containerPos[2]
-				)
+				let containerPos = this.memoryObject.containerPos;
+				let parkingDistance = isNullOrUndefined(this.memoryObject.containerId) ? 1 : 0;
+
+				if(creep.pos.getRangeTo(containerPos[0], containerPos[1]) > parkingDistance)
 					return this.creepActions.moveTo(this.creepName, this.memoryObject.containerPos);
 
 				let link = this.core.getObjectById(this.memoryObject.linkId);
-				if(!isUndefinedOrNull(link) && link.energy !== 0)
-					this.creepActions.withdraw(this.creepName, link.id, RESOURCE_ENERGY);
+				if(!isUndefinedOrNull(link))
+				{
+					if(link.energy !== 0)
+						this.creepActions.withdraw(this.creepName, link.id, RESOURCE_ENERGY);
+					return;
+				}
+
+				let energiesAtContainerPos = this.core.getRoomPosition(this.memoryObject.containerPos).lookFor(LOOK_ENERGY);
+				if(energiesAtContainerPos.length !== 0)
+				{
+					if(this.creepActions.pickup(this.creepName, energiesAtContainerPos[0].id))
+					return;
+				}
 
 				return;
 			}
