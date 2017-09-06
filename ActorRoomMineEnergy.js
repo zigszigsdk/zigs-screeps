@@ -12,12 +12,14 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 		super(core);
 		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
 		this.ResourceRequest = core.getClass(CLASS_NAMES.RESOURCE_REQUEST);
+		this.roomScoring = core.getService(SERVICE_NAMES.ROOM_SCORING);
 	}
 
 	initiateActor(parentId, roomName)
 	{
-		let roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
-		let mines = roomScoring.getRoom(roomName).mines;
+		let roomScoring = this.roomScoring.getRoom(roomName);
+
+		let mines = roomScoring.mines;
 
 		this.memoryObject =
 			{ parentId: parentId
