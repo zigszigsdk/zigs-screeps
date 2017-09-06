@@ -1,5 +1,5 @@
 "use strict";
- 
+
 const maxSteps = 10;
 
 let ActorWithMemory = require('ActorWithMemory');
