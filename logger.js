@@ -1,5 +1,5 @@
 "use strict";
-
+ 
 const MEMORY_KEYWORD = "core:logger";
 const CPU_TO_TRACE_MULTIPLIER = 1000000;
 const BOOT_MESSAGE_EMPHASIS_COUNT = 45;

@@ -1,5 +1,5 @@
 "use strict";
-
+ 
 const bankDelimiter = "¤";
 const kvpDelimiter = "#";
 
