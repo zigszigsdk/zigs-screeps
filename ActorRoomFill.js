@@ -116,8 +116,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 		if(!isNullOrUndefined(this.memoryObject.regularFillActorId))
 		{
-			let subActorId = this.memoryObject.recoveryFillActorId;
-			let subActor = this.core.getActor(subActorId);
+			let subActor = this.core.getActor(this.memoryObject.regularFillActorId);
 			subActor.updateBuildings();
 			return;
 		}
