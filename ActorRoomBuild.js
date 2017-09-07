@@ -1,8 +1,9 @@
 "use strict";
 
-let ActorWithMemory = require('ActorWithMemory');
+const ActorWithMemory = require('ActorWithMemory');
 
-let ENERGY_LIMIT = 250;
+const ENERGY_LIMIT = 250;
+const targetNumberOfBuildersOverLevel = [0, 0, 3, 1, 1, 1, 1, 1, 1];
 
 module.exports = class ActorRoomBuild extends ActorWithMemory
 {
@@ -21,7 +22,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 			, currentTask: null
 			, pendingCallback: false
 			, energyLocations: []
-			, subActorId: null
+			, subActorIds: []
 			};
 
 		this.core.subscribe(EVENTS.ROOM_LEVEL_CHANGED + roomName, this.actorId, "onRoomLevelChange");
@@ -48,7 +49,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
 
 		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
-		this.memoryObject.subActorId = oldMemory.subActorId;
+		this.memoryObject.subActorIds = oldMemory.subActorIds;
 
 		this.lateInitiate();
 
@@ -200,7 +201,9 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		let structureType = this.memoryObject.currentTask.structureType;
 		let buildPos = this.memoryObject.currentTask.pos;
 
-		if(this.memoryObject.subActorId === null)
+		const roomLevel = this.core.getRoom(this.memoryObject.roomName).controller.level;
+
+		if(this.memoryObject.subActorIds.length < targetNumberOfBuildersOverLevel[roomLevel])
 		{
 			if(this.memoryObject.pendingCallback === true)
 				return;
@@ -216,18 +219,20 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		}
 
 		let energyPos = this.findNearestEnergyPosition(buildPos);
+		for(let idIndex in this.memoryObject.subActorIds)
+		{
+			let subActor = this.core.getActor(this.memoryObject.subActorIds[idIndex]);
 
-		let subActor = this.core.getActor(this.memoryObject.subActorId);
+			subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS,		energyPos, RESOURCE_ENERGY, ENERGY_LIMIT]);
+			subActor.replaceInstruction(2, [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,	buildPos,  structureType	 			]);
+			subActor.replaceInstruction(3, [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, buildPos,  structureType,   6			]);
+			subActor.setPointer(1);
 
-		subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS,		energyPos, RESOURCE_ENERGY, ENERGY_LIMIT]);
-		subActor.replaceInstruction(2, [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,	buildPos,  structureType	 			]);
-		subActor.replaceInstruction(3, [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, buildPos,  structureType,   6			]);
-		subActor.setPointer(1);
-
-		let callbackObj = subActor.getCallbackObj();
-		callbackObj.at = buildPos;
-		callbackObj.type = structureType;
-		subActor.setCallbackObj(callbackObj);
+			let callbackObj = subActor.getCallbackObj();
+			callbackObj.at = buildPos;
+			callbackObj.type = structureType;
+			subActor.setCallbackObj(callbackObj);
+		}
 	}
 
 	requestBuilder(callbackObj)
@@ -318,8 +323,9 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 	createBuilder(spawnId, callbackObj)
 	{
 		this.memoryObject.pendingCallback = false;
+		const roomLevel = this.core.getRoom(this.memoryObject.roomName).controller.level;
 
-		if(this.memoryObject.subActorId !== null)
+		if(this.memoryObject.subActorIds.length >= targetNumberOfBuildersOverLevel[roomLevel])
 			return;
 
 		if(this.memoryObject.currentTask === null)
@@ -356,12 +362,18 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 				, [CREEP_INSTRUCTION.DESTROY_SCRIPT] ] //9
 		));
 
-		this.memoryObject.subActorId = actorObj.id;
+		this.memoryObject.subActorIds.push(actorObj.id);
+
+		if(this.memoryObject.subActorIds.length < targetNumberOfBuildersOverLevel[roomLevel])
+			this.requestBuilder(callbackObj);
 	}
 
-	builderDied(callbackObj)
+	builderDied(callbackObj, subActorId)
 	{
-		this.memoryObject.subActorId = null;
+		let index = this.memoryObject.subActorIds.indexOf(subActorId);
+		if(index !== -1)
+			this.memoryObject.subActorIds.splice(index, 1);
+
 		this.requestBuilder(callbackObj);
 	}
 
