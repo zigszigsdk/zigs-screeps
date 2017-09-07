@@ -55,6 +55,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 	{
 		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
 		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
+		this.memoryObject.creepCount = oldMemory.creepCount;
 		this.memoryObject.workParts = oldMemory.workParts;
 		this.lateInitiate();
 	}
