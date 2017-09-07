@@ -3,7 +3,8 @@
 let ActorWithMemory = require('ActorWithMemory');
 
 const TARGET_WORKPARTS = 20;
-const MAX_CREEPS = 4;
+
+const MAX_CREEPS_OVER_LEVEL = [0, 1, 4, 4, 4, 4, 4, 4, 4];
 const TARGET_RESOURCE_RESERVE = 1500;
 
 module.exports = class ActorRoomUpgrade extends ActorWithMemory
@@ -74,8 +75,8 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 	{
 		if(this.memoryObject.workParts >= TARGET_WORKPARTS)
 			return;
-
-		let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
+		let room = this.core.getRoom(this.memoryObject.roomName);
+		let energy = room.energyCapacityAvailable;
 
 		let body = new this.CreepBodyFactory()
 			.addPattern([CARRY, WORK, WORK, MOVE], 1)
@@ -110,9 +111,10 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 			));
 
 		this.memoryObject.creepCount++;
-		this.memoryObject.workParts += workParts;
 
-		if(this.memoryObject.workParts < TARGET_WORKPARTS && this.memoryObject.creepCount < MAX_CREEPS)
+		this.memoryObject.workParts += workParts;
+		let maxCreeps = MAX_CREEPS_OVER_LEVEL[room.controller.level];
+		if(this.memoryObject.workParts < TARGET_WORKPARTS && this.memoryObject.creepCount < maxCreeps)
 			this.requestCreep();
 	}
 
@@ -121,7 +123,8 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		this.memoryObject.creepCount--;
 		this.memoryObject.workParts -= callbackObj.workParts;
 
-		if(this.memoryObject.workParts < TARGET_WORKPARTS && this.memoryObject.creepCount < MAX_CREEPS)
+		let maxCreeps = MAX_CREEPS_OVER_LEVEL[this.core.getRoom(this.memoryObject.roomName).controller.level];
+		if(this.memoryObject.workParts < TARGET_WORKPARTS && this.memoryObject.creepCount < maxCreeps)
 			this.requestCreep();
 	}
 };
