@@ -69,9 +69,13 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		{
 			parent.requestBuilding(	[STRUCTURE_CONTAINER],
 									this.memoryObject.containers[index],
-									PRIORITY_NAMES.BUILD.FLOWER_CONTAINER);
+									PRIORITY_NAMES.BUILD.FLOWER_CONTAINER,
+									2);
 			//there should be a road under the container since it's walkable
-			parent.requestBuilding([STRUCTURE_ROAD], this.memoryObject.containers[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
+			parent.requestBuilding(	[STRUCTURE_ROAD],
+									this.memoryObject.containers[index],
+									PRIORITY_NAMES.BUILD.FLOWER_ROAD,
+									2);
 
 			parent.requestResource(
 				new this.ResourceRequest(this.memoryObject.containers[index], RESOURCE_ENERGY)
@@ -83,7 +87,10 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		}
 
 		for(let index in this.memoryObject.roads)
-			parent.requestBuilding([STRUCTURE_ROAD], this.memoryObject.roads[index], PRIORITY_NAMES.BUILD.FLOWER_ROAD);
+			parent.requestBuilding(	[STRUCTURE_ROAD],
+									this.memoryObject.roads[index],
+									PRIORITY_NAMES.BUILD.FLOWER_ROAD,
+									2);
 
 		this.requestFiller();
 

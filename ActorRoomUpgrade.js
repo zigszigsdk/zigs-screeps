@@ -35,7 +35,8 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 
 		parent.requestBuilding(	[STRUCTURE_CONTAINER, STRUCTURE_LINK],
 								this.memoryObject.energyPos,
-								PRIORITY_NAMES.BUILD.UPGRADER_CONTAINER);
+								PRIORITY_NAMES.BUILD.UPGRADER_CONTAINER,
+								2);
 
 		let request = new this.ResourceRequest(this.memoryObject.energyPos, RESOURCE_ENERGY)
 					.setPriorityName(PRIORITY_NAMES.RESOURCE.UPGRADE)

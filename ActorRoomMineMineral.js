@@ -31,13 +31,12 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 		if(isUndefinedOrNull(this.memoryObject.mineral))
 			return this.core.removeActor(this.actorId);
 
-		let room = this.core.getRoom(this.memoryObject.roomName);
-
 		let parent = this.core.getActor(this.memoryObject.parentId);
 
 		parent.requestBuilding(	[STRUCTURE_CONTAINER],
 								this.memoryObject.mineral.miningSpot,
-								PRIORITY_NAMES.BUILD.MINERAL_MINING_CONTAINER);
+								PRIORITY_NAMES.BUILD.MINERAL_MINING_CONTAINER,
+								2);
 
 		let mineral = this.core.getObjectById(this.memoryObject.mineral.id);
 		let mineralPosArr = [mineral.pos.x, mineral.pos.y, mineral.pos.roomName];

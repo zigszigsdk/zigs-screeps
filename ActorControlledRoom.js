@@ -69,10 +69,10 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 			this.memoryObject.creepRequests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]); //descending
 		}
 
-		requestBuilding(typeProgression, at, priority)
+		requestBuilding(typeProgression, at, priority, minRoomLevel)
 		{
 			let roomBuild = this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD]);
-			roomBuild.requestBuilding(typeProgression, at, priority);
+			roomBuild.requestBuilding(typeProgression, at, priority, minRoomLevel);
 		}
 
 		removeAllBuildingRequestsWithType(type)

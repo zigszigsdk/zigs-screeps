@@ -39,7 +39,8 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 
 			parent.requestBuilding(	[STRUCTURE_CONTAINER],
 									this.memoryObject.mines[keys[index]].miningSpot,
-									PRIORITY_NAMES.BUILD.ENERGY_MINING_CONTAINER);
+									PRIORITY_NAMES.BUILD.ENERGY_MINING_CONTAINER,
+									2);
 
 			parent.requestBuilding(	[STRUCTURE_LINK],
 									this.memoryObject.mines[keys[index]].linkSpot,

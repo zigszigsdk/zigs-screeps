@@ -62,7 +62,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 			this.addEnergyLocation(oldMemory.energyLocations[index]);
 	}
 
-	requestBuilding(typeProgression, at, priority)
+	requestBuilding(typeProgression, at, priority, minRoomLevel)
 	{
 		for(let index in this.memoryObject.requests)
 		{
@@ -80,14 +80,14 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 				) &&
 				request.pos[0] === at[0] && request.pos[1] === at[1] && request.pos[2] === at[2])
 				{
-					this.memoryObject.requests[index] = this._parseRequest(typeProgression, at, priority);
+					this.memoryObject.requests[index] = this._parseRequest(typeProgression, at, priority, minRoomLevel);
 					this.memoryObject.requests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]);
 					this.update();
 					return;
 				}
 		}
 
-		let newRequest = this._parseRequest(typeProgression, at, priority);
+		let newRequest = this._parseRequest(typeProgression, at, priority, minRoomLevel);
 		this.memoryObject.requests.push(newRequest);
 
 		if(newRequest.completeness !== -1)
@@ -118,7 +118,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		this.update();
 	}
 
-	_parseRequest(typeProgression, at, priority)
+	_parseRequest(typeProgression, at, priority, minRoomLevel)
 	{
 		let rp = this.core.getRoomPosition(at);
 
@@ -137,6 +137,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		return 	{ typeProgression: typeProgression
 				, pos: at
 				, priority: priority
+				, minRoomLevel: minRoomLevel
 				, completeness: completeness
 				};
 	}
@@ -246,10 +247,14 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 	{
 		let cachedLookups = {};
 		let room = this.core.getRoom(this.memoryObject.roomName);
+		let roomLevel = room.controller.level;
 
 		for(let requestIndex in this.memoryObject.requests)
 		{
 			let request = this.memoryObject.requests[requestIndex];
+			if(roomLevel < request.minRoomLevel)
+				continue;
+
 			request.completeness = -1;
 
 			let roomPosition = this.core.getRoomPosition(request.pos);
