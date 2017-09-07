@@ -4,7 +4,7 @@ let ActorWithMemory = require('ActorWithMemory');
 
 const TARGET_WORKPARTS = 20;
 
-const MAX_CREEPS_OVER_LEVEL = [0, 1, 4, 4, 4, 4, 4, 4, 4];
+const MAX_CREEPS_OVER_LEVEL = [0, 1, 3, 3, 3, 3, 3, 3, 3];
 const TARGET_RESOURCE_RESERVE = 1500;
 
 module.exports = class ActorRoomUpgrade extends ActorWithMemory
