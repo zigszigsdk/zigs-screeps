@@ -320,6 +320,14 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 					return;
 				}
 
+				let container = this.core.getObjectById(this.memoryObject.containerId);
+				if(!isUndefinedOrNull(container))
+				{
+					if(container.store.energy !== 0)
+						this.creepActions.withdraw(this.creepName, container.id, RESOURCE_ENERGY);
+					return;
+				}
+
 				let energiesAtContainerPos = this.core.getRoomPosition(this.memoryObject.containerPos).lookFor(LOOK_ENERGY);
 				if(energiesAtContainerPos.length !== 0)
 				{
