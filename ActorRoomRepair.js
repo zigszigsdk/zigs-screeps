@@ -178,7 +178,6 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 		subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS, job.energyAt, RESOURCE_ENERGY ]);
 		subActor.replaceInstruction(2, [CREEP_INSTRUCTION.FIX_AT, job.maintainAt, job.maintainType ]);
 		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, job.maintainAt, job.maintainType, 1 ]);
-		subActor.setPointer(2);
 	}
 
 	repairComplete()
@@ -198,7 +197,6 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 		subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS, 	 job.energyAt, 	 RESOURCE_ENERGY	]);
 		subActor.replaceInstruction(2, [CREEP_INSTRUCTION.FIX_AT, 			 job.maintainAt, job.maintainType 	]);
 		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.GOTO_IF_NOT_FIXED, job.maintainAt, job.maintainType, 1]);
-		subActor.setPointer(2);
 	}
 
 	fixerDied()
