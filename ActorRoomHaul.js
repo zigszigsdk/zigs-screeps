@@ -368,7 +368,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 	{
 		let route = this.memoryObject.routes[callbackObj.routeIndex];
 
-		if(route === null) //the routes have been changed and the hauler is no longer needed
+		if(isNullOrUndefined(route)) //the routes have been changed and the hauler is no longer needed
 			return this.core.removeActor(subActorId);
 
 		let dropPoint = this.getDropPoint(route);
