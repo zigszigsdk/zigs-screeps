@@ -192,10 +192,14 @@ module.exports = class Actors
 
 	resetActor(actorId)
 	{
+		if(isNullOrUndefined(actorId))
+			return;
+
 		let actor = this.getFromId(actorId);
 
 		if(isUndefinedOrNull(actor))
 			return;
+
 		actor.resetActor();
 	}
 
