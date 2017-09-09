@@ -27,6 +27,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			, roomName: roomName
 			, resourceRequests: []
 			, routes: []
+			, unassignedSubActorIds: []
 			};
 	}
 
@@ -40,15 +41,21 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 		for(let routeIndex in oldMemory.routes)
 			for(let actorIndex in oldMemory.routes[routeIndex].subActorIds)
-				this.core.removeActor(oldMemory.routes[routeIndex].subActorIds[actorIndex]);
-
-		this.lateInitiate();
+			{
+				if(isNullOrUndefined(this.core.getActor(
+						oldMemory.routes[routeIndex].subActorIds[actorIndex])))
+					continue;
+				this.memoryObject.unassignedSubActorIds.push(
+					oldMemory.routes[routeIndex].subActorIds[actorIndex]);
+			}
 
 		for(let index in oldMemory.resourceRequests)
 			this.requestResource(oldMemory.resourceRequests[index]);
 
 		this.core.subscribe(EVENTS.STRUCTURE_DESTROYED, this.actorId, "structureDestroyed");
 		this.core.subscribe(EVENTS.STRUCTURE_BUILD, this.actorId, "structureBuild");
+		this.lateInitiate();
+
 	}
 
 	requestResource(newRequest)
@@ -98,12 +105,18 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 	{
 		for(let routeIndex in this.memoryObject.routes)
 			for(let subActorIndex in this.memoryObject.routes[routeIndex].subActorIds)
-				this.core.removeActor(this.memoryObject.routes[routeIndex].subActorIds[subActorIndex]);
+				this.memoryObject.unassignedSubActorIds.push(
+					this.memoryObject.routes[routeIndex].subActorIds[subActorIndex]);
 
 		this.recalculateRoutes();
 
 		for(let routeIndex in this.memoryObject.routes)
-			this.requestSpawn(routeIndex);
+		{
+			if(this.memoryObject.unassignedSubActorIds.length !== 0)
+				this.reassignSubActor(routeIndex);
+			else
+				this.requestSpawn(routeIndex);
+		}
 
 	}
 
@@ -198,6 +211,42 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 	createHauler(spawnId, callbackObj)
 	{
+		let actorCallbackObj = this.initiateHauler(callbackObj, spawnId);
+
+		let instructions = this.getInstructions(actorCallbackObj.fillPoint,
+												actorCallbackObj.dropPoint,
+												actorCallbackObj.type,
+												spawnId,
+												actorCallbackObj.body);
+
+		let actorResult = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+			(script)=>script.initiateActor("hauler", actorCallbackObj, instructions));
+
+		this.registerActor(actorCallbackObj, actorResult.id);
+	}
+
+	reassignSubActor(routeIndex)
+	{
+		let subActorId = this.memoryObject.unassignedSubActorIds.pop();
+
+		let callbackObj = this.initiateHauler({routeIndex: routeIndex}, null);
+
+
+		let instructions = this.getInstructions(callbackObj.fillPoint,
+												callbackObj.dropPoint,
+												callbackObj.type,
+												callbackObj.spawnId,
+												callbackObj.body);
+
+		let subActor = this.core.getActor(subActorId);
+		subActor.replaceInstructions(instructions);
+		subActor.setCallbackObj(callbackObj);
+
+		this.registerActor(callbackObj, subActorId);
+	}
+
+	initiateHauler(callbackObj, spawnId)
+	{
 		let route = this.memoryObject.routes[callbackObj.routeIndex];
 		if(isUndefinedOrNull(route) ||
 			route.subActorIds.length >= MAX_SUBACTORS_PER_ROUTE ||
@@ -207,23 +256,21 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		let dropPoint = this.getDropPoint(route);
 		let body = this.getBody(callbackObj.routeIndex);
 		let carryParts = this.getCarryParts(body);
-		let instructions = this.getInstructions(route.fillPoints[0], dropPoint, route.type, spawnId, body);
 
-		let actorCallbackObj =
-			{ routeIndex: callbackObj.routeIndex
-			, fillPoint: route.fillPoints[0]
-			, carryParts: carryParts
-			, dropPoint: dropPoint
-			, type: route.type
-			, spawnId: spawnId
-			, body: body
-			};
+		return 	{ routeIndex: callbackObj.routeIndex
+				, fillPoint: route.fillPoints[0]
+				, carryParts: carryParts
+				, dropPoint: dropPoint
+				, type: route.type
+				, spawnId: spawnId
+				, body: body
+				};
+	}
 
-		let actorResult = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
-			(script)=>script.initiateActor("hauler", actorCallbackObj, instructions));
-
-		this.memoryObject.routes[callbackObj.routeIndex].subActorIds.push(actorResult.id);
-		this.memoryObject.routes[callbackObj.routeIndex].carryParts += carryParts;
+	registerActor(callbackObj, actorId)
+	{
+		this.memoryObject.routes[callbackObj.routeIndex].subActorIds.push(actorId);
+		this.memoryObject.routes[callbackObj.routeIndex].carryParts += callbackObj.carryParts;
 
 		this.requestSpawn(callbackObj.routeIndex);
 	}
@@ -392,4 +439,6 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 					}
 				});
 	}
+
+
 };
