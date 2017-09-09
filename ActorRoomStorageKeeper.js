@@ -59,6 +59,7 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 					.setMin(0)
 					.setDesired(25000)
 					.setMax(50000)
+					.setMinRoomLevel(4)
 					.fabricate());
 	}
 
