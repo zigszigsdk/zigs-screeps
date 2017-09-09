@@ -143,9 +143,15 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			outputRequests[RESOURCES_ALL[index]] = [];
 		}
 
+		const roomLevel = this.core.getRoom(this.memoryObject.roomName).controller.level;
+
 		for(let requestIndex in this.memoryObject.resourceRequests)
 		{
 			let resourceRequest = this.memoryObject.resourceRequests[requestIndex];
+
+			if(roomLevel < resourceRequest.minRoomLevel)
+				continue;
+
 			if(resourceRequest.rate > 0)
 				inputRequests[resourceRequest.type].push(resourceRequest);
 			else

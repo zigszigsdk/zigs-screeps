@@ -51,11 +51,11 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 				.setRate(5)
 				.setDesired(0)
 				.setMin(0)
+				.setMinRoomLevel(6)
 				.setParking(this.memoryObject.mineral.parkingSpot)
 				.fabricate());
 
 		this._update();
-
 	}
 
 	onRoomLevelChanged()
