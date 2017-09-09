@@ -43,10 +43,12 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 			, containerId: undefined
 			, linkId: undefined
 			, storageId: undefined
+			, minerContainerIds: undefined
 			, containerPos: undefined
 			, linkPos: undefined
 			, storagePos: undefined
 			, targetIds: undefined
+			, minerContainerPoss: undefined
 			};
 
 		this.updateBuildings();
@@ -101,17 +103,31 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 			if(!isNullOrUndefined(target))
 				this.memoryObject.targetIds.push(target.id);
 		}
+
 		for(let index in layout.flower.extension)
 		{
 			let target = this.core.getStructureAt(layout.flower.extension[index], STRUCTURE_EXTENSION);
 			if(!isNullOrUndefined(target))
 				this.memoryObject.targetIds.push(target.id);
 		}
+
 		for(let index in layout.flower.tower)
 		{
 			let target = this.core.getStructureAt(layout.flower.tower[index], STRUCTURE_TOWER);
 			if(!isNullOrUndefined(target))
 				this.memoryObject.targetIds.push(target.id);
+		}
+
+		this.memoryObject.minerContainerIds = [];
+		this.memoryObject.minerContainerPoss = [];
+
+		for(let index in layout.mines)
+		{
+			const spot = layout.mines[index].miningSpot;
+			this.memoryObject.minerContainerPoss.push(spot);
+			let target = this.core.getStructureAt(spot, STRUCTURE_CONTAINER);
+			if(!isNullOrUndefined(target))
+				this.memoryObject.minerContainerIds.push(target.id);
 		}
 
 	}
@@ -263,6 +279,32 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 					if(this.creepActions.withdraw(this.creepName, storage.id, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
 						this.creepActions.moveTo(this.creepName, this.memoryObject.storagePos);
 					return;
+				}
+
+				//look for energy in mining containers
+				for(let index in this.memoryObject.minerContainerIds)
+				{
+					let container = this.core.getObjectById(this.memoryObject.minerContainerIds[index]);
+					if(!isUndefinedOrNull(container) && !isUndefinedOrNull(container.store[RESOURCE_ENERGY]) &&
+						container.store[RESOURCE_ENERGY] !== 0
+					)
+					{
+						if(this.creepActions.withdraw(this.creepName, container.id, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
+							this.creepActions.moveTo(	this.creepName,
+														[container.pos.x, container.pos.y, container.pos.roomName]);
+						return;
+					}
+				}
+				//look for loose energy at mining container positions
+				for(let index in this.memoryObject.minerContainerPoss)
+				{
+					let energiesAtContainerPos = this.core.getRoomPosition(this.memoryObject.minerContainerPoss[index]).lookFor(LOOK_ENERGY);
+					if(energiesAtContainerPos.length !== 0)
+					{
+						if(this.creepActions.pickup(this.creepName, energiesAtContainerPos[0].id) === ERR_NOT_IN_RANGE)
+							this.creepActions.moveTo(this.creepName, this.memoryObject.minerContainerPoss[index]);
+						return;
+					}
 				}
 
 				return;
