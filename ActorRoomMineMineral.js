@@ -36,7 +36,7 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 		parent.requestBuilding(	[STRUCTURE_CONTAINER],
 								this.memoryObject.mineral.miningSpot,
 								PRIORITY_NAMES.BUILD.MINERAL_MINING_CONTAINER,
-								2);
+								5);
 
 		let mineral = this.core.getObjectById(this.memoryObject.mineral.id);
 		let mineralPosArr = [mineral.pos.x, mineral.pos.y, mineral.pos.roomName];
