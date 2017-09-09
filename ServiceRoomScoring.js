@@ -201,7 +201,7 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 			for(let buildingKeyIndex = buildingKeys.length-1; buildingKeyIndex >= 0; buildingKeyIndex--)
 			{
 				let key = buildingKeys[buildingKeyIndex];
-				for(let posIndex = pattern.buildings[key].pos.length-1; posIndex >= 0; posIndex--)
+				for(let posIndex = 0; posIndex < pattern.buildings[key].pos.length; posIndex++)
 				{
 					let pos = pattern.buildings[key].pos[posIndex];
 					relativePositions.push(

@@ -40,24 +40,12 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 		//don't request towers. let ROOM_GUARD take care of that.
 
-		let extensions = JSON.parse(JSON.stringify(this.memoryObject.extensions));
-
-		let core = this.core;
-		let extensionExists = function(pos)
-		{
-			let structs = core.getRoomPosition(pos).lookFor(LOOK_STRUCTURES);
-
-			for(let structIndex = 0; structIndex < structs.length; structIndex++)
-					if(structs[structIndex].structureType === STRUCTURE_EXTENSION)
-						return 1;
-			return 0;
-		};
-
-		extensions.sort((a, b) => extensionExists(b) - extensionExists(a) );
-
-		for(let index in extensions)
-			parent.requestBuilding([STRUCTURE_EXTENSION], extensions[index],
-				index < 5 ? PRIORITY_NAMES.BUILD.EXTENSION_FIRST_FIVE : PRIORITY_NAMES.BUILD.EXTENSION_AFTER_FIVE);
+		for(let index in this.memoryObject.extensions)
+			parent.requestBuilding(	[STRUCTURE_EXTENSION],
+									this.memoryObject.extensions[index],
+									index < 5 ?
+										PRIORITY_NAMES.BUILD.EXTENSION_FIRST_FIVE[index] :
+										PRIORITY_NAMES.BUILD.EXTENSION_AFTER_FIVE[index]);
 
 		for(let index in this.memoryObject.spawns)
 			parent.requestBuilding([STRUCTURE_SPAWN], this.memoryObject.spawns[index], PRIORITY_NAMES.BUILD.SPAWN);
