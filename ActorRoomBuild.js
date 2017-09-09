@@ -56,7 +56,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		for(let index in oldMemory.requests)
 		{
 			let request = oldMemory.requests[index];
-			this.requestBuilding(request.typeProgression, request.pos, request.priority);
+			this.requestBuilding(request.typeProgression, request.pos, request.priority, request.minRoomLevel);
 		}
 
 		for(let index in oldMemory.energyLocations)
