@@ -28,6 +28,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			, resourceRequests: []
 			, routes: []
 			, unassignedSubActorIds: []
+			, live: false
 			};
 	}
 
@@ -35,6 +36,8 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 	{
 		this.core.subscribe(EVENTS.STRUCTURE_DESTROYED, this.actorId, "structureDestroyed");
 		this.core.subscribe(EVENTS.STRUCTURE_BUILD, this.actorId, "structureBuild");
+		this.memoryObject.live = true;
+		this.update();
 	}
 
 	resetActor()
@@ -105,6 +108,9 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 	update()
 	{
+		if(!this.memoryObject.live)
+			return;
+
 		for(let routeIndex in this.memoryObject.routes)
 			for(let subActorIndex in this.memoryObject.routes[routeIndex].subActorIds)
 				this.memoryObject.unassignedSubActorIds.push(
