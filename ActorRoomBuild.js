@@ -88,6 +88,21 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 				}
 		}
 
+		for(let progressionIndex in typeProgression)
+		{
+			let existingStructure = this.core.getStructureAt(
+				[at[0], at[1], this.memoryObject.roomName],
+				typeProgression[progressionIndex]);
+
+			if (!isNullOrUndefined(existingStructure))
+			{
+				this.core.subscribe(EVENTS.STRUCTURE_DESTROYED + existingStructure.id,
+									this.actorId,
+									"onStructureDestroyed");
+				break;
+			}
+		}
+
 		let newRequest = this._parseRequest(typeProgression, at, priority, minRoomLevel);
 		this.memoryObject.requests.push(newRequest);
 
