@@ -31,7 +31,11 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			};
 	}
 
-	lateInitiate(){}
+	lateInitiate()
+	{
+		this.core.subscribe(EVENTS.STRUCTURE_DESTROYED, this.actorId, "structureDestroyed");
+		this.core.subscribe(EVENTS.STRUCTURE_BUILD, this.actorId, "structureBuild");
+	}
 
 	resetActor()
 	{
@@ -52,8 +56,6 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		for(let index in oldMemory.resourceRequests)
 			this.requestResource(oldMemory.resourceRequests[index]);
 
-		this.core.subscribe(EVENTS.STRUCTURE_DESTROYED, this.actorId, "structureDestroyed");
-		this.core.subscribe(EVENTS.STRUCTURE_BUILD, this.actorId, "structureBuild");
 		this.lateInitiate();
 
 	}
