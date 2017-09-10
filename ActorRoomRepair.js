@@ -189,7 +189,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 
 		let subActor = this.core.getActor(this.memoryObject.subActorId);
 
-		if(subActor === null) //died on same tick as completed
+		if(isNullOrUndefined(subActor)) //died on same tick as completed
 			return;
 
 		let job = this.memoryObject.jobs[this.memoryObject.jobPointer];
