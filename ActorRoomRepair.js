@@ -43,18 +43,31 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 
 	requestMaintain(at, type)
 	{
+		let newRequest = 	{ at: at
+							, type: type
+							};
+
 		for(let index in this.memoryObject.maintainRequests)
 		{
 			let request = this.memoryObject.maintainRequests[index];
-			if(request.at[0] === at[0] && request.at[1] === at[1] && request.at[2] === at[2] && request.type === type)
+			if(request.at[0] === at[0] && request.at[1] === at[1] && request.at[2] === at[2] &&
+				(
+					type === request.type||
+					(
+						type !== STRUCTURE_ROAD &&
+						type !== STRUCTURE_RAMPART &&
+						request.type[0] !== STRUCTURE_ROAD &&
+						request.type[0] !== STRUCTURE_RAMPART
+					)
+				))
+			{
+				this.memoryObject.maintainRequests[index] = newRequest;
+				this.update();
 				return;
+			}
 		}
 
-		this.memoryObject.maintainRequests.push(
-			{ at: at
-			, type: type
-			}
-		);
+		this.memoryObject.maintainRequests.push(newRequest);
 
 		this.update();
 	}
