@@ -719,8 +719,8 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 					pos = this.core.getRoomPosition(currentInstruction[1]);
 
-					filter = {filter: (x)=>x.structureType === currentInstruction[2]};
-					filteredStructs = pos.lookFor(LOOK_STRUCTURES, filter);
+					filteredStructs = _.filter(pos.lookFor(LOOK_STRUCTURES),
+										(s)=>s.structureType === currentInstruction[2]);
 
 					if(filteredStructs.length === 0 || filteredStructs[0].hits === filteredStructs[0].hitsMax)
 						break;
