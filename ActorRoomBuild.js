@@ -94,13 +94,16 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 				[at[0], at[1], this.memoryObject.roomName],
 				typeProgression[progressionIndex]);
 
-			if (!isNullOrUndefined(existingStructure))
-			{
-				this.core.subscribe(EVENTS.STRUCTURE_DESTROYED + existingStructure.id,
-									this.actorId,
-									"onStructureDestroyed");
-				break;
-			}
+			if (isNullOrUndefined(existingStructure))
+				continue;
+
+			const parent = this.core.getActor(this.memoryObject.parentId);
+			parent.buildingCompleted(at, typeProgression[progressionIndex]);
+
+			this.core.subscribe(EVENTS.STRUCTURE_DESTROYED + existingStructure.id,
+								this.actorId,
+								"onStructureDestroyed");
+			break;
 		}
 
 		let newRequest = this._parseRequest(typeProgression, at, priority, minRoomLevel);
