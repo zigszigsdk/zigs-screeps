@@ -5,9 +5,14 @@ const LINK_MAX_TRANSFER_FILL = 799;
 
 module.exports = class ActorRoomLink extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super(locator);
+
+		this.events = locator.getService(SERVICE_NAMES.EVENTS);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+
+		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
 	}
 
 	initiateActor(parentId, roomName)
@@ -21,9 +26,9 @@ module.exports = class ActorRoomLink extends ActorWithMemory
 			, flowerLinkId: null
 			};
 
-		this.core.subscribe(EVENTS.EVERY_TICK, this.actorId, "onEveryTick");
-		this.core.subscribe(EVENTS.STRUCTURE_BUILD	 + roomName, this.actorId, "onStructureUpdate");
-		this.core.subscribe(EVENTS.STRUCTURE_DESTROYED + roomName, this.actorId, "onStructureUpdate");
+		this.events.subscribe(EVENTS.EVERY_TICK, this.actorId, "onEveryTick");
+		this.events.subscribe(EVENTS.STRUCTURE_BUILD	 + roomName, this.actorId, "onStructureUpdate");
+		this.events.subscribe(EVENTS.STRUCTURE_DESTROYED + roomName, this.actorId, "onStructureUpdate");
 
 		this._updateLinkIds();
 	}
@@ -37,17 +42,17 @@ module.exports = class ActorRoomLink extends ActorWithMemory
 
 	_updateLinkIds()
 	{
-		let core = this.core;
+		let screepsApi = this.screepsApi;
 		let findAt = function(posArr, structureType)
 		{
-			let results = _.filter(core.getRoomPosition(posArr).lookFor(LOOK_STRUCTURES),
+			let results = _.filter(screepsApi.getRoomPosition(posArr).lookFor(LOOK_STRUCTURES),
 				(x)=>x.structureType === structureType);
 			if(results.length === 0)
 				return null;
 			return results[0];
 		};
 
-		let layout = this.core.getService(SERVICE_NAMES.ROOM_SCORING).getRoom(this.memoryObject.roomName);
+		let layout = this.roomScoring.getRoom(this.memoryObject.roomName);
 
 		let flowerLink = findAt(layout.flower.link[0], STRUCTURE_LINK);
 		this.memoryObject.flowerLinkId = flowerLink === null ? null : flowerLink.id;
@@ -74,12 +79,12 @@ module.exports = class ActorRoomLink extends ActorWithMemory
 
 	onEveryTick()
 	{
-		let flowerLink = this.core.getObjectFromId(this.memoryObject.flowerLinkId);
-		let upgraderLink = this.core.getObjectFromId(this.memoryObject.upgraderLinkId);
+		let flowerLink = this.screepsApi.getObjectFromId(this.memoryObject.flowerLinkId);
+		let upgraderLink = this.screepsApi.getObjectFromId(this.memoryObject.upgraderLinkId);
 
 		for(let index in this.memoryObject.mineLinkIds)
 		{
-			let mineLink = this.core.getObjectFromId(this.memoryObject.mineLinkIds[index]);
+			let mineLink = this.screepsApi.getObjectFromId(this.memoryObject.mineLinkIds[index]);
 
 			if(isNullOrUndefined(mineLink) || mineLink.cooldown !== 0)
 				continue;
@@ -100,9 +105,9 @@ module.exports = class ActorRoomLink extends ActorWithMemory
 
 	removeActor()
 	{
-		this.core.unsubscribe(EVENTS.EVERY_TICK, this.actorId);
-		this.core.unsubscribe(EVENTS.STRUCTURE_BUILD	 + this.memoryObject.roomName, this.actorId);
-		this.core.unsubscribe(EVENTS.STRUCTURE_DESTROYED + this.memoryObject.roomName, this.actorId);
+		this.events.unsubscribe(EVENTS.EVERY_TICK, this.actorId);
+		this.events.unsubscribe(EVENTS.STRUCTURE_BUILD	 + this.memoryObject.roomName, this.actorId);
+		this.events.unsubscribe(EVENTS.STRUCTURE_DESTROYED + this.memoryObject.roomName, this.actorId);
 		super.removeActor();
 	}
 

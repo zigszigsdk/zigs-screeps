@@ -4,15 +4,18 @@ const ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorStructureEvents extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super(locator);
+
+		this.events = locator.getService(SERVICE_NAMES.EVENTS);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 	}
 
 	initiateActor()
 	{
 		super.initiateActor();
-		this.core.subscribe("everyTick", this.actorId, "onEveryTick");
+		this.events.subscribe("everyTick", this.actorId, "onEveryTick");
 		this.memoryObject =
 			{ structures: {}
 			};
@@ -20,7 +23,7 @@ module.exports = class ActorStructureEvents extends ActorWithMemory
 
 	removeActor()
 	{
-		this.core.unsubscribe("everyTick", this.actorId);
+		this.events.unsubscribe("everyTick", this.actorId);
 		super.removeActor();
 	}
 
@@ -34,10 +37,10 @@ module.exports = class ActorStructureEvents extends ActorWithMemory
 			if(this.memoryObject.structures[newStructureId])
 				continue;
 
-			let roomName = this.core.getObjectById(newStructureId).room.name;
+			let roomName = this.screepsApi.getObjectById(newStructureId).room.name;
 
-			this.core.frontLoadEvent(EVENTS.STRUCTURE_BUILD + newStructureId);
-			this.core.frontLoadEvent(EVENTS.STRUCTURE_BUILD + roomName);
+			this.events.frontLoadEvent(EVENTS.STRUCTURE_BUILD + newStructureId);
+			this.events.frontLoadEvent(EVENTS.STRUCTURE_BUILD + roomName);
 			this.memoryObject.structures[newStructureId] =
 				{ roomName: roomName
 				};
@@ -51,8 +54,8 @@ module.exports = class ActorStructureEvents extends ActorWithMemory
 			if(Game.structures[oldStructureId])
 				continue;
 
-			this.core.frontLoadEvent(EVENTS.STRUCTURE_DESTROYED + oldStructureId);
-			this.core.frontLoadEvent(EVENTS.STRUCTURE_DESTROYED + this.memoryObject.structures[oldStructureId].roomName);
+			this.events.frontLoadEvent(EVENTS.STRUCTURE_DESTROYED + oldStructureId);
+			this.events.frontLoadEvent(EVENTS.STRUCTURE_DESTROYED + this.memoryObject.structures[oldStructureId].roomName);
 			delete this.memoryObject.structures[oldStructureId];
 		}
 

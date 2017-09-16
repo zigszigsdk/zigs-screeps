@@ -1,5 +1,5 @@
 "use strict";
- 
+
 const bankDelimiter = "¤";
 const kvpDelimiter = "#";
 
@@ -7,11 +7,6 @@ const API_MEMORY_KEY = "apiMemory";
 
 module.exports = class MemoryBank
 {
-	constructor(core)
-	{
-		this.core = core;
-	}
-
 	rewindCore()
 	{
 		let memoryString = RawMemory.get();
@@ -52,10 +47,13 @@ module.exports = class MemoryBank
     		}
     		catch(e)
     		{
-    		    
     			this.setMemory(API_MEMORY_KEY, {});
-    			console.log("couldn't parse api memory: " + apiMemory);
-    			this.core.logWarning("couldn't parse api memory: " + apiMemory);
+
+    			let message = "couldn't parse api memory: " + apiMemory;
+    			if(isNullOrUndefined(this.logger))
+    				console.log(message);
+    			else
+    				this.logger.logWarning(message);
     		}
 
 		for (let bankKey in this.banksKvp)
@@ -67,7 +65,10 @@ module.exports = class MemoryBank
 			)
 				continue;
 
-			this.core.logMemory(bankKey, this.banksKvp[bankKey]);
+			if(isNullOrUndefined(this.logger))
+				console.log(bankKey + " is " + this.banksKvp[bankKey]);
+			else
+				this.logger.memory(bankKey, this.banksKvp[bankKey]);
 
 			rawMemory += bankKey + kvpDelimiter + this.banksKvp[bankKey] + bankDelimiter;
 		}
@@ -100,5 +101,10 @@ module.exports = class MemoryBank
 	{
 		this.banksKvp = {};
 		this.unwindCore();
+	}
+
+	setLogger(logger)
+	{
+		this.logger = logger;
 	}
 };

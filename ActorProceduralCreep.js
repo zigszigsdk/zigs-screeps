@@ -6,10 +6,14 @@ let ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorProcedualCreep extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.mapNavigation = core.getService(SERVICE_NAMES.MAP_NAVIGATION);
+		super(locator);
+		this.mapNavigation = locator.getService(SERVICE_NAMES.MAP_NAVIGATION);
+		this.events = locator.getService(SERVICE_NAMES.EVENTS);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.logger = locator.getService(SERVICE_NAMES.LOGGER);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 	}
 
 	initiateActor(creepNamePrefix, callbackStamp, instructions)
@@ -21,7 +25,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 			, callbackStamp: callbackStamp
 			};
 
-		this.core.subscribe("everyTick", this.actorId, "onEveryTick");
+		this.events.subscribe("everyTick", this.actorId, "onEveryTick");
 		this.onEveryTick(); //act or initiation tick
 	}
 
@@ -38,11 +42,11 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 	removeActor()
 	{
-		let creep = this.core.getCreep(this.memoryObject.creepName);
+		let creep = this.screepsApi.getCreep(this.memoryObject.creepName);
 		if(creep)
 			creep.suicide();
 
-		this.core.unsubscribe("everyTick", this.actorId);
+		this.events.unsubscribe("everyTick", this.actorId);
 		super.removeActor();
 	}
 
@@ -56,7 +60,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 		if(creep)
 			return creep;
 
-		return this.core.getCreep(this.memoryObject.creepName);
+		return this.screepsApi.getCreep(this.memoryObject.creepName);
 	}
 
 	replaceInstruction(index, instruction)
@@ -166,7 +170,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					if(creep !== null && creep !== undefined)
 						break;
 
-					let spawn = this.core.getObjectById(currentInstruction[1][0]); //should accept multiple spawns
+					let spawn = this.screepsApi.getObjectById(currentInstruction[1][0]); //should accept multiple spawns
 
 					if(spawn.canCreateCreep(currentInstruction[2], this.memoryObject.creepName) !== OK)
 					{
@@ -178,11 +182,11 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					break;
 
 				case CREEP_INSTRUCTION.CALLBACK:
-					let callbackActor = this.core.actorFromId(currentInstruction[1]);
+					let callbackActor = this.actors.get(currentInstruction[1]);
 					if(callbackActor && callbackActor[currentInstruction[2]])
 						callbackActor[currentInstruction[2]](this.memoryObject.callbackStamp, this.actorId);
 					else
-						this.core.logWarning("actorProcedualCreep: callback did not exist. ID: " +
+						this.logger.warning("actorProcedualCreep: callback did not exist. ID: " +
 							currentInstruction[1] + " function: " + currentInstruction[2]);
 					break;
 
@@ -194,7 +198,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 					stop = true;
 
-					source = this.core.getObjectById(currentInstruction[1]);
+					source = this.screepsApi.getObjectById(currentInstruction[1]);
 
 					if(creep.harvest(source) === ERR_NOT_IN_RANGE)
 						creep.moveTo(source);
@@ -207,7 +211,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					if(!creep || _.sum(creep.carry) === 0)
 						break;
 
-					let controller = this.core.getObjectById(currentInstruction[1]);
+					let controller = this.screepsApi.getObjectById(currentInstruction[1]);
 
 					if(creep.upgradeController(controller) === ERR_NOT_IN_RANGE)
 						creep.moveTo(controller);
@@ -244,7 +248,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 				case CREEP_INSTRUCTION.DESTROY_SCRIPT:
 					stop=true;
-					this.core.removeActor(this.actorId);
+					this.actors.remove(this.actorId);
 					break;
 
 				case CREEP_INSTRUCTION.PICKUP_AT_POS:
@@ -260,7 +264,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 						break;
 
 					posList = currentInstruction[1];
-					pos = this.core.getRoomPosition(posList);
+					pos = this.screepsApi.getRoomPosition(posList);
 
 
 					limit = 0;
@@ -352,7 +356,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					for(let positionIndex in positions)
 					{
 						posList = positions[positionIndex];
-						pos = this.core.getRoomPosition(posList);
+						pos = this.screepsApi.getRoomPosition(posList);
 
 						limit = 0;
 						if(currentInstruction.length >= 4)
@@ -428,7 +432,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 						break;
 
 					let posArr = currentInstruction[1];
-					pos = this.core.getRoomPosition(posArr);
+					pos = this.screepsApi.getRoomPosition(posArr);
 
 					if(pos.isEqualTo(creep.pos)) //most structures can't be build if you're standing on
 					{
@@ -483,7 +487,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 						break;
 
 					let posInst = currentInstruction[1];
-					pos = this.core.getRoomPosition(posInst);
+					pos = this.screepsApi.getRoomPosition(posInst);
 
 					structs = pos.lookFor(LOOK_STRUCTURES);
 
@@ -526,7 +530,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 						break;
 
 					pos = currentInstruction[1];
-					targetPos = this.core.getRoomPosition(pos);
+					targetPos = this.screepsApi.getRoomPosition(pos);
 
 					if(creep.pos.x === targetPos.x &&
 						creep.pos.y === targetPos.y &&
@@ -553,7 +557,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					if(!creep)
 						break;
 
-					source = this.core.getObjectById(currentInstruction[1]);
+					source = this.screepsApi.getObjectById(currentInstruction[1]);
 
 					if(creep.harvest(source) === ERR_NOT_IN_RANGE)
 						creep.moveTo(source);
@@ -572,7 +576,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 					currentInstruction[2].forEach((targetId) =>
 					{
-						let candidate = this.core.getObjectById(targetId);
+						let candidate = this.screepsApi.getObjectById(targetId);
 
 						if(candidate && candidate.energy !== candidate.energyCapacity)
 							candidates.push(candidate);
@@ -600,7 +604,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					stop = true;
 
 					pos = currentInstruction[1];
-					targetPos = this.core.getRoomPosition(pos);
+					targetPos = this.screepsApi.getRoomPosition(pos);
 
 					structures = targetPos.lookFor(LOOK_STRUCTURES);
 
@@ -666,7 +670,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					if(creep.hits !== creep.hitsMax)
 						creep.heal(creep);
 
-					targetPos = this.core.getRoomPosition(currentInstruction[1]);
+					targetPos = this.screepsApi.getRoomPosition(currentInstruction[1]);
 
 					if(creep.pos.roomName !== targetPos.roomName)
 					{
@@ -696,7 +700,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					if(!creep || _.sum(creep.carry) === 0)
 						break;
 
-					pos = this.core.getRoomPosition(currentInstruction[1]);
+					pos = this.screepsApi.getRoomPosition(currentInstruction[1]);
 
 					filteredStructs = _.filter(pos.lookFor(LOOK_STRUCTURES),
 										(s)=>s.structureType === currentInstruction[2]);
@@ -717,7 +721,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					if(!creep)
 						break;
 
-					pos = this.core.getRoomPosition(currentInstruction[1]);
+					pos = this.screepsApi.getRoomPosition(currentInstruction[1]);
 
 					filteredStructs = _.filter(pos.lookFor(LOOK_STRUCTURES),
 										(s)=>s.structureType === currentInstruction[2]);
@@ -731,10 +735,10 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 				case CREEP_INSTRUCTION.REMOVE_FLAG_AT:
 
-					if(! this.core.getRoom(currentInstruction[1][2] ) )
+					if(! this.screepsApi.getRoom(currentInstruction[1][2] ) )
 						break;
 
-					pos = this.core.getRoomPosition(currentInstruction[1]);
+					pos = this.screepsApi.getRoomPosition(currentInstruction[1]);
 
 					let flags = pos.lookFor(LOOK_FLAGS);
 
@@ -752,11 +756,11 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 					stop = true;
 
-					room = this.core.getRoom(currentInstruction[1][2]);
+					room = this.screepsApi.getRoom(currentInstruction[1][2]);
 
 					if(typeof room === UNDEFINED)
 					{
-						pos = this.core.getRoomPosition(currentInstruction[1]);
+						pos = this.screepsApi.getRoomPosition(currentInstruction[1]);
 						creep.moveTo(pos);
 						break;
 					}
@@ -792,7 +796,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 					if(creep.room.name === currentInstruction[1])
 					{
-						creep.moveTo(this.core.getRoomPosition([25, 25, roomPath[0]]));
+						creep.moveTo(this.screepsApi.getRoomPosition([25, 25, roomPath[0]]));
 						break;
 					}
 
@@ -835,7 +839,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					break;
 
 				default:
-					this.core.logWarning("actorProcedualCreep doesn't have a case called: " + currentInstruction[0]);
+					this.logger.warning("actorProcedualCreep doesn't have a case called: " + currentInstruction[0]);
 					stop = true;
 					break;
 			}

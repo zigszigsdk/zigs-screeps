@@ -7,10 +7,14 @@ const targetNumberOfBuildersOverLevel = [0, 0, 3, 1, 1, 1, 1, 1, 1];
 
 module.exports = class ActorRoomBuild extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.CreepBodyFactory = this.core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		super(locator);
+		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+
+		this.events = locator.getService(SERVICE_NAMES.EVENTS);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 	}
 
 	initiateActor(parentId, roomName)
@@ -25,7 +29,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 			, subActorIds: []
 			};
 
-		this.core.subscribe(EVENTS.ROOM_LEVEL_CHANGED + roomName, this.actorId, "onRoomLevelChange");
+		this.events.subscribe(EVENTS.ROOM_LEVEL_CHANGED + roomName, this.actorId, "onRoomLevelChange");
 	}
 
 	onRoomLevelChange()
@@ -40,7 +44,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 	resetActor()
 	{
-		let room = this.core.getRoom(this.memoryObject.roomName);
+		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
 
 		let sites = room.find(FIND_CONSTRUCTION_SITES);
 		for(let index in sites)
@@ -90,17 +94,17 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 		for(let progressionIndex in typeProgression)
 		{
-			let existingStructure = this.core.getStructureAt(
+			let existingStructure = this.screepsApi.getStructureAt(
 				[at[0], at[1], this.memoryObject.roomName],
 				typeProgression[progressionIndex]);
 
 			if (isNullOrUndefined(existingStructure))
 				continue;
 
-			const parent = this.core.getActor(this.memoryObject.parentId);
+			const parent = this.actors.get(this.memoryObject.parentId);
 			parent.buildingCompleted(at, typeProgression[progressionIndex]);
 
-			this.core.subscribe(EVENTS.STRUCTURE_DESTROYED + existingStructure.id,
+			this.events.subscribe(EVENTS.STRUCTURE_DESTROYED + existingStructure.id,
 								this.actorId,
 								"onStructureDestroyed");
 			break;
@@ -111,7 +115,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 		if(newRequest.completeness !== -1)
 		{
-			let parent = this.core.getActor(this.memoryObject.parentId);
+			let parent = this.actors.get(this.memoryObject.parentId);
 			parent.buildingCompleted(at, typeProgression[newRequest.completeness]);
 		}
 
@@ -139,7 +143,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 	_parseRequest(typeProgression, at, priority, minRoomLevel)
 	{
-		let rp = this.core.getRoomPosition(at);
+		let rp = this.screepsApi.getRoomPosition(at);
 
 		let completeness = -1;
 
@@ -219,7 +223,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		let structureType = this.memoryObject.currentTask.structureType;
 		let buildPos = this.memoryObject.currentTask.pos;
 
-		const roomLevel = this.core.getRoom(this.memoryObject.roomName).controller.level;
+		const roomLevel = this.screepsApi.getRoom(this.memoryObject.roomName).controller.level;
 
 		if(this.memoryObject.subActorIds.length < targetNumberOfBuildersOverLevel[roomLevel])
 		{
@@ -239,7 +243,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		let energyPos = this.findNearestEnergyPosition(buildPos);
 		for(let idIndex in this.memoryObject.subActorIds)
 		{
-			let subActor = this.core.getActor(this.memoryObject.subActorIds[idIndex]);
+			let subActor = this.actors.get(this.memoryObject.subActorIds[idIndex]);
 
 			subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS,		energyPos, RESOURCE_ENERGY, ENERGY_LIMIT]);
 			subActor.replaceInstruction(2, [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,	buildPos,  structureType	 			]);
@@ -255,7 +259,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 	requestBuilder(callbackObj)
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		parent.requestCreep(
 			{ actorId: this.actorId
@@ -269,7 +273,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 	getNextTask()
 	{
 		let cachedLookups = {};
-		let room = this.core.getRoom(this.memoryObject.roomName);
+		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
 		let roomLevel = room.controller.level;
 
 		for(let requestIndex in this.memoryObject.requests)
@@ -280,7 +284,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 			request.completeness = -1;
 
-			let roomPosition = this.core.getRoomPosition(request.pos);
+			let roomPosition = this.screepsApi.getRoomPosition(request.pos);
 			let structs = roomPosition.lookFor(LOOK_STRUCTURES);
 
 			for(let progressionIndex = request.typeProgression.length-1; progressionIndex >= 0; progressionIndex--)
@@ -341,7 +345,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 	createBuilder(spawnId, callbackObj)
 	{
 		this.memoryObject.pendingCallback = false;
-		const roomLevel = this.core.getRoom(this.memoryObject.roomName).controller.level;
+		const roomLevel = this.screepsApi.getRoom(this.memoryObject.roomName).controller.level;
 
 		if(this.memoryObject.subActorIds.length >= targetNumberOfBuildersOverLevel[roomLevel])
 			return;
@@ -355,7 +359,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 		let body = new this.CreepBodyFactory()
 			.addPattern([WORK, CARRY, MOVE, MOVE], 5)
-			.setMaxCost(this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable)
+			.setMaxCost(this.screepsApi.getRoom(this.memoryObject.roomName).energyCapacityAvailable)
 			.fabricate();
 
 
@@ -366,7 +370,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		callbackObj.at = buildPos;
 		callbackObj.type = structureType;
 
-		let actorObj = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+		let actorObj = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor("builder", callbackObj,
 				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
 				, [CREEP_INSTRUCTION.PICKUP_AT_POS,	energyPos, RESOURCE_ENERGY,ENERGY_LIMIT] //1
@@ -397,16 +401,16 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 
 	buildCompleted(callbackObj)
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
-		let structs = this.core.getRoomPosition(callbackObj.at).lookFor(LOOK_STRUCTURES);
+		let structs = this.screepsApi.getRoomPosition(callbackObj.at).lookFor(LOOK_STRUCTURES);
 		for(let index in structs)
 		{
 			if(structs[index].structureType !== callbackObj.type)
 				continue;
 
 			parent.buildingCompleted(callbackObj.at, callbackObj.type);
-			this.core.subscribe(EVENTS.STRUCTURE_DESTROYED + structs[index].id, this.actorId, "onStructureDestroyed");
+			this.events.subscribe(EVENTS.STRUCTURE_DESTROYED + structs[index].id, this.actorId, "onStructureDestroyed");
 			break;
 		}
 

@@ -11,19 +11,20 @@ const Service = require('Service');
 
 module.exports = class ServiceBodypartPredicter extends Service
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super();
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 	}
 
 	haulerCarry(fromPoint, toPoints, toHaulPerTick)
 	{
-		let fromRoomPosition = this.core.getRoomPosition(fromPoint);
+		let fromRoomPosition = this.screepsApi.getRoomPosition(fromPoint);
 		let maxDistance = 0;
 
 		for(let index in toPoints)
 		{
-			let toPoint = this.core.getRoomPosition(toPoints[index]);
+			let toPoint = this.screepsApi.getRoomPosition(toPoints[index]);
 			let distance = fromRoomPosition.findPathTo(toPoint, PATHOPTION_STATIC).length;
 
 			if(distance > maxDistance)

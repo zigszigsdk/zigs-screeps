@@ -11,14 +11,6 @@ module.exports = class Core
 		require('loadData')();
 
 		let ConsoleInterface = require('ConsoleInterface');
-		global.CI = new ConsoleInterface();
-
-		this.recycleCount = 0;
-
-		let CoreFacade = require('CoreFacade');
-		let coreFacade = new CoreFacade();
-
-
 		let Logger = require('Logger');
 		let EventQueue = require('EventQueue');
 		let Subscriptions = require('Subscriptions');
@@ -28,51 +20,28 @@ module.exports = class Core
 		let Resetter = require('Resetter');
 		let ConsoleExecuter = require('ConsoleExecuter');
 
-		let DebugWrapperCore;
-		if(DEBUG)
-		{
-			DebugWrapperCore = require("DebugWrapperCore");
-			this.logger = new DebugWrapperCore(Logger, coreFacade);
-			coreFacade.setLogger(this.logger);
+		global.CI = new ConsoleInterface();
 
-			this.eventQueue = new DebugWrapperCore(EventQueue, coreFacade);
-			coreFacade.setEventQueue(this.eventQueue);
+		this.memoryBank = new MemoryBank();
+		this.logger = new Logger(this.memoryBank);
+		this.memoryBank.setLogger(this.logger);
+		this.eventQueue = new EventQueue();
+		this.subscriptions = new Subscriptions(this.memoryBank, this.logger);
+		this.locator = new Locator();
+		this.actors = new Actors(this.memoryBank, this.logger, this.locator);
 
-			this.subscriptions = new DebugWrapperCore(Subscriptions, coreFacade);
-			coreFacade.setSubscriptions(this.subscriptions);
+		this.locator.setCoreAccess(	{ logger: this.logger
+									, eventQueue: this.eventQueue
+									, subscriptions: this.subscriptions
+									, memoryBank: this.memoryBank
+									, actors: this.actors
+									});
 
-			this.memoryBank = new DebugWrapperCore(MemoryBank, coreFacade);
-			coreFacade.setMemoryBank(this.memoryBank);
 
-			this.actors = new DebugWrapperCore(Actors, coreFacade);
-			coreFacade.setActors(this.actors);
+		this.resetter = new Resetter(this.locator, this.actors);
+		this.consoleExecuter = new ConsoleExecuter(this.memoryBank, this.locator, this.actors, this.logger);
 
-			this.locator = new DebugWrapperCore(Locator, coreFacade);
-			coreFacade.setLocator(this.locator);
-		}
-		else
-		{
-			this.logger = new Logger(coreFacade);
-			coreFacade.setLogger(this.logger);
-
-			this.eventQueue = new EventQueue(coreFacade);
-			coreFacade.setEventQueue(this.eventQueue);
-
-			this.subscriptions = new Subscriptions(coreFacade);
-			coreFacade.setSubscriptions(this.subscriptions);
-
-			this.memoryBank = new MemoryBank(coreFacade);
-			coreFacade.setMemoryBank(this.memoryBank);
-
-			this.actors = new Actors(coreFacade);
-			coreFacade.setActors(this.actors);
-
-			this.locator = new Locator(coreFacade);
-			coreFacade.setLocator(this.locator);
-		}
-
-		this.resetter = new Resetter(coreFacade);
-		this.consoleExecuter = new ConsoleExecuter(coreFacade);
+		this.recycleCount = 0;
 	}
 
 	boot()
@@ -81,8 +50,6 @@ module.exports = class Core
 
 		//if the memory isn't saved at some point in the loop, all data would be lost.
 		RawMemory.set(RawMemory.get()); //This makes sure it'll be preserved even at runtime error after this point.
-
-		//return;
 
 		let memBlank = RawMemory.get() === "";
 

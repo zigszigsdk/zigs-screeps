@@ -4,10 +4,13 @@ let ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorRoomOffense extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		super(locator);
+		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 	}
 
 	initiateActor(parentId, roomName)
@@ -33,7 +36,7 @@ module.exports = class ActorRoomOffense extends ActorWithMemory
 
 	requestCreep()
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createDismantler"
@@ -52,7 +55,7 @@ module.exports = class ActorRoomOffense extends ActorWithMemory
 
 		let targetPos = Game.flags[targetKeys[0]].pos;
 
-		let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
+		let energy = this.screepsApi.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
 		let body = new this.CreepBodyFactory()
 			.addPattern([WORK, MOVE], 1)
@@ -64,7 +67,7 @@ module.exports = class ActorRoomOffense extends ActorWithMemory
 			.fabricate();
 
 
-		this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+		this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor("soloDismantler", {},
 			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
 			, [CREEP_INSTRUCTION.DISMANTLE_AT, targetPos] //1

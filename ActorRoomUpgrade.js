@@ -9,13 +9,15 @@ const TARGET_RESOURCE_RESERVE = 1500;
 
 module.exports = class ActorRoomUpgrade extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
-		this.ResourceRequest = core.getClass(CLASS_NAMES.RESOURCE_REQUEST);
+		super(locator);
+		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		this.ResourceRequest = locator.getClass(CLASS_NAMES.RESOURCE_REQUEST);
 
-		this.roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
+		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 	}
 
 	initiateActor(parentId, roomName)
@@ -32,14 +34,14 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 				{ spots: parkingSpots
 				, actors: Array(parkingSpots.length)
 				}
-			, controllerId: this.core.getRoom(roomName).controller.id
+			, controllerId: this.screepsApi.getRoom(roomName).controller.id
 			};
 	}
 
 	lateInitiate()
 	{
 
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 
 		parent.requestBuilding(	[STRUCTURE_CONTAINER, STRUCTURE_LINK],
@@ -73,7 +75,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 			this.memoryObject.parking.actors[index] = oldActors.pop();
 
 		for(let index in oldActors)
-			this.core.getActor(oldActors[index]).setPointer(5); //destroy self and report to this script
+			this.actors.get(oldActors[index]).setPointer(5); //destroy self and report to this script
 
 		//these two will be adjusted automatically by the actors calling back on death.
 		this.memoryObject.creepCount = oldMemory.creepCount;
@@ -84,7 +86,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 
 	requestCreep()
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		parent.requestCreep(
 			{ actorId: this.actorId
@@ -99,7 +101,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		if(this.memoryObject.workParts >= TARGET_WORKPARTS)
 			return;
 
-		let room = this.core.getRoom(this.memoryObject.roomName);
+		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
 		let energy = room.energyCapacityAvailable;
 
 		let body = new this.CreepBodyFactory()
@@ -134,7 +136,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		if(parkingIndex === -1) //no free spaces. Limited by room layout / roomscoring
 			return;
 
-		let actorResult = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+		let actorResult = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor("upgrader", {workParts: workParts, parkingIndex: parkingIndex},
 			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
 			, [CREEP_INSTRUCTION.MOVE_TO_POSITION, this.memoryObject.parking.spots[parkingIndex] ] //1
@@ -161,7 +163,7 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		if(callbackObj.parkingIndex)
 			this.memoryObject.parking.actors[callbackObj.parkingIndex] = null;
 
-		let maxCreeps = MAX_CREEPS_OVER_LEVEL[this.core.getRoom(this.memoryObject.roomName).controller.level];
+		let maxCreeps = MAX_CREEPS_OVER_LEVEL[this.screepsApi.getRoom(this.memoryObject.roomName).controller.level];
 		if(this.memoryObject.workParts < TARGET_WORKPARTS && this.memoryObject.creepCount < maxCreeps)
 			this.requestCreep();
 	}

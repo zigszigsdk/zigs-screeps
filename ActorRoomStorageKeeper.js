@@ -5,16 +5,20 @@ let MAX_SPAWN_ENERGY_NEEDED = 500;
 let ActorWithMemory = require('ActorWithMemory');
 module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
-		this.ResourceRequest = core.getClass(CLASS_NAMES.RESOURCE_REQUEST);
+		super(locator);
+		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		this.ResourceRequest = locator.getClass(CLASS_NAMES.RESOURCE_REQUEST);
+
+		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 	}
 
 	initiateActor(parentId, roomName)
 	{
-		let roomScore = this.core.getService(SERVICE_NAMES.ROOM_SCORING).getRoom(roomName);
+		let roomScore = this.roomScoring.getRoom(roomName);
 
 		this.memoryObject =
 			{ parentId: parentId
@@ -33,7 +37,7 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 	{
 		this._requestCreep();
 
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		const requestBuilding = function(posList, type, priorityName, removeType, minRoomLevel, separatePriorityNames)
 		{
@@ -77,7 +81,7 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 
 	_requestCreep()
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		parent.requestCreep(
 			{ actorId: this.actorId
@@ -89,7 +93,7 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 
 	spawnCreep(spawnId)
 	{
-		let room = this.core.getRoom(this.memoryObject.roomName);
+		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
 		let energy = room.energyAvailable;
 
 		let body = new this.CreepBodyFactory()

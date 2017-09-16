@@ -4,9 +4,10 @@ let ServiceWithMemory = require('ServiceWithMemory');
 
 module.exports = class ServiceTerrainCache extends ServiceWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super(locator);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 	}
 
 	resetService()
@@ -23,7 +24,7 @@ module.exports = class ServiceTerrainCache extends ServiceWithMemory
 		{
 			let column = [];
 			for(let y = FIRST_OF_ROOM; y <= LAST_OF_ROOM; y++)
-				column.push(this.core.getRoomPosition([x, y, roomName]).lookFor(LOOK_TERRAIN)[0]);
+				column.push(this.screepsApi.getRoomPosition([x, y, roomName]).lookFor(LOOK_TERRAIN)[0]);
 
 			terrain.push(column);
 		}

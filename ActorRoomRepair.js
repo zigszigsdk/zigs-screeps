@@ -4,10 +4,13 @@ let ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorRoomRepair extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		super(locator);
+		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 	}
 
 	initiateActor(parentId, roomName)
@@ -103,7 +106,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 		for(let maintainIndex in this.memoryObject.maintainRequests)
 		{
 			let maintainRequest = this.memoryObject.maintainRequests[maintainIndex];
-			let maintainRoomPos = this.core.getRoomPosition(maintainRequest.at);
+			let maintainRoomPos = this.screepsApi.getRoomPosition(maintainRequest.at);
 
 			let bestScore = Number.NEGATIVE_INFINITY;
 			let energyLocation = null;
@@ -140,7 +143,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 		if(this.memoryObject.creepRequested === true)
 			return;
 
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "createFixer"
@@ -154,7 +157,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 
 	createFixer(spawnId)
 	{
-		let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
+		let energy = this.screepsApi.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
 		let body = new this.CreepBodyFactory()
 			.addPattern([MOVE, CARRY, WORK], 5)
@@ -164,7 +167,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 
 		let job = this.memoryObject.jobs[this.memoryObject.jobPointer];
 
-		let actorRes = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+		let actorRes = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor("fixer", {},
 				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
 				, [CREEP_INSTRUCTION.PICKUP_AT_POS, job.energyAt, RESOURCE_ENERGY] //1
@@ -184,7 +187,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 
 	updateSubActor()
 	{
-		let subActor = this.core.getActor(this.memoryObject.subActorId);
+		let subActor = this.actors.get(this.memoryObject.subActorId);
 
 		let job = this.memoryObject.jobs[this.memoryObject.jobPointer];
 
@@ -200,7 +203,7 @@ module.exports = class ActorRoomRepair extends ActorWithMemory
 		if(this.memoryObject.jobPointer === this.memoryObject.jobs.length)
 			this.memoryObject.jobPointer = 0;
 
-		let subActor = this.core.getActor(this.memoryObject.subActorId);
+		let subActor = this.actors.get(this.memoryObject.subActorId);
 
 		if(isNullOrUndefined(subActor)) //died on same tick as completed
 			return;

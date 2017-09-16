@@ -1,12 +1,15 @@
 "use strict";
- 
+
 const MEMORY_KEYWORD = "core:actors";
 
 module.exports = class Actors
 {
-	constructor(core)
+	constructor(memoryBank, logger, locator)
 	{
-		this.core = core;
+		this.memoryBank = memoryBank;
+		this.logger = logger;
+		this.locator = locator;
+
 		this.localCache =
 			{ actors: {}
 			, classes: {}
@@ -16,7 +19,7 @@ module.exports = class Actors
 
 	rewindCore()
 	{
-		this.memoryObject = this.core.getMemory(MEMORY_KEYWORD);
+		this.memoryObject = this.memoryBank.getMemory(MEMORY_KEYWORD);
 
 		for(let actorId in this.localCache.actors)
 			this.localCache.outdatedActors[actorId] = this.localCache.actors[actorId];
@@ -50,7 +53,7 @@ module.exports = class Actors
 			 this.localCache.actors[actorId].unwindActor();
 		}
 
-		this.core.setMemory(MEMORY_KEYWORD, this.memoryObject);
+		this.memoryBank.setMemory(MEMORY_KEYWORD, this.memoryObject);
 	}
 
 	getFromId(actorId)
@@ -60,11 +63,11 @@ module.exports = class Actors
 
 		if(this.localCache.outdatedActors[actorId])
 		{
-			this.core.startCpuLog("rewinding actor");
+			this.logger.startCpuLog("rewinding actor");
 			let actor = this.localCache.outdatedActors[actorId];
 			actor.rewindActor(Number(actorId));
 			this.localCache.actors[actorId] = actor;
-			this.core.endCpuLog("rewinding actor");
+			this.logger.endCpuLog("rewinding actor");
 			return actor;
 		}
 
@@ -72,41 +75,35 @@ module.exports = class Actors
 
 		if(typeof scriptName === UNDEFINED || scriptName === null)
 		{
-			this.core.logWarning("attempted to actors.getFromId with invalid details. Scriptname: " +
+			this.logger.warning("attempted to actors.getFromId with invalid details. Scriptname: " +
 				scriptName + ", actorId: " + actorId);
 			return null;
 		}
 
 		if(!this.localCache.classes[scriptName])
 		{
-			this.core.startCpuLog("load actor class script");
+			this.logger.startCpuLog("load actor class script");
 			try //insure that one failing actor can't take the core and thus all actors down.
 			{
 				this.localCache.classes[scriptName] = require(scriptName);
 			}
 			catch(error)
 			{
-				this.core.endCpuLog("load actor class script");
-				this.core.logError("error requiring script " + scriptName, error);
+				this.logger.endCpuLog("load actor class script");
+				this.logger.error("error requiring script " + scriptName, error);
 				return;
 			}
-			this.core.endCpuLog("load actor class script");
+			this.logger.endCpuLog("load actor class script");
 		}
 
-		this.core.startCpuLog("instanciate actor script");
+		this.logger.startCpuLog("instanciate actor script");
 
 		let ActorClass = this.localCache.classes[scriptName];
 		let actor;
 
-		if(DEBUG)
-		{
-			let DebugWrapperActor = require("DebugWrapperActor");
-			actor = new DebugWrapperActor(ActorClass, actorId, this.core);
-		}
-		else
-			actor = new ActorClass(this.core);
+		actor = new ActorClass(this.locator);
 
-		this.core.endCpuLog("instanciate actor script");
+		this.logger.endCpuLog("instanciate actor script");
 
 		actor.rewindActor(Number(actorId));
 
@@ -125,7 +122,7 @@ module.exports = class Actors
 			}
 			catch(error)
 			{
-				this.core.logError("error requiring script " + scriptName, error);
+				this.logger.error("error requiring script " + scriptName, error);
 				return;
 			}
 		}
@@ -136,13 +133,8 @@ module.exports = class Actors
 
 		let actorId = this.memoryObject.actorIdCounter++;
 
-		if(DEBUG)
-		{
-			let DebugWrapperActor = require("DebugWrapperActor");
-			actor = new DebugWrapperActor(ActorClass, actorId, this.core);
-		}
-		else
-			actor = new ActorClass(this.core);
+
+		actor = new ActorClass(this.locator);
 
 		this.memoryObject.scriptNameFromId[actorId] = scriptName;
 		this.localCache.actors[actorId] = actor;

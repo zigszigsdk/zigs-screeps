@@ -7,21 +7,24 @@ const ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorRoomMineMineral extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
-		this.ResourceRequest = core.getClass(CLASS_NAMES.RESOURCE_REQUEST);
+		super(locator);
+		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		this.ResourceRequest = locator.getClass(CLASS_NAMES.RESOURCE_REQUEST);
+
+		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
+		this.events = locator.getService(SERVICE_NAMES.EVENTS);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 	}
 
 	initiateActor(parentId, roomName)
 	{
-		let roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
-
 		this.memoryObject =
 			{ parentId: parentId
 			, roomName: roomName
-			, mineral: roomScoring.getRoom(roomName).mineral
+			, mineral: this.roomScoring.getRoom(roomName).mineral
 			, subActorId: null
 			};
 	}
@@ -29,16 +32,16 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 	lateInitiate()
 	{
 		if(isUndefinedOrNull(this.memoryObject.mineral))
-			return this.core.removeActor(this.actorId);
+			return this.actors.remove(this.actorId);
 
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		parent.requestBuilding(	[STRUCTURE_CONTAINER],
 								this.memoryObject.mineral.miningSpot,
 								PRIORITY_NAMES.BUILD.MINERAL_MINING_CONTAINER,
 								5);
 
-		let mineral = this.core.getObjectById(this.memoryObject.mineral.id);
+		let mineral = this.screepsApi.getObjectById(this.memoryObject.mineral.id);
 		let mineralPosArr = [mineral.pos.x, mineral.pos.y, mineral.pos.roomName];
 
 		parent.requestBuilding(	[STRUCTURE_EXTRACTOR],
@@ -60,7 +63,7 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 
 	onRoomLevelChanged()
 	{
-		this.core.unsubscribe(EVENTS.ROOM_LEVEL_CHANGED + this.memoryObject.roomName, this.actorId);
+		this.events.unsubscribe(EVENTS.ROOM_LEVEL_CHANGED + this.memoryObject.roomName, this.actorId);
 		this._update();
 
 	}
@@ -72,26 +75,26 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 
 	onBuildingCompleted()
 	{
-		this.core.unsubscribe(EVENTS.STRUCTURE_BUILD + this.memoryObject.roomName, this.actorId);
+		this.events.unsubscribe(EVENTS.STRUCTURE_BUILD + this.memoryObject.roomName, this.actorId);
 		this._update();
 	}
 
 	_update()
 	{
-		let room = this.core.getRoom(this.memoryObject.roomName);
-		let mineral = this.core.getObjectById(this.memoryObject.mineral.id);
+		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
+		let mineral = this.screepsApi.getObjectById(this.memoryObject.mineral.id);
 
 		if(room.controller.level < LEVEL_REQUIRED_TO_MINE_MINERALS)
-			return this.core.subscribe(EVENTS.ROOM_LEVEL_CHANGED + room.name, this.actorId, "onRoomLevelChanged");
+			return this.events.subscribe(EVENTS.ROOM_LEVEL_CHANGED + room.name, this.actorId, "onRoomLevelChanged");
 
 		if(isUndefined(mineral.mineralAmount) || mineral.mineralAmount === 0)
-			return this.core.callbackAfter(mineral.ticksToRegeneration, this.actorId, "onMineralRegenerated");
+			return; //this.???.callbackAfter(mineral.ticksToRegeneration, this.actorId, "onMineralRegenerated");
 
-		let extractor = this.core.getStructureAt([mineral.pos.x, mineral.pos.y, mineral.pos.roomName],
+		let extractor = this.screepsApi.getStructureAt([mineral.pos.x, mineral.pos.y, mineral.pos.roomName],
 												STRUCTURE_EXTRACTOR);
 
 		if(isNullOrUndefined(extractor))
-			return this.core.subscribe(EVENTS.STRUCTURE_BUILD + room.name, this.actorId, "onBuildingCompleted");
+			return this.events.subscribe(EVENTS.STRUCTURE_BUILD + room.name, this.actorId, "onBuildingCompleted");
 
 		this._requestMiner();
 	}
@@ -111,7 +114,7 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 		if(this.memoryObject.subActorId !== null)
 			return;
 
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		parent.requestCreep(
 			{ actorId: this.actorId
@@ -126,7 +129,7 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 		if(this.memoryObject.subActorId !== null)
 			return;
 
-		let room = this.core.getRoom(this.memoryObject.roomName);
+		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
 		let energy = room.energyAvailable;
 
 		let	body = new this.CreepBodyFactory()
@@ -140,7 +143,7 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 		let mineralId = this.memoryObject.mineral.id;
 		let miningSpot = this.memoryObject.mineral.miningSpot;
 
-		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+		let result = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor(ROLE_NAME, {},
 				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
 				, [CREEP_INSTRUCTION.MOVE_TO_POSITION, miningSpot] //1

@@ -13,11 +13,16 @@ const SCORE_BELOW_DESIRED = 3;
 
 module.exports = class ActorRoomHaul extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
-		this.bodypartPredicter = core.getService(SERVICE_NAMES.BODYPART_PREDICTER);
+		super(locator);
+
+		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+
+		this.bodypartPredicter = locator.getService(SERVICE_NAMES.BODYPART_PREDICTER);
+		this.events = locator.getService(SERVICE_NAMES.EVENTS);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 	}
 
 	initiateActor(parentId, roomName)
@@ -34,8 +39,8 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 	lateInitiate()
 	{
-		this.core.subscribe(EVENTS.STRUCTURE_DESTROYED, this.actorId, "structureDestroyed");
-		this.core.subscribe(EVENTS.STRUCTURE_BUILD, this.actorId, "structureBuild");
+		this.events.subscribe(EVENTS.STRUCTURE_DESTROYED, this.actorId, "structureDestroyed");
+		this.events.subscribe(EVENTS.STRUCTURE_BUILD, this.actorId, "structureBuild");
 		this.memoryObject.live = true;
 		this.update();
 	}
@@ -49,7 +54,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		for(let routeIndex in oldMemory.routes)
 			for(let actorIndex in oldMemory.routes[routeIndex].subActorIds)
 			{
-				if(isNullOrUndefined(this.core.getActor(
+				if(isNullOrUndefined(this.actors.get(
 						oldMemory.routes[routeIndex].subActorIds[actorIndex])))
 					continue;
 				this.memoryObject.unassignedSubActorIds.push(
@@ -143,7 +148,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			outputRequests[RESOURCES_ALL[index]] = [];
 		}
 
-		const roomLevel = this.core.getRoom(this.memoryObject.roomName).controller.level;
+		const roomLevel = this.screepsApi.getRoom(this.memoryObject.roomName).controller.level;
 
 		for(let requestIndex in this.memoryObject.resourceRequests)
 		{
@@ -187,7 +192,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 				else
 					for(let outputIndex in outputRequests[RESOURCES_ALL[resourceIndex]])
 					{
-						let rp = this.core.getRoomPosition(outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at);
+						let rp = this.screepsApi.getRoomPosition(outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].at);
 						let acceptedStructs = _.filter(rp.lookFor(LOOK_STRUCTURES),
 							(struct) =>	struct.structureType === STRUCTURE_CONTAINER ||
 										struct.structureType === STRUCTURE_STORAGE ||
@@ -233,7 +238,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 												spawnId,
 												actorCallbackObj.body);
 
-		let actorResult = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+		let actorResult = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor("hauler", actorCallbackObj, instructions));
 
 		this.registerActor(actorCallbackObj, actorResult.id);
@@ -252,7 +257,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 												callbackObj.spawnId,
 												callbackObj.body);
 
-		let subActor = this.core.getActor(subActorId);
+		let subActor = this.actors.get(subActorId);
 		subActor.replaceInstructions(instructions);
 		subActor.setCallbackObj(callbackObj);
 
@@ -307,7 +312,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		for(let dropIndex in route.dropPoints)
 		{
 			let dropPointHere = route.dropPoints[dropIndex];
-			let rp = this.core.getRoomPosition(dropPointHere.at);
+			let rp = this.screepsApi.getRoomPosition(dropPointHere.at);
 			let resourceHere = 0;
 
 			let storages = rp.lookFor(LOOK_STRUCTURES, FILTERS.ANY_STORAGE);
@@ -383,7 +388,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		let route = this.memoryObject.routes[callbackObj.routeIndex];
 
 		if(isNullOrUndefined(route)) //the routes have been changed and the hauler is no longer needed
-			return this.core.removeActor(subActorId);
+			return this.actors.remove(subActorId);
 
 		let dropPoint = this.getDropPoint(route);
 
@@ -404,7 +409,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			, body: callbackObj.body
 			};
 
-		let subActor = this.core.getActor(subActorId);
+		let subActor = this.actors.get(subActorId);
 
 		subActor.replaceInstructions(instructions);
 		subActor.setCallbackObj(actorCallbackObj);
@@ -415,7 +420,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 		let route = this.memoryObject.routes[routeIndex];
 		let maxRepeats = route.targetCarryParts - route.carryParts;
 
-		let energy = this.core.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
+		let energy = this.screepsApi.getRoom(this.memoryObject.roomName).energyCapacityAvailable;
 
 		return new this.CreepBodyFactory()
 			.addPattern([CARRY, MOVE], maxRepeats)
@@ -442,7 +447,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			route.carryParts >= route.targetCarryParts)
 			return;
 
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 		parent.requestCreep(
 				{ actorId: this.actorId
 				, functionName: "createHauler"

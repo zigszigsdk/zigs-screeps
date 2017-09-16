@@ -4,9 +4,11 @@ const Service = require('Service');
 
 module.exports = class ServiceRoomCalc extends Service
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super();
+
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 	}
 
 	openPosAroundTakeNearestExcept(aroundThisPos, nearestThisPos, exceptThesePos)
@@ -51,7 +53,7 @@ module.exports = class ServiceRoomCalc extends Service
 				if(! this.isOnRoomInside(y) || (x === centerX && y === centerY))
 					continue;
 
-				results.push(this.core.getRoomPosition([x, y, roomName]));
+				results.push(this.screepsApi.getRoomPosition([x, y, roomName]));
 			}
 		}
 		return results;

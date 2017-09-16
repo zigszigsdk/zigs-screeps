@@ -5,12 +5,13 @@ const ROLE_NAME = "Explorer";
 
 module.exports = class ActorRoomExplore extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.mapSearch = core.getService(SERVICE_NAMES.MAP_SEARCH);
-		this.mapStatus = core.getService(SERVICE_NAMES.MAP_STATUS);
-		this.mapCalc = core.getService(SERVICE_NAMES.MAP_CALC);
+		super(locator);
+		this.mapSearch = locator.getService(SERVICE_NAMES.MAP_SEARCH);
+		this.mapStatus = locator.getService(SERVICE_NAMES.MAP_STATUS);
+		this.mapCalc = locator.getService(SERVICE_NAMES.MAP_CALC);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 	}
 
 	initiateActor(parentId, roomName)
@@ -36,7 +37,7 @@ module.exports = class ActorRoomExplore extends ActorWithMemory
 		let oldMemory = JSON.parse(JSON.stringify(this.memoryObject));
 
 		for(let index in oldMemory.subActorIds)
-			this.core.removeActor(oldMemory.subActorIds[index]);
+			this.actors.remove(oldMemory.subActorIds[index]);
 
 		this.initiateActor(oldMemory.parentId, oldMemory.roomName);
 		this.lateInitiate();
@@ -60,7 +61,7 @@ module.exports = class ActorRoomExplore extends ActorWithMemory
 
 	_requestCreep()
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "spawnExplorer"
@@ -84,7 +85,7 @@ module.exports = class ActorRoomExplore extends ActorWithMemory
 
 	_reRequestCreep()
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 		parent.requestCreep(
 			{ actorId: this.actorId
 			, functionName: "respawnExplorer"
@@ -121,7 +122,7 @@ module.exports = class ActorRoomExplore extends ActorWithMemory
 			, [CREEP_INSTRUCTION.CALLBACK, this.actorId, "explorerDiedBeforeArrival"] //7
 			, [CREEP_INSTRUCTION.DESTROY_SCRIPT] ];//8
 
-		return this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+		return this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor(ROLE_NAME, callbackObj, instructions));
 	}
 

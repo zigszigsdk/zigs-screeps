@@ -9,11 +9,6 @@ const Service = require('Service');
 
 module.exports = class ServiceMapCalc extends Service
 {
-	constructor(core)
-	{
-		super(core);
-	}
-
 	parseRoomName(roomName)
 	{
 		let indexOfSecondLetter;

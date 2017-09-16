@@ -1,19 +1,21 @@
 "use strict";
- 
+
 const ActorWithMemory = require('ActorWithMemory');
 const NO_CONTROLLER_IN_ROOM = -1;
 
 module.exports = class ActorTickExpander extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super(locator);
+
+		this.events = locator.getService(SERVICE_NAMES.EVENTS);
 	}
 
 	initiateActor()
 	{
 		super.initiateActor();
-		this.core.subscribe("everyTick", this.actorId, "onEveryTick");
+		this.events.subscribe("everyTick", this.actorId, "onEveryTick");
 		this.memoryObject =
 			{ roomLevels: {}
 			};
@@ -21,7 +23,7 @@ module.exports = class ActorTickExpander extends ActorWithMemory
 
 	removeActor()
 	{
-		this.core.unsubscribe("everyTick", this.actorId);
+		this.events.unsubscribe("everyTick", this.actorId);
 		super.removeActor();
 	}
 
@@ -31,7 +33,7 @@ module.exports = class ActorTickExpander extends ActorWithMemory
 		let counter = 1;
 
 		for(let mod=2; tick % mod === 0; mod *= 2)
-			this.core.frontLoadEvent("tick2pow" + counter++);
+			this.events.frontLoadEvent("tick2pow" + counter++);
 
 		for(let roomName in Game.rooms)
 		{
@@ -43,7 +45,7 @@ module.exports = class ActorTickExpander extends ActorWithMemory
 			if(typeof oldRoomLevel === UNDEFINED || oldRoomLevel !== currentRoomLevel)
 			{
 				this.memoryObject.roomLevels[roomName] = currentRoomLevel;
-				this.core.frontLoadEvent(EVENTS.ROOM_LEVEL_CHANGED + roomName);
+				this.events.frontLoadEvent(EVENTS.ROOM_LEVEL_CHANGED + roomName);
 			}
 		}
 	}

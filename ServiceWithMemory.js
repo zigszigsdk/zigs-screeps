@@ -2,24 +2,25 @@
 
 module.exports = class ServiceWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		this.core = core;
+		this.memory = locator.getService(SERVICE_NAMES.MEMORY);
 	}
 
 	rewindService()
 	{
-		this.memoryObject = this.core.getMemory(this.constructor.name);
+		this.memoryObject = this.memory.getMemory(this.constructor.name);
 	}
 
 	unwindService()
 	{
-		this.core.setMemory(this.constructor.name, this.memoryObject);
+		this.memory.setMemory(this.constructor.name, this.memoryObject);
 	}
 
 	resetService()
 	{
 		this.memoryObject = {};
-		this.core.setMemory(this.constructor.name, {});
+		this.memory.setMemory(this.constructor.name, {});
 	}
 };
+

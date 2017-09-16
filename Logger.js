@@ -6,14 +6,14 @@ const BOOT_MESSAGE_EMPHASIS_COUNT = 45;
 
 module.exports = class Logger
 {
-	constructor(core)
+	constructor(memoryBank)
 	{
-		this.core = core;
+		this.memoryBank = memoryBank;
 	}
 
 	rewindCore()
 	{
-		this.memoryObject = this.core.getMemory(MEMORY_KEYWORD);
+		this.memoryObject = this.memoryBank.getMemory(MEMORY_KEYWORD);
 		this.traceLog = [];
 		this.memoryLog = "";
 		this.bootLog = "";
@@ -21,7 +21,7 @@ module.exports = class Logger
 
 	unwindCore()
 	{
-		this.core.setMemory(MEMORY_KEYWORD, this.memoryObject);
+		this.memoryBank.setMemory(MEMORY_KEYWORD, this.memoryObject);
 	}
 
 	hardResetCore()

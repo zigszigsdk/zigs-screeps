@@ -2,9 +2,9 @@
 
 module.exports = class ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		this.core = core;
+		this.memory = locator.getService(SERVICE_NAMES.MEMORY);
 	}
 
 	rewindActor(actorId)
@@ -12,7 +12,7 @@ module.exports = class ActorWithMemory
 		this.actorId = actorId;
 		this.bankKey = this.constructor.name + ":" + actorId;
 
-		this.memoryObject = this.core.getMemory(this.bankKey);
+		this.memoryObject = this.memory.getMemory(this.bankKey);
 	}
 
 	initiateActor(roomName)
@@ -24,12 +24,12 @@ module.exports = class ActorWithMemory
 
 	unwindActor()
 	{
-		this.core.setMemory(this.bankKey, this.memoryObject);
+		this.memory.setMemory(this.bankKey, this.memoryObject);
 	}
 
 	removeActor()
 	{
-		this.core.eraseMemory(this.bankKey);
+		this.memory.erase(this.bankKey);
 		this.memoryObject = null;
 	}
 

@@ -12,6 +12,11 @@ module.exports = function()
 		, MAP_SEARCH: "ServiceMapSearch"
 		, CREEP_ACTIONS: "ServiceCreepActions"
 		, BODYPART_PREDICTER: "ServiceBodypartPredicter"
+		, ACTORS: "ServiceActors"
+		, SCREEPS_API: "ServiceScreepsApi"
+		, EVENTS: "ServiceEvents"
+		, LOGGER: "ServiceLogger"
+		, MEMORY: "ServiceMemory"
 		};
 
 	global.ACTOR_NAMES =

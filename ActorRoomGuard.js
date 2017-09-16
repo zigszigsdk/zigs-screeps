@@ -6,17 +6,20 @@ let ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorRoomGuard extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super(locator);
+		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
+		this.events = locator.getService(SERVICE_NAMES.EVENTS);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 	}
 
 	initiateActor(parentId, roomName)
 	{
-		let roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
-		let towerLocations = roomScoring.getRoom(roomName).flower.tower;
+		let towerLocations = this.roomScoring.getRoom(roomName).flower.tower;
 
-		this.core.subscribe("everyTick", this.actorId, "onEveryTick");
+		this.events.subscribe("everyTick", this.actorId, "onEveryTick");
 		this.memoryObject =
 			{ parentId: parentId
 			, roomName: roomName
@@ -26,7 +29,7 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 
 	lateInitiate()
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		for(let index in this.memoryObject.towerLocations)
 			parent.requestBuilding([STRUCTURE_TOWER], this.memoryObject.towerLocations[index], PRIORITY_NAMES.BUILD.TOWER);
@@ -42,7 +45,7 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 
 	removeActor()
 	{
-		this.core.unsubscribe("everyTick", this.actorId);
+		this.events.unsubscribe("everyTick", this.actorId);
 		super.removeActor();
 	}
 
@@ -50,7 +53,7 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 
 	onEveryTick()
 	{
-		let room = this.core.getRoom(this.memoryObject.roomName);
+		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
 
 		let enemies = room.find(FIND_HOSTILE_CREEPS);
 
@@ -61,7 +64,7 @@ module.exports = class ActorRoomGuard extends ActorWithMemory
 		{
 			let towerPos = this.memoryObject.towerLocations[index];
 
-			let towerRp = this.core.getRoomPosition(towerPos);
+			let towerRp = this.screepsApi.getRoomPosition(towerPos);
 
 			let structs = towerRp.lookFor(LOOK_STRUCTURES);
 

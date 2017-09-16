@@ -1,10 +1,11 @@
 "use strict";
- 
+
 module.exports = class Resetter
 {
-	constructor(core)
+	constructor(locator, actors)
 	{
-		this.core = core;
+		this.locator = locator;
+		this.actors = actors;
 	}
 
 	hardResetCore()
@@ -12,12 +13,12 @@ module.exports = class Resetter
 		for(let name in Game.creeps)
 			Game.creeps[name].suicide();
 
-		this.core.resetAllServices();
+		this.locator.resetAllServices();
 
-		this.core.createActor(ACTOR_NAMES.TICK_EXPANDER);
-		this.core.createActor(ACTOR_NAMES.STRUCTURE_EVENTS);
+		this.actors.createNew(ACTOR_NAMES.TICK_EXPANDER);
+		this.actors.createNew(ACTOR_NAMES.STRUCTURE_EVENTS);
 
-		let mapStatus = this.core.getService(SERVICE_NAMES.MAP_STATUS);
+		let mapStatus = this.locator.getService(SERVICE_NAMES.MAP_STATUS);
 
 		for(let roomName in Game.rooms)
 		{
@@ -30,7 +31,7 @@ module.exports = class Resetter
 			if(room.find(FIND_MY_SPAWNS).length === 0)
 				continue;
 
-			this.core.createActor(ACTOR_NAMES.ROOM_BOOTER,(script)=>script.initiateActor(roomName));
+			this.actors.createNew(ACTOR_NAMES.ROOM_BOOTER,(script)=>script.initiateActor(roomName));
 
 			mapStatus.setBelongingToOwn(roomName);
 		}

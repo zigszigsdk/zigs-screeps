@@ -4,13 +4,13 @@ const Service = require('Service');
 
 module.exports = class ServiceMapNavigation extends Service
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super();
 
-		const mapStatus = core.getService(SERVICE_NAMES.MAP_STATUS);
-		const mapCalc = core.getService(SERVICE_NAMES.MAP_CALC);
-		this.mapSearch = core.getService(SERVICE_NAMES.MAP_SEARCH);
+		const mapStatus = locator.getService(SERVICE_NAMES.MAP_STATUS);
+		const mapCalc = locator.getService(SERVICE_NAMES.MAP_CALC);
+		this.mapSearch = locator.getService(SERVICE_NAMES.MAP_SEARCH);
 
 		//functions passed as parameters cannot access class instance 'this'.
 		this._safeRoomFilter = function(roomName)

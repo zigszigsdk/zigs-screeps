@@ -2,18 +2,17 @@
 
 module.exports = class Locator
 {
-	constructor(core)
+	constructor()
 	{
-		this.core = core;
 		this.services = {};
-		this.outdatedServices = {};
 		this.classes = {};
 	}
 
 	rewindCore()
 	{
-		this.outdatedServices = this.services;
-		this.services = {};
+		let keys = Object.keys(this.services);
+		for(let keyIndex in keys)
+			this.services[keys[keyIndex]].rewindService();
 	}
 
 	unwindCore()
@@ -25,7 +24,6 @@ module.exports = class Locator
 
 	hardResetCore()
 	{
-		this.outdatedServices = {};
 		this.services = {};
 		this.classes = {};
 	}
@@ -33,21 +31,14 @@ module.exports = class Locator
 	getService(name)
 	{
 		if(typeof name === UNDEFINED)
-			throw {msg: "tried to get an unexisting service. name is undefined"};
+			throw new Error("tried to get an unexisting service. name is 'undefined'");
 
 		if(this.services[name])
 			return this.services[name];
 
-		if(this.outdatedServices[name])
-		{
-			this.outdatedServices[name].rewindService();
-			this.services[name] = this.outdatedServices[name];
-			return this.services[name];
-		}
-
 		let ServiceClass = require(name);
 
-		let service = new ServiceClass(this.core);
+		let service = new ServiceClass(this);
 		service.rewindService();
 
 		this.services[name] = service;
@@ -70,11 +61,21 @@ module.exports = class Locator
 	getClass(name)
 	{
 		if(typeof name === UNDEFINED)
-			throw "tried to get an unexisting class. name is undefined";
+			throw new Error("tried to get an unexisting class. name is 'undefined'");
 
 		if(!this.classes[name])
 			this.classes[name] = require(name);
 
 		return this.classes[name];
+	}
+
+	getCoreAccess()
+	{
+		return this.coreAccess;
+	}
+
+	setCoreAccess(coreAccess)
+	{
+		this.coreAccess = coreAccess;
 	}
 };

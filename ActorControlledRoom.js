@@ -4,23 +4,26 @@ let ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorControlledRoom extends ActorWithMemory
 {
-		constructor(core)
+		constructor(locator)
 		{
-			super(core);
+			super(locator);
+			this.mapCalc = locator.getService(SERVICE_NAMES.MAP_CALC);
+			this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+			this.events = locator.getService(SERVICE_NAMES.EVENTS);
+			this.actors = locator.getService(SERVICE_NAMES.ACTORS);
+			this.logger = locator.getService(SERVICE_NAMES.LOGGER);
 		}
 
 		initiateActor(roomName)
 		{
-			let mapCalc = this.core.getService(SERVICE_NAMES.MAP_CALC);
-
 			this.memoryObject =
-				{ room: mapCalc.parseRoomName(roomName)
+				{ room: this.mapCalc.parseRoomName(roomName)
 				, creepRequests: []
-				, controllerId: this.core.getRoom(roomName).controller.id
+				, controllerId: this.screepsApi.getRoom(roomName).controller.id
 				, subActorIds: {}
 				};
 
-			this.core.subscribe(EVENTS.EVERY_TICK, this.actorId, "onEveryTick");
+			this.events.subscribe(EVENTS.EVERY_TICK, this.actorId, "onEveryTick");
 
 			let subActorNames = [ ACTOR_NAMES.ROOM_REPAIR
 								, ACTOR_NAMES.ROOM_BUILD
@@ -38,22 +41,22 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 
 			for(let index in subActorNames)
 				this.memoryObject.subActorIds[subActorNames[index]] =
-					this.core.createActor(subActorNames[index], (script)=>
+					this.actors.create(subActorNames[index], (script)=>
 						script.initiateActor(this.actorId, roomName) ).id;
 
 			for(let index in subActorNames)
-				this.core.getActor(this.memoryObject.subActorIds[subActorNames[index]]).lateInitiate();
+				this.actors.get(this.memoryObject.subActorIds[subActorNames[index]]).lateInitiate();
 		}
 
 		resetActor()
 		{
-			this.core.logWarning(
+			this.logger.warning(
 				"ActorControlledRoom cannot reset without sideeffects to other actors. Use hardReset if nessesary");
 		}
 
 		removeActor()
 		{
-			this.core.unsubscribe(EVENTS.EVERY_TICK, this.actorId);
+			this.events.unsubscribe(EVENTS.EVERY_TICK, this.actorId);
 			super.removeActor();
 		}
 
@@ -71,56 +74,56 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 
 		requestBuilding(typeProgression, at, priority, minRoomLevel)
 		{
-			let roomBuild = this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD]);
+			let roomBuild = this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD]);
 			roomBuild.requestBuilding(typeProgression, at, priority, minRoomLevel);
 		}
 
 		removeAllBuildingRequestsWithType(type)
 		{
-			let roomBuild = this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD]);
+			let roomBuild = this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD]);
 			roomBuild.removeAllRequestsWithType(type);
 		}
 
 		requestResource(request)
 		{
-			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_HAUL])
+			this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_HAUL])
 				.requestResource(request);
 		}
 
 		removeResourceRequestsAt(at)
 		{
-			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_HAUL])
+			this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_HAUL])
 				.removeRequestsAt(at);
 		}
 
 		registerEnergyLocation(request)
 		{
-			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
+			this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
 				.addEnergyLocation(request);
 
-			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD])
+			this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_BUILD])
 				.addEnergyLocation(request);
 
-			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
+			this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
 				.addEnergyLocation(request);
 		}
 
 		buildingCompleted(at, type)
 		{
-			this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
+			this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_REPAIR])
 				.requestMaintain(at, type);
 
 			switch(type)
 			{
 				case STRUCTURE_TOWER:
-					this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_GUARD])
+					this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_GUARD])
 						.buildingCompleted(at, type);
-					this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
+					this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
 						.buildingCompleted(at, type);
 					break;
 				case STRUCTURE_EXTENSION:
 				case STRUCTURE_SPAWN:
-					this.core.getActor(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
+					this.actors.get(this.memoryObject.subActorIds[ACTOR_NAMES.ROOM_FILL])
 						.buildingCompleted(at, type);
 					break;
 			}
@@ -128,7 +131,7 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 
 		onEveryTick()
 		{
-			let room = this.core.getRoom(this.memoryObject.room.name);
+			let room = this.screepsApi.getRoom(this.memoryObject.room.name);
 
 			let spawns = room.find(FIND_MY_SPAWNS);
 			let spawn;
@@ -153,7 +156,7 @@ module.exports = class ActorControlledRoom extends ActorWithMemory
 			if(room.energyAvailable !== room.energyCapacityAvailable &&
 				(!request.energyNeeded || room.energyAvailable < request.energyNeeded))
 				return this.memoryObject.creepRequests.unshift(request);
-			let actor = this.core.getActor(request.actorId);
+			let actor = this.actors.get(request.actorId);
 
 			actor[request.functionName](spawn.id, request.callbackObj);
 		}

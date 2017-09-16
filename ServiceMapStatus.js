@@ -9,9 +9,12 @@ const ServiceWithMemory = require('ServiceWithMemory');
 
 module.exports = class ServiceMapStatus extends ServiceWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super(locator);
+
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.logger = locator.getService(SERVICE_NAMES.LOGGER);
 	}
 
 	resetService()
@@ -37,11 +40,11 @@ module.exports = class ServiceMapStatus extends ServiceWithMemory
 
 	findAndSetStatusOfRoom(roomName)
 	{
-		let room = this.core.getRoom(roomName);
+		let room = this.screepsApi.getRoom(roomName);
 
 		if(isUndefined(room))
 		{
-			this.core.logWarning(
+			this.logger.warning(
 				"at ServiceMapStatus.findAndSetStatusOfRoom: tried to set status of room without visibility: " +
 				roomName);
 			return;

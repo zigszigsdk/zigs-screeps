@@ -7,12 +7,16 @@ let ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
-		this.ResourceRequest = core.getClass(CLASS_NAMES.RESOURCE_REQUEST);
-		this.roomScoring = core.getService(SERVICE_NAMES.ROOM_SCORING);
+		super(locator);
+		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		this.ResourceRequest = locator.getClass(CLASS_NAMES.RESOURCE_REQUEST);
+		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
+
+		this.events = locator.getService(SERVICE_NAMES.EVENTS);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 	}
 
 	initiateActor(parentId, roomName)
@@ -30,7 +34,7 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 
 	lateInitiate()
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		let keys = Object.keys(this.memoryObject.mines);
 		for(let index in keys)
@@ -56,8 +60,8 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 			parent.registerEnergyLocation(request);
 		}
 
-		this.core.subscribe(EVENTS.STRUCTURE_BUILD + this.memoryObject.roomName, this.actorId, "onStructuresChanged");
-		this.core.subscribe(EVENTS.STRUCTURE_DESTROYED + this.memoryObject.roomName, this.actorId, "onStructuresChanged");
+		this.events.subscribe(EVENTS.STRUCTURE_BUILD + this.memoryObject.roomName, this.actorId, "onStructuresChanged");
+		this.events.subscribe(EVENTS.STRUCTURE_DESTROYED + this.memoryObject.roomName, this.actorId, "onStructuresChanged");
 		this._updateRequests();
 	}
 
@@ -68,18 +72,18 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 
 	_updateRequests()
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 
-		let layout = this.core.getService(SERVICE_NAMES.ROOM_SCORING).getRoom(this.memoryObject.roomName);
+		let layout = this.roomScoring.getRoom(this.memoryObject.roomName);
 
-		let recieversReady = !(isNullOrUndefined(this.core.getStructureAt(layout.upgrade.container, STRUCTURE_LINK)) ||
-			isNullOrUndefined(this.core.getStructureAt(layout.upgrade.container, STRUCTURE_LINK)));
+		let recieversReady = !(isNullOrUndefined(this.screepsApi.getStructureAt(layout.upgrade.container, STRUCTURE_LINK)) ||
+			isNullOrUndefined(this.screepsApi.getStructureAt(layout.upgrade.container, STRUCTURE_LINK)));
 
 		let keys = Object.keys(this.memoryObject.mines);
 		for(let index in keys)
 		{
-			let link = this.core.getStructureAt(this.memoryObject.mines[keys[index]].linkSpot, STRUCTURE_LINK);
+			let link = this.screepsApi.getStructureAt(this.memoryObject.mines[keys[index]].linkSpot, STRUCTURE_LINK);
 			if(isNullOrUndefined(link) || !recieversReady)
 			{
 				let request = new this.ResourceRequest(this.memoryObject.mines[keys[index]].miningSpot, RESOURCE_ENERGY)
@@ -107,11 +111,11 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 		for(let index in keys)
 		{
 			this.memoryObject.mines[keys[index]].regularMinerActorId =
-				isNullOrUndefined(this.core.getActor(oldMemory.mines[keys[index]].regularMinerActorId)) ?
+				isNullOrUndefined(this.actors.get(oldMemory.mines[keys[index]].regularMinerActorId)) ?
 				null : oldMemory.mines[keys[index]].regularMinerActorId;
 
 			this.memoryObject.mines[keys[index]].recoveryMinerActorId =
-				isNullOrUndefined(this.core.getActor(oldMemory.mines[keys[index]].recoveryMinerActorId)) ?
+				isNullOrUndefined(this.actors.get(oldMemory.mines[keys[index]].recoveryMinerActorId)) ?
 				null : oldMemory.mines[keys[index]].recoveryMinerActorId;
 		}
 
@@ -123,7 +127,7 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 		if(!isNullOrUndefined(this.memoryObject.mines[mineKey].regularMinerActorId))
 			return;
 
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		parent.requestCreep(
 			{ actorId: this.actorId
@@ -150,7 +154,7 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 		if(!isNullOrUndefined(this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId))
 			return;
 
-		let room = this.core.getRoom(this.memoryObject.roomName);
+		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
 
 		if(room.energyAvailable === room.energyCapacityAvailable || room.energyAvailable >= MAX_ENERGY_NEEDED)
 			return this._createFullMiner(spawnId, callbackObj);
@@ -165,7 +169,7 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 
 		let pos = this.memoryObject.mines[callbackObj.sourceId].miningSpot;
 
-		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+		let result = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor(RECOVERY_MINER, callbackObj,
 			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body]   //0
 			, [CREEP_INSTRUCTION.MOVE_TO_POSITION, pos]   //1
@@ -186,10 +190,10 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 
 	_createFullMiner(spawnId, callbackObj)
 	{
-		let core = this.core;
+		let screepsApi = this.screepsApi;
 		let findAt = function(posArr, structureType)
 		{
-			let results = _.filter(core.getRoomPosition(posArr).lookFor(LOOK_STRUCTURES),
+			let results = _.filter(screepsApi.getRoomPosition(posArr).lookFor(LOOK_STRUCTURES),
 				(x)=>x.structureType === structureType);
 			if(results.length === 0)
 				return null;
@@ -212,13 +216,13 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 			, diedFunctionName: "fullMinerDied"
 			};
 
-		let result = this.core.createActor(ACTOR_NAMES.CREEP_ENERGY_MINER,
+		let result = this.actors.create(ACTOR_NAMES.CREEP_ENERGY_MINER,
 			(script)=> script.initiateActor(callbackTo, mineInfo, spawnId));
 
 		this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId = result.id;
 
 			if(!isNullOrUndefined(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId))
-				this.core.removeActor(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId);
+				this.actors.remove(this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId);
 
 			this.memoryObject.mines[callbackObj.sourceId].recoveryMinerActorId = null;
 	}

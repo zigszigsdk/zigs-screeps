@@ -7,17 +7,21 @@ let ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorRoomFill extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.CreepBodyFactory = core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
-		this.ResourceRequest = core.getClass(CLASS_NAMES.RESOURCE_REQUEST);
+		super(locator);
+
+		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		this.ResourceRequest = locator.getClass(CLASS_NAMES.RESOURCE_REQUEST);
+
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
 	}
 
 	initiateActor(parentId, roomName)
 	{
-		let roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
-		let scoring = roomScoring.getRoom(roomName);
+		let scoring = this.roomScoring.getRoom(roomName);
 
 		this.memoryObject =
 			{ parentId: parentId
@@ -36,7 +40,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 	lateInitiate()
 	{
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		//don't request towers. let ROOM_GUARD take care of that.
 
@@ -104,7 +108,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 
 		if(!isNullOrUndefined(this.memoryObject.regularFillActorId))
 		{
-			let subActor = this.core.getActor(this.memoryObject.regularFillActorId);
+			let subActor = this.actors.get(this.memoryObject.regularFillActorId);
 			subActor.updateBuildings();
 			return;
 		}
@@ -113,14 +117,14 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		if(isNullOrUndefined(subActorId))
 			return;
 
-		let room = this.core.getRoom(this.memoryObject.roomName);
+		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
 
 		let getId = (list) => _.map(list, (item)=>item.id);
 		let towers = getId(room.find(FIND_STRUCTURES, FILTERS.TOWERS));
 		let extensions = getId(room.find(FIND_STRUCTURES, FILTERS.EXTENSIONS));
 		let spawns = getId(room.find(FIND_STRUCTURES, FILTERS.SPAWNS));
 
-		let subActor = this.core.getActor(subActorId);
+		let subActor = this.actors.get(subActorId);
 
 		subActor.replaceInstruction(4, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, towers]);
 		subActor.replaceInstruction(5, [CREEP_INSTRUCTION.FILL_NEAREST_UNTIL_EMPTY, RESOURCE_ENERGY, extensions]);
@@ -153,7 +157,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		if(this.memoryObject.regularFillActorId !== null)
 			return;
 
-		let parent = this.core.getActor(this.memoryObject.parentId);
+		let parent = this.actors.get(this.memoryObject.parentId);
 
 		parent.requestCreep(
 			{ actorId: this.actorId
@@ -178,7 +182,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		if(this.memoryObject.regularFillActorId !== null)
 			return;
 
-		let room = this.core.getRoom(this.memoryObject.roomName);
+		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
 
 		if(room.energyAvailable === room.energyCapacityAvailable ||
 			room.energyAvailable >= FULL_FILLER_ENERGY_COST)
@@ -191,7 +195,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		if(this.memoryObject.recoveryFillActorId !== null)
 			return;
 
-		let spawn = this.core.getObjectById(spawnId);
+		let spawn = this.screepsApi.getObjectById(spawnId);
 
 		let backupPoints = [];
 
@@ -209,7 +213,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		let containerPoint = this.memoryObject.containers[0];
 		let linkPoint = this.memoryObject.links[0];
 
-		let result = this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+		let result = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor("recoveryFiller", {},
 			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
 			, [CREEP_INSTRUCTION.PICKUP_AT_POS, linkPoint, RESOURCE_ENERGY] //1
@@ -234,13 +238,13 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 			, diedFunctionName: "fillerDied"
 			};
 
-		let result = this.core.createActor(ACTOR_NAMES.CREEP_FILLER,
+		let result = this.actors.create(ACTOR_NAMES.CREEP_FILLER,
 			(script)=>script.initiateActor(callbackTo, this.memoryObject.roomName, spawnId));
 
 		this.memoryObject.regularFillActorId = result.id;
 		if(this.memoryObject.recoveryFillActorId !== null)
 		{
-			this.core.removeActor(this.memoryObject.recoveryFillActorId);
+			this.actors.remove(this.memoryObject.recoveryFillActorId);
 			this.memoryObject.recoveryFillActorId = null;
 		}
 

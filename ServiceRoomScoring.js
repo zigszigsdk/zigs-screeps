@@ -31,9 +31,13 @@ const PATH_IGNORE = {ignoreCreeps: true, ignoreRoads: true};
 
 module.exports = class ServiceRoomScoring extends ServiceWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super(locator);
+
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
+		this.terrainCache = locator.getService(SERVICE_NAMES.TERRAIN_CACHE);
+		this.roomCalc = locator.getService(SERVICE_NAMES.ROOM_CALC);
 	}
 
 	resetService()
@@ -44,10 +48,8 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 
 	scoreRoom(roomName)
 	{
-		let terrainCache = this.core.getService(SERVICE_NAMES.TERRAIN_CACHE);
-		let roomCalc = this.core.getService(SERVICE_NAMES.ROOM_CALC);
 
-		let room = this.core.getRoom(roomName);
+		let room = this.screepsApi.getRoom(roomName);
 		let sources = room.find(FIND_SOURCES);
 
 		let locationScores = {};
@@ -87,13 +89,13 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 		let mines = {};
 		for(let index in sources)
 		{
-			let miningPos = roomCalc.openPosAroundTakeNearest(sources[index].pos, room.controller.pos);
+			let miningPos = this.roomCalc.openPosAroundTakeNearest(sources[index].pos, room.controller.pos);
 			let miningSpot = [miningPos.x, miningPos.y, miningPos.roomName];
 
-			let linkPos = roomCalc.openPosAroundTakeNearestExcept(miningPos, room.controller.pos, [miningSpot]);
+			let linkPos = this.roomCalc.openPosAroundTakeNearestExcept(miningPos, room.controller.pos, [miningSpot]);
 			let linkSpot = [linkPos.x, linkPos.y, linkPos.roomName];
 
-			let parkingPos = roomCalc.openPosAroundTakeNearestExcept(miningPos, room.controller.pos, [miningSpot, linkSpot]);
+			let parkingPos = this.roomCalc.openPosAroundTakeNearestExcept(miningPos, room.controller.pos, [miningSpot, linkSpot]);
 			let parkingSpot = [parkingPos.x, parkingPos.y, parkingPos.roomName];
 
 			mines[sources[index].id] =
@@ -103,7 +105,7 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 				, parkingSpot: parkingSpot
 				};
 
-			_.each(roomCalc.getRoomPositionsInRange(miningPos.x, miningPos.y, miningPos.roomName, 1),
+			_.each(this.roomCalc.getRoomPositionsInRange(miningPos.x, miningPos.y, miningPos.roomName, 1),
 				(rp) => addLocationScore(rp.x, rp.y, Number.NEGATIVE_INFINITY));
 		}
 
@@ -111,10 +113,10 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 		let mineral = null;
 		if(minerals.length !== 0)
 		{
-			let miningPos = roomCalc.openPosAroundTakeNearest(minerals[0].pos, room.controller.pos);
+			let miningPos = this.roomCalc.openPosAroundTakeNearest(minerals[0].pos, room.controller.pos);
 			let miningSpot = [miningPos.x, miningPos.y, miningPos.roomName];
 
-			let parkingPos = roomCalc.openPosAroundTakeNearestExcept(miningPos, room.controller.pos, [miningSpot]);
+			let parkingPos = this.roomCalc.openPosAroundTakeNearestExcept(miningPos, room.controller.pos, [miningSpot]);
 			let parkingSpot = [parkingPos.x, parkingPos.y, parkingPos.roomName];
 
 			mineral =
@@ -124,7 +126,7 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 				, mineralType: minerals[0].mineralType
 				};
 
-			_.each(roomCalc.getRoomPositionsInRange(mineral.miningSpot.x,
+			_.each(this.roomCalc.getRoomPositionsInRange(mineral.miningSpot.x,
 													mineral.miningSpot.y,
 													mineral.miningSpot.roomName,
 													2),
@@ -135,8 +137,8 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 		let nearestSource = room.controller.pos.findClosestByPath(FIND_SOURCES, {ignoreCreeps: true, ignoreRoads: true});
 
 		let candidates =
-			roomCalc.filterBlockedPositions(
-				roomCalc.getRoomPositionsInRange(
+			this.roomCalc.filterBlockedPositions(
+				this.roomCalc.getRoomPositionsInRange(
 					room.controller.pos.x,
 					room.controller.pos.y,
 					roomName,
@@ -149,15 +151,15 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 		let miningParkingRoomPostions = [];
 
 		for(let mineId in mines)
-			miningParkingRoomPostions.push(this.core.getRoomPosition(mines[mineId].parkingSpot));
+			miningParkingRoomPostions.push(this.screepsApi.getRoomPosition(mines[mineId].parkingSpot));
 
 		for(let index in candidates)
 		{
 			let score =
 				candidates[index].findPathTo(nearestSource, PATH_IGNORE).length * DIST_SCORE;
 
-			let openSpots = roomCalc.filterBlockedPositions(
-				roomCalc.getRoomPositionsInRange(candidates[index].x, candidates[index].y, roomName, 1));
+			let openSpots = this.roomCalc.filterBlockedPositions(
+				this.roomCalc.getRoomPositionsInRange(candidates[index].x, candidates[index].y, roomName, 1));
 
 			let openSpotScores = [];
 
@@ -201,7 +203,7 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 			, spots: upgraderSpots
 			};
 
-		_.each(roomCalc.getRoomPositionsInRange(upgradeContainer[0], upgradeContainer[1], upgradeContainer[2], 1),
+		_.each(this.roomCalc.getRoomPositionsInRange(upgradeContainer[0], upgradeContainer[1], upgradeContainer[2], 1),
 			(rp) => addLocationScore(rp.x, rp.y, Number.NEGATIVE_INFINITY));
 
 		//can't build on the edge
@@ -216,6 +218,9 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 												y - FIRST_OF_ROOM,
 												LAST_OF_ROOM - x,
 												LAST_OF_ROOM - y) * DIST_FROM_EDGE_SCORE);
+
+		let roomCalc = this.roomCalc;
+		let terrainCache = this.terrainCache;
 
 		let getTerrainScore = function(pos, buildingType)
 		{

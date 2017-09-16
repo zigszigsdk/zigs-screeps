@@ -4,14 +4,17 @@ const MEMORY_KEY = "core:consoleExecuter";
 
 module.exports = class ConsoleExecuter
 {
-	constructor(core)
+	constructor(memoryBank, locator, actors, logger)
 	{
-		this.core = core;
+		this.memoryBank = memoryBank;
+		this.locator = locator;
+		this.actors = actors;
+		this.logger = logger;
 	}
 
 	rewindCore()
 	{
-		this.memoryObject = this.core.getMemory(MEMORY_KEY);
+		this.memoryObject = this.memoryBank.getMemory(MEMORY_KEY);
 	}
 
 	execute()
@@ -22,47 +25,47 @@ module.exports = class ConsoleExecuter
 		switch(this.memoryObject.consoleInterfaceHook)
 		{
 			case 1:
-				this.core.logger.memoryObject.errors = {};
+				this.logger.memoryObject.errors = {};
 				break;
 			case 2:
-				this.core.logger.memoryObject.warnings = {};
+				this.logger.memoryObject.wcrnings = {};
 				break;
 			case 3:
-				this.core.resetActor(this.memoryObject.p1);
+				this.actors.resetActor(this.memoryObject.p1);
 				break;
 			case 4:
-				this.core.removeActor(this.memoryObject.p1);
+				this.actors.removeActor(this.memoryObject.p1);
 				break;
 			case 5:
-				this.core.resetAllActors();
+				this.actors.resetAllActors();
 				break;
 			case 6:
 				try
 				{
-					console.log( ( eval(this.memoryObject.p1) )(this.core) );
+					console.log( ( eval(this.memoryObject.p1) )(this.locator) );
 					//allows console user to execute arbritrary commands DURING a cycle rather than at the end of it.
 				}
 				catch(e)
 				{
 					console.log("failed " + e);
-					this.core.logError("could not run consoleExecuter command\n" + this.memoryObject.p1, e);
+					this.logger.error("could not run consoleExecuter command\n" + this.memoryObject.p1, e);
 				}
 				break;
 			case 7:
-				this.core.resetService(this.memoryObject.p1);
+				this.locator.resetService(this.memoryObject.p1);
 				break;
 			case 8:
-				this.core.createActor("ActorAdhocHauler", (script)=>script.initiateActor(this.memoryObject.p1,
+				this.actors.createActor("ActorAdhocHauler", (script)=>script.initiateActor(this.memoryObject.p1,
 																						this.memoryObject.p2,
 																						this.memoryObject.p3,
 																						this.memoryObject.p4,
 																						this.memoryObject.p5));
 				break;
 			case 9:
-				this.core.eraseMemory(this.memoryObject.p1);
+				this.memoryBank.eraseMemory(this.memoryObject.p1);
 				break;
 			case 10:
-				this.core.getService(SERVICE_NAMES.ROOM_SCORING).scoreRoom(this.memoryObject.p1);
+				this.locator.getService(SERVICE_NAMES.ROOM_SCORING).scoreRoom(this.memoryObject.p1);
 				break;
 			default:
 				break;
@@ -72,7 +75,7 @@ module.exports = class ConsoleExecuter
 	unwindCore()
 	{
 		this.memoryObject = { consoleInterfaceHook: null };
-		this.core.setMemory(MEMORY_KEY, this.memoryObject);
+		this.memoryBank.setMemory(MEMORY_KEY, this.memoryObject);
 	}
 
 	hardResetCore(){}

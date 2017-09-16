@@ -4,14 +4,18 @@ let ActorWithMemory = require("ActorWithMemory");
 
 module.exports = class ActorRoomBooter extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
+		super(locator);
+		this.events = locator.getService(SERVICE_NAMES.EVENTS);
+		this.terrainCache = locator.getService(SERVICE_NAMES.TERRAIN_CACHE);
+		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 	}
 
 	initiateActor(roomName)
 	{
-		this.core.subscribe(EVENTS.EVERY_TICK_LATE, this.actorId, "onEveryTickLate");
+		this.events.subscribe(EVENTS.EVERY_TICK_LATE, this.actorId, "onEveryTickLate");
 		this.memoryObject =
 			{ phase: 0
 			, roomName: roomName};
@@ -24,34 +28,33 @@ module.exports = class ActorRoomBooter extends ActorWithMemory
 
 	removeActor()
 	{
-		this.core.unsubscribe(EVENTS.EVERY_TICK_LATE, this.actorId);
+		this.events.unsubscribe(EVENTS.EVERY_TICK_LATE, this.actorId);
 		super.removeActor();
 	}
 
 	onEveryTickLate()
 	{
+		console.log("phase: " + this.memoryObject.phase);
 		switch(this.memoryObject.phase)
 		{
 			case 0:
-				let terrainCache = this.core.getService(SERVICE_NAMES.TERRAIN_CACHE);
-				terrainCache.cacheRoom(this.memoryObject.roomName);
+				this.terrainCache.cacheRoom(this.memoryObject.roomName);
 				this.memoryObject.phase++;
 				break;
 
 			case 1:
-				let roomScoring = this.core.getService(SERVICE_NAMES.ROOM_SCORING);
-				roomScoring.scoreRoom(this.memoryObject.roomName);
+				this.roomScoring.scoreRoom(this.memoryObject.roomName);
 				this.memoryObject.phase++;
 				break;
 
 			case 2:
-				this.core.createActor(ACTOR_NAMES.CONTROLLED_ROOM,
+				this.actors.create(ACTOR_NAMES.CONTROLLED_ROOM,
 					(script) => script.initiateActor(this.memoryObject.roomName));
 				this.memoryObject.phase++;
 				break;
 
 			case 3:
-				this.core.removeActor(this.actorId);
+				this.actors.remove(this.actorId);
 				break;
 		}
 	}

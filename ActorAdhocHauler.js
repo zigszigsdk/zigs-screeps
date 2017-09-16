@@ -4,10 +4,12 @@ let ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorAdhocHauler extends ActorWithMemory
 {
-	constructor(core)
+	constructor(locator)
 	{
-		super(core);
-		this.CreepBodyFactory = this.core.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		super(locator);
+		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
+		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
+		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 	}
 
 	initiateActor(fromPos, toPos, type, controlledRoomId, creepSize)
@@ -33,7 +35,7 @@ module.exports = class ActorAdhocHauler extends ActorWithMemory
 
 	requestCreep()
 	{
-		let controlledRoom = this.core.getActor(this.memoryObject.controlledRoomId);
+		let controlledRoom = this.actors.get(this.memoryObject.controlledRoomId);
 
 		controlledRoom.requestCreep(
 			{ actorId: this.actorId
@@ -47,10 +49,10 @@ module.exports = class ActorAdhocHauler extends ActorWithMemory
 	{
 		let body = new this.CreepBodyFactory()
 			.addPattern([MOVE, CARRY], this.memoryObject.creepSize)
-			.setMaxCost(this.core.getObjectById(spawnId).room.energyCapacityAvailable)
+			.setMaxCost(this.screepsApi.getObjectById(spawnId).room.energyCapacityAvailable)
 			.fabricate();
 
-		this.core.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
+		this.actors.createActor(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor("adhocHauler", {},
 				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
 				, [CREEP_INSTRUCTION.PICKUP_AT_POS, this.memoryObject.fromPos,	this.memoryObject.type] //1
