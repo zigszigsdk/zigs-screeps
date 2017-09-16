@@ -25,6 +25,10 @@ const SCORE_WALL_TOUCH = -15;
 const NEGATIVE_INFINITY_MEMORY = "NegativeInfinity";
 const DIDNT_FIT = "didntFit";
 
+const UPGRADER_UPGRADE_RANGE = 3;
+
+const PATH_IGNORE = {ignoreCreeps: true, ignoreRoads: true};
+
 module.exports = class ServiceRoomScoring extends ServiceWithMemory
 {
 	constructor(core)
@@ -140,27 +144,61 @@ module.exports = class ServiceRoomScoring extends ServiceWithMemory
 
 		let bestUpgradeScore = Number.NEGATIVE_INFINITY;
 		let upgradeContainer;
+		let upgraderSpots;
+
+		let miningParkingRoomPostions = [];
+
+		for(let mineId in mines)
+			miningParkingRoomPostions.push(this.core.getRoomPosition(mines[mineId].parkingSpot));
+
 		for(let index in candidates)
 		{
 			let score =
-				candidates[index].findPathTo(nearestSource, {ignoreCreeps: true, ignoreRoads: true}).length * DIST_SCORE;
+				candidates[index].findPathTo(nearestSource, PATH_IGNORE).length * DIST_SCORE;
 
 			let openSpots = roomCalc.filterBlockedPositions(
 				roomCalc.getRoomPositionsInRange(candidates[index].x, candidates[index].y, roomName, 1));
 
+			let openSpotScores = [];
+
 			for(let innerIndex in openSpots)
-				if(room.controller.pos.getRangeTo(openSpots[innerIndex]) <= 3)
-					score += SPOT_SCORE;
+				if(room.controller.pos.getRangeTo(openSpots[innerIndex]) <= UPGRADER_UPGRADE_RANGE)
+					openSpotScores.push(
+						{	roomPosition: openSpots[innerIndex]
+						,	score: 0
+						});
+
+			if(openSpotScores.length < 4) //no room for 3 upgraders + 1 loadoff access point.
+				continue;
+
+			score += SPOT_SCORE * openSpotScores.length;
 
 			if(score >= bestUpgradeScore)
 			{
 				upgradeContainer = [candidates[index].x, candidates[index].y, roomName];
 				bestUpgradeScore = score;
+
+				for(let spotIndex in openSpotScores)
+						for(let mineIndex in miningParkingRoomPostions)
+							openSpotScores[spotIndex].score -=
+								openSpotScores[spotIndex].roomPosition.
+									findPathTo(miningParkingRoomPostions[mineIndex], PATH_IGNORE).length;
+
+				openSpotScores.sort((a, b)=>b.score-a.score); //descending
+
+				//skip the first for transporter access, grab 3 for upgraders.
+				upgraderSpots = [];
+				for(let index = 1; index <= 3; index++)
+				{
+					let pos = openSpotScores[index].roomPosition;
+					upgraderSpots.push([pos.x, pos.y, pos.roomName]);
+				}
 			}
 		}
 
 		let upgrade =
 			{ container: upgradeContainer
+			, spots: upgraderSpots
 			};
 
 		_.each(roomCalc.getRoomPositionsInRange(upgradeContainer[0], upgradeContainer[1], upgradeContainer[2], 1),
