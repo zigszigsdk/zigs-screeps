@@ -119,6 +119,14 @@ module.exports = function()
 
 	global.LEVEL_REQUIRED_TO_MINE_MINERALS = 6;
 
+	const makeRange = function(name, count)
+	{
+		let result = [];
+		for(let index = 1; index <= count; index++)
+			result.push(name + "_" + index);
+		return result;
+	};
+
 	global.PRIORITY_NAMES =
 	{	SPAWN:
 			{ ADHOC: "SPAWN_ADHOC"
@@ -137,8 +145,8 @@ module.exports = function()
 			}
 		, BUILD:
 			{ ADHOC: "BUILD_ADHOC"
-			, EXTENSION_FIRST_FIVE: []
-			, EXTENSION_AFTER_FIVE: []
+			, EXTENSION_FIRST_FIVE: makeRange("BUILD_EXTENSION_FIRST_FIVE", 60)
+			, EXTENSION_AFTER_FIVE: makeRange("BUILD_EXTENSION_AFTER_FIVE", 60)
 			, SPAWN: "BUILD_SPAWN"
 			, ENERGY_MINING_CONTAINER: "BUILD_ENERGY_MINING_CONTAINER"
 			, MINERAL_MINING_CONTAINER: "BUILD_MINERAL_MINING_CONTAINER"
@@ -153,7 +161,7 @@ module.exports = function()
 			, STORAGE: "BUILD_STORAGE"
 			, NUKER: "BUILD_NUKER"
 			, TERMINAL: "BUILD_TERMINAL"
-			, LAB: "BUILD_LAB"
+			, LAB: makeRange("BUILD_LAB", 10)
 			, STORAGE_ROAD: "BUILD_STORAGE_ROAD"
 			, UPGRADER_LINK: "BUILD_UPGRADER_LINK"
 			, ENERGY_MINING_LINK: "BUILD_ENERGY_MINING_LINK"
@@ -167,12 +175,6 @@ module.exports = function()
 			, MINERAL: "RESOURCE_MINERAL"
 			}
 	};
-
-	for(let index = 1; index <= 60; index++)
-	{
-		global.PRIORITY_NAMES.BUILD.EXTENSION_FIRST_FIVE.push("BUILD_EXTENSION_FIRST_FIVE_" + index);
-		global.PRIORITY_NAMES.BUILD.EXTENSION_AFTER_FIVE.push("BUILD_EXTENSION_AFTER_FIVE_" + index);
-	}
 
 	global.CREEP_INSTRUCTION =
 		{ SPAWN_UNTIL_SUCCESS: "spawnUntilSucess"
