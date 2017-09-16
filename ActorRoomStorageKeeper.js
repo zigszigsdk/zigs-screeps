@@ -35,13 +35,17 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 
 		let parent = this.core.getActor(this.memoryObject.parentId);
 
-		const requestBuilding = function(posList, type, priorityName, removeType, minRoomLevel)
+		const requestBuilding = function(posList, type, priorityName, removeType, minRoomLevel, separatePriorityNames)
 		{
 			if(removeType)
 				parent.removeAllBuildingRequestsWithType(type);
 
-			for(let index in posList)
-				parent.requestBuilding(	[type], posList[index], priorityName, minRoomLevel);
+			if(requestBuilding)
+				for(let index in posList)
+					parent.requestBuilding(	[type], posList[index], priorityName[index], minRoomLevel);
+			else
+				for(let index in posList)
+					parent.requestBuilding(	[type], posList[index], priorityName, minRoomLevel);
 		};
 
 		requestBuilding(this.memoryObject.links, STRUCTURE_LINK, PRIORITY_NAMES.BUILD.STORAGE_LINK, false);
@@ -49,8 +53,8 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 		requestBuilding(this.memoryObject.storages, STRUCTURE_STORAGE, PRIORITY_NAMES.BUILD.STORAGE, true);
 		requestBuilding(this.memoryObject.nukers, STRUCTURE_NUKER, PRIORITY_NAMES.BUILD.NUKER, true);
 		requestBuilding(this.memoryObject.terminals, STRUCTURE_TERMINAL, PRIORITY_NAMES.BUILD.TERMINAL, true);
-		requestBuilding(this.memoryObject.labs, STRUCTURE_LAB, PRIORITY_NAMES.BUILD.LAB, true);
 		requestBuilding(this.memoryObject.roads, STRUCTURE_ROAD, PRIORITY_NAMES.BUILD.STORAGE_ROAD, false, 2);
+		requestBuilding(this.memoryObject.labs, STRUCTURE_LAB, PRIORITY_NAMES.BUILD.LAB, true, true);
 
 		for(let index in RESOURCES_ALL)
 			parent.requestResource(
