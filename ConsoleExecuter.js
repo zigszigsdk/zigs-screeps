@@ -61,6 +61,9 @@ module.exports = class ConsoleExecuter
 			case 9:
 				this.core.eraseMemory(this.memoryObject.p1);
 				break;
+			case 10:
+				this.core.getService(SERVICE_NAMES.ROOM_SCORING).scoreRoom(this.memoryObject.p1);
+				break;
 			default:
 				break;
 		}

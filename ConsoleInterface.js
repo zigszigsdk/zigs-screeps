@@ -148,4 +148,9 @@ module.exports = class ConsoleInterface
 			Game.flags[flagName].remove();
 	}
 
+	rescoreRoom(roomName)
+	{
+		this.setCommand(10, roomName);
+	}
+
 };
