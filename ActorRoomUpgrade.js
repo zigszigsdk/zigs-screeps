@@ -2,10 +2,10 @@
 
 let ActorWithMemory = require('ActorWithMemory');
 
-const TARGET_WORKPARTS = 20;
-
 const MAX_CREEPS_OVER_LEVEL = [0, 1, 3, 3, 3, 3, 3, 3, 3];
 const TARGET_RESOURCE_RESERVE = 1500;
+
+const UPGRADER_PARKING_PREFIX = "UpgraderParkingPermission:";
 
 module.exports = class ActorRoomUpgrade extends ActorWithMemory
 {
@@ -18,16 +18,25 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
 		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
+		this.roomNavigation = locator.getService(SERVICE_NAMES.ROOM_NAVIGATION);
 	}
 
 	initiateActor(parentId, roomName)
 	{
 		let score = this.roomScoring.getRoom(roomName);
 		let parkingSpots = score.upgrade.spots;
+
+		for(let index in parkingSpots)
+		{
+			const ps = parkingSpots[index][0];
+			this.roomNavigation.reservePositions(	this.memoryObject.roomName,
+													{x: ps[0], y: ps[1], roomName: ps[2]},
+													UPGRADER_PARKING_PREFIX + index);
+		}
+
 		this.memoryObject =
 			{ roomName: roomName
 			, parentId: parentId
-			, workParts: 0
 			, creepCount: 0
 			, energyPos: score.upgrade.container
 			, parking:
@@ -79,14 +88,18 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 
 		//these two will be adjusted automatically by the actors calling back on death.
 		this.memoryObject.creepCount = oldMemory.creepCount;
-		this.memoryObject.workParts = oldMemory.workParts;
 
 		this.lateInitiate();
 	}
 
 	requestCreep()
 	{
-		let parent = this.actors.get(this.memoryObject.parentId);
+		const room = this.screepsApi.getRoom(this.memoryObject.roomName);
+		const maxCreeps = MAX_CREEPS_OVER_LEVEL[room.controller.level];
+		if(this.memoryObject.creepCount >= maxCreeps)
+			return;
+
+		const parent = this.actors.get(this.memoryObject.parentId);
 
 		parent.requestCreep(
 			{ actorId: this.actorId
@@ -98,33 +111,6 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 
 	createUpgrader(spawnId)
 	{
-		if(this.memoryObject.workParts >= TARGET_WORKPARTS)
-			return;
-
-		let room = this.screepsApi.getRoom(this.memoryObject.roomName);
-		let energy = room.energyCapacityAvailable;
-
-		let body = new this.CreepBodyFactory()
-			.addPattern([CARRY, WORK, WORK, MOVE], 1)
-			.addPattern(Array(2).fill(WORK), 1)
-			.addPattern([MOVE], 3)
-			.addPattern(Array(1).fill(WORK), 1)
-			.addPattern([MOVE], 1)
-			.addPattern(Array(5).fill(WORK), 1)
-			.addPattern([MOVE], 5)
-			.addPattern([CARRY], 4)
-			.addPattern(Array(10).fill(WORK), 1)
-			.addPattern([MOVE], 10)
-			.addPattern([CARRY], 5)
-			.setSort([MOVE, CARRY, WORK])
-			.setMaxCost(energy)
-			.fabricate();
-
-		let workParts = 0;
-		for(let index in body)
-			if(body[index] === WORK)
-				workParts++;
-
 		let parkingIndex = -1;
 		for(let index = 0; index < this.memoryObject.parking.actors.length; index++)
 			if(isNullOrUndefined(this.memoryObject.parking.actors[index]))
@@ -136,35 +122,35 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 		if(parkingIndex === -1) //no free spaces. Limited by room layout / roomscoring
 			return;
 
-		let actorResult = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
-			(script)=>script.initiateActor("upgrader", {workParts: workParts, parkingIndex: parkingIndex},
-			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
-			, [CREEP_INSTRUCTION.MOVE_TO_POSITION, this.memoryObject.parking.spots[parkingIndex] ] //1
-			, [CREEP_INSTRUCTION.PICKUP_AT_POS, this.memoryObject.energyPos, RESOURCE_ENERGY] //2
-			, [CREEP_INSTRUCTION.UPGRADE_UNTIL_EMPTY, this.memoryObject.controllerId] //3
-			, [CREEP_INSTRUCTION.GOTO_IF_ALIVE,	2] //4
-			, [CREEP_INSTRUCTION.CALLBACK, this.actorId, "upgraderDied"] //5
-			, [CREEP_INSTRUCTION.DESTROY_SCRIPT] ] //6
-			));
+		const callbackTo = 	{ actorId: this.actorId
+							, diedFunctionName: "upgraderDied"
+							};
+
+		const ps = this.memoryObject.parking.spots[parkingIndex];
+		const el = this.memoryObject.energyPos;
+		const positions = 	{ parkingSpace: {x:ps[0], y:ps[1], roomName:ps[2]}
+							, energyLocation: {x:el[0], y:el[1], roomName:el[2]}
+							};
+
+		const actorResult = this.actors.create(ACTOR_NAMES.CREEP_UPGRADER,
+			(script)=>script.initiateActor(callbackTo,
+											positions,
+											spawnId,
+											parkingIndex,
+											[UPGRADER_PARKING_PREFIX + parkingIndex]
+											));
 
 		this.memoryObject.creepCount++;
-		this.memoryObject.workParts += workParts;
 		this.memoryObject.parking.actors[parkingIndex] = actorResult.id;
 
-		let maxCreeps = MAX_CREEPS_OVER_LEVEL[room.controller.level];
-		if(this.memoryObject.workParts < TARGET_WORKPARTS && this.memoryObject.creepCount < maxCreeps)
-			this.requestCreep();
+		this.requestCreep();
 	}
 
-	upgraderDied(callbackObj)
+	upgraderDied(parkingIndex)
 	{
 		this.memoryObject.creepCount--;
-		this.memoryObject.workParts -= callbackObj.workParts;
-		if(callbackObj.parkingIndex)
-			this.memoryObject.parking.actors[callbackObj.parkingIndex] = null;
+		this.memoryObject.parking.actors[parkingIndex] = null;
 
-		let maxCreeps = MAX_CREEPS_OVER_LEVEL[this.screepsApi.getRoom(this.memoryObject.roomName).controller.level];
-		if(this.memoryObject.workParts < TARGET_WORKPARTS && this.memoryObject.creepCount < maxCreeps)
-			this.requestCreep();
+		this.requestCreep();
 	}
 };

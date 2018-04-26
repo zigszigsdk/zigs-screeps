@@ -206,6 +206,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 								{ at: at
 								, desired: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].desired
 								, max: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].max
+								, navPermissions: outputRequests[RESOURCES_ALL[resourceIndex]][outputIndex].navPermissions
 								});
 						}
 					}
@@ -213,7 +214,12 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 				if(dropPoints.length === 0)
 					continue;
 
-				let fillPoints = [{at: inputRequest.at, min: inputRequest.min, parking: inputRequest.parking}];
+				let fillPoints =
+					[{ at: inputRequest.at
+					, min: inputRequest.min
+					, parking: inputRequest.parking
+					, navPermissions: inputRequest.navPermissions
+					}];
 
 				this.memoryObject.routes.push(
 					{ routeIndex: routeIndex++
@@ -231,6 +237,9 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 	createHauler(spawnId, callbackObj)
 	{
 		let actorCallbackObj = this.initiateHauler(callbackObj, spawnId);
+
+		if(isNullOrUndefined(actorCallbackObj))
+			return;
 
 		let instructions = this.getInstructions(actorCallbackObj.fillPoint,
 												actorCallbackObj.dropPoint,
@@ -250,7 +259,9 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 
 		let callbackObj = this.initiateHauler({routeIndex: routeIndex}, null);
 
-
+		if(isNullOrUndefined(callbackObj))
+			return;
+		
 		let instructions = this.getInstructions(callbackObj.fillPoint,
 												callbackObj.dropPoint,
 												callbackObj.type,
@@ -368,7 +379,7 @@ module.exports = class ActorRoomHaul extends ActorWithMemory
 			from.min;
 
 		return [  [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //00
-				, [CREEP_INSTRUCTION.MOVE_TO_POSITION, from.parking] //01
+				, [CREEP_INSTRUCTION.MOVE_TO_POSITION, from.parking, from.navPermissions] //01
 				, [CREEP_INSTRUCTION.PICKUP_AT_POS, from.at, type, min] //02
 				, [CREEP_INSTRUCTION.GOTO_IF_TTL_LESS, 9, 175] //03
 

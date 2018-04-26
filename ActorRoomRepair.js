@@ -2,6 +2,8 @@
 
 let ActorWithMemory = require('ActorWithMemory');
 
+const MAX_CREEPS_OVER_LEVEL = [0, 0, 1, 1, 1, 1, 1, 1, 1];
+
 module.exports = class ActorRoomRepair extends ActorWithMemory
 {
 	constructor(locator)

@@ -2,8 +2,10 @@
 
 const ActorWithMemory = require('ActorWithMemory');
 
-const ENERGY_LIMIT = 250;
-const targetNumberOfBuildersOverLevel = [0, 0, 3, 1, 1, 1, 1, 1, 1];
+//reminder: early room-development is important, as even with safezone activated, enemies can still
+//siphon energy. Furthermore, the first tower at RoomLevel 3 is a massive boon in defense.
+const ENERGY_LIMIT_OVER_ROOMLEVEL = 	[0,	0, 0, 0, 250, 250, 250, 250, 250];
+const targetNumberOfBuildersOverLevel = [0, 0, 3, 3, 1,   1,   1,   1,   1];
 
 module.exports = class ActorRoomBuild extends ActorWithMemory
 {
@@ -244,8 +246,9 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		for(let idIndex in this.memoryObject.subActorIds)
 		{
 			let subActor = this.actors.get(this.memoryObject.subActorIds[idIndex]);
+			const energyLimit = ENERGY_LIMIT_OVER_ROOMLEVEL[roomLevel];
 
-			subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS,		energyPos, RESOURCE_ENERGY, ENERGY_LIMIT]);
+			subActor.replaceInstruction(1, [CREEP_INSTRUCTION.PICKUP_AT_POS,		energyPos, RESOURCE_ENERGY, energyLimit ]);
 			subActor.replaceInstruction(2, [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY,	buildPos,  structureType	 			]);
 			subActor.replaceInstruction(3, [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, buildPos,  structureType,   6			]);
 			subActor.setPointer(1);
@@ -370,10 +373,12 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		callbackObj.at = buildPos;
 		callbackObj.type = structureType;
 
+		const energyLimit = ENERGY_LIMIT_OVER_ROOMLEVEL[roomLevel];
+
 		let actorObj = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor("builder", callbackObj,
 				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
-				, [CREEP_INSTRUCTION.PICKUP_AT_POS,	energyPos, RESOURCE_ENERGY,ENERGY_LIMIT] //1
+				, [CREEP_INSTRUCTION.PICKUP_AT_POS,	energyPos, RESOURCE_ENERGY,energyLimit] //1
 				, [CREEP_INSTRUCTION.BUILD_UNTIL_EMPTY, buildPos, structureType] //2
 				, [CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT, buildPos, structureType,	6] //3
 				, [CREEP_INSTRUCTION.GOTO_IF_ALIVE, 1] //4

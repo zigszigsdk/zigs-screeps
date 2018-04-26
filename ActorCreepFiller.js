@@ -343,7 +343,7 @@ module.exports = class ActorCreepFiller extends ActorWithMemory
 				let target = creep.pos.findClosestByPath(candidates);
 
 				if(creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE)
-					creep.moveTo(target);
+					this.creepActions.moveTo(this.creepName, [target.pos.x, target.pos.y, target.pos.roomName]);
 
 				break;
 

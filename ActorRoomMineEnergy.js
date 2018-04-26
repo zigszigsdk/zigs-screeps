@@ -1,6 +1,9 @@
 "use strict";
 
 const RECOVERY_MINER = "recoveryMiner";
+const PERMISSIONS = { MINER_PARKING: "EnergyMinerParkingPermission"
+					, HAULER_PARKING: "EnergyHaulerParkingPermission"};
+
 const MAX_ENERGY_NEEDED = 1200;
 
 let ActorWithMemory = require('ActorWithMemory');
@@ -12,8 +15,9 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 		super(locator);
 		this.CreepBodyFactory = locator.getClass(CLASS_NAMES.CREEP_BODY_FACTORY);
 		this.ResourceRequest = locator.getClass(CLASS_NAMES.RESOURCE_REQUEST);
-		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
 
+		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
+		this.roomNavigation = locator.getService(SERVICE_NAMES.ROOM_NAVIGATION);
 		this.events = locator.getService(SERVICE_NAMES.EVENTS);
 		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
@@ -36,13 +40,18 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 	{
 		let parent = this.actors.get(this.memoryObject.parentId);
 
+		let minerReservationPositions = [];
+		let haulerReservationPositions = [];
+
 		let keys = Object.keys(this.memoryObject.mines);
 		for(let index in keys)
 		{
 			this.requestMinerFor(keys[index]);
 
+			const miningSpot = this.memoryObject.mines[keys[index]].miningSpot;
+
 			parent.requestBuilding(	[STRUCTURE_CONTAINER],
-									this.memoryObject.mines[keys[index]].miningSpot,
+									miningSpot,
 									PRIORITY_NAMES.BUILD.ENERGY_MINING_CONTAINER,
 									2);
 
@@ -55,10 +64,30 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 					.setDesired(500)
 					.setMin(250)
 					.setParking(this.memoryObject.mines[keys[index]].parkingSpot)
+					.setNavPermissions(PERMISSIONS.HAULER_PARKING)
 					.fabricate();
 
 			parent.registerEnergyLocation(request);
+
+			minerReservationPositions.push(	{ x:miningSpot[0]
+											, y:miningSpot[1]
+											, roomName:miningSpot[2]
+											});
+
+			const haulerParkingSpot = this.memoryObject.mines[keys[index]].parkingSpot;
+			haulerReservationPositions.push({ x:haulerParkingSpot[0]
+											, y: haulerParkingSpot[1]
+											, roomName: haulerParkingSpot[2]
+											});
 		}
+
+		this.roomNavigation.reservePositions(	this.memoryObject.roomName,
+												minerReservationPositions,
+												PERMISSIONS.MINER_PARKING);
+
+		this.roomNavigation.reservePositions(	this.memoryObject.roomName,
+												haulerReservationPositions,
+												PERMISSIONS.HAULER_PARKING);
 
 		this.events.subscribe(EVENTS.STRUCTURE_BUILD + this.memoryObject.roomName, this.actorId, "onStructuresChanged");
 		this.events.subscribe(EVENTS.STRUCTURE_DESTROYED + this.memoryObject.roomName, this.actorId, "onStructuresChanged");
@@ -172,7 +201,7 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 		let result = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor(RECOVERY_MINER, callbackObj,
 			[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body]   //0
-			, [CREEP_INSTRUCTION.MOVE_TO_POSITION, pos]   //1
+			, [CREEP_INSTRUCTION.MOVE_TO_POSITION, pos, PERMISSIONS.MINER_PARKING]   //1
 			, [CREEP_INSTRUCTION.MINE_UNTIL_DEATH, callbackObj.sourceId]   //2
 			, [CREEP_INSTRUCTION.CALLBACK, this.actorId, "recoveryMinerDied"]   //3
 			, [CREEP_INSTRUCTION.DESTROY_SCRIPT] ]));//4
@@ -217,7 +246,7 @@ module.exports = class ActorRoomMineEnergy extends ActorWithMemory
 			};
 
 		let result = this.actors.create(ACTOR_NAMES.CREEP_ENERGY_MINER,
-			(script)=> script.initiateActor(callbackTo, mineInfo, spawnId));
+			(script)=> script.initiateActor(callbackTo, mineInfo, spawnId, PERMISSIONS.MINER_PARKING));
 
 		this.memoryObject.mines[callbackObj.sourceId].regularMinerActorId = result.id;
 

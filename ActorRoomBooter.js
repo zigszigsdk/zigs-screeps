@@ -34,7 +34,6 @@ module.exports = class ActorRoomBooter extends ActorWithMemory
 
 	onEveryTickLate()
 	{
-		console.log("phase: " + this.memoryObject.phase);
 		switch(this.memoryObject.phase)
 		{
 			case 0:

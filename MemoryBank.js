@@ -53,7 +53,7 @@ module.exports = class MemoryBank
     			if(isNullOrUndefined(this.logger))
     				console.log(message);
     			else
-    				this.logger.logWarning(message);
+    				this.logger.warning(message);
     		}
 
 		for (let bankKey in this.banksKvp)

@@ -28,7 +28,7 @@ module.exports = class ConsoleExecuter
 				this.logger.memoryObject.errors = {};
 				break;
 			case 2:
-				this.logger.memoryObject.wcrnings = {};
+				this.logger.memoryObject.warnings = {};
 				break;
 			case 3:
 				this.actors.resetActor(this.memoryObject.p1);

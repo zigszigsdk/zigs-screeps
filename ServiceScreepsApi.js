@@ -4,6 +4,12 @@ const Service = require('Service');
 
 module.exports = class ServiceScreepsApi extends Service
 {
+	rewindService()
+	{
+		super.rewindService();
+		this.pathFinder = PathFinder;
+	}
+
 	getStructureAt(posArr, structureType)
 	{
 		let structs = this.getRoomPosition(posArr).lookFor(LOOK_STRUCTURES);
@@ -15,12 +21,28 @@ module.exports = class ServiceScreepsApi extends Service
 		return null;
 	}
 
-	getRoomPosition(list)
+	getRoomPosition(input)
+	{
+		if(isArray(input))
+			return this.getRoomPositionFromList(input);
+		else
+			return this.getRoomPositionFromObject(input);
+	}
+
+	getRoomPositionFromList(list)
 	{
 		if(!DEBUG)
 			return new RoomPosition(list[0], list[1], list[2]);
 
 		return new this.DebugWrapperScreeps(this, new RoomPosition(list[0], list[1], list[2]), "(a RoomPosition)" );
+	}
+
+	getRoomPositionFromObject(obj)
+	{
+		if(!DEBUG)
+			return new RoomPosition(obj.x, obj.y, obj.roomName);
+
+		return new this.DebugWrapperScreeps(this, new RoomPosition(obj.x, obj.y, obj.roomName), "(a RoomPosition)" );
 	}
 
 	getRoom(name)
@@ -68,4 +90,10 @@ module.exports = class ServiceScreepsApi extends Service
 
 		return new this.DebugWrapperScreeps(this, spawn, "(a StructureSpawn)");
 	}
+
+	 getRoomLevel(roomName)
+	 {
+	 	const room = this.getRoom(roomName);
+	 	return isNullOrUndefined(room) ? 0 : room.controller.level;
+	 }
 };

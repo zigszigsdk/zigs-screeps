@@ -39,12 +39,14 @@ module.exports = class ActorCreepEnergyMiner extends ActorWithMemory
 			this.creepName = NAME_PREFIX + this.memoryObject.mineInfo.sourceId;
 	}
 
-	initiateActor(callbackTo, mineInfo, spawnId)
+	initiateActor(callbackTo, mineInfo, spawnId, navPermission)
 	{
 		this.memoryObject =
-			{ callbackTo: callbackTo
+			{ state: STATES.SPAWNING
+			, callbackTo: callbackTo
 			, mineInfo: mineInfo
-			, state: STATES.SPAWNING
+			, navPermission: navPermission
+			, path: undefined
 			};
 
 		this.creepName = NAME_PREFIX + this.memoryObject.mineInfo.sourceId;
@@ -91,8 +93,11 @@ module.exports = class ActorCreepEnergyMiner extends ActorWithMemory
 			}
 			case STATES.MOVE:
 			{
-				if(creep.pos.isEqualTo(this.screepsApi.getRoomPosition(this.memoryObject.mineInfo.minePos)))
-					this.memoryObject.state = STATES.MINE;
+				if(!creep.pos.isEqualTo(this.screepsApi.getRoomPosition(this.memoryObject.mineInfo.minePos)))
+					return;
+
+				this.memoryObject.path = undefined;
+				this.memoryObject.state = STATES.MINE;
 				return;
 			}
 			case STATES.MINE:
@@ -177,10 +182,31 @@ module.exports = class ActorCreepEnergyMiner extends ActorWithMemory
 
 	_executeState()
 	{
+
+
 		switch(this.memoryObject.state)
 		{
 			case STATES.MOVE:
-				this.creepActions.moveTo(this.creepName, this.memoryObject.mineInfo.minePos, true);
+				let creep = this.screepsApi.getCreep(this.creepName);
+				let newPos = [creep.pos.x, creep.pos.y, creep.pos.roomName];
+				if(! this.memoryObject.lastPosition ||
+					(
+						this.memoryObject.lastPosition[0] === newPos[0] &&
+						this.memoryObject.lastPosition[1] === newPos[1] &&
+						this.memoryObject.lastPosition[2] === newPos[2]
+					)
+				)
+					this.memoryObject.path = undefined;
+
+				this.memoryObject.path =
+					this.creepActions.moveWithPath(
+						this.creepName
+					,	this.memoryObject.mineInfo.minePos
+					,	this.memoryObject.path
+					,	this.memoryObject.navPermission
+					);
+
+				this.memoryObject.lastPosition = newPos;
 				return;
 
 			case STATES.MINE:

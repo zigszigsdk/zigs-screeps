@@ -14,6 +14,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 		this.logger = locator.getService(SERVICE_NAMES.LOGGER);
 		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
+		this.creepActions = locator.getService(SERVICE_NAMES.CREEP_ACTIONS);
 	}
 
 	initiateActor(creepNamePrefix, callbackStamp, instructions)
@@ -201,7 +202,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					source = this.screepsApi.getObjectById(currentInstruction[1]);
 
 					if(creep.harvest(source) === ERR_NOT_IN_RANGE)
-						creep.moveTo(source);
+						this.creepActions.moveTo(this.memoryObject.creepName, [source.pos.x, source.pos.y, source.pos.roomName]);
 
 					break;
 
@@ -214,7 +215,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					let controller = this.screepsApi.getObjectById(currentInstruction[1]);
 
 					if(creep.upgradeController(controller) === ERR_NOT_IN_RANGE)
-						creep.moveTo(controller);
+						this.creepActions.moveTo(this.memoryObject.creepName, [controller.pos.x, controller.pos.y, controller.pos.roomName]);
 
 					stop = true;
 					break;
@@ -306,7 +307,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 							resourceList[indexOfResourceTypeInPool].amount + carrySum >= creep.carryCapacity)
 						{
 							if(creep.pickup(resourceList[indexOfResourceTypeInPool]) === ERR_NOT_IN_RANGE)
-								creep.moveTo(resourceList[indexOfResourceTypeInPool]);
+								this.creepActions.moveTo(this.memoryObject.creepName, [resourceList[indexOfResourceTypeInPool].pos.x, resourceList[indexOfResourceTypeInPool].pos.y, resourceList[indexOfResourceTypeInPool].pos.roomName]);
 
 							stop = true;
 						}
@@ -317,7 +318,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 							if(stored - (creep.carryCapacity - carrySum) >= limit)
 							{
 								if(creep.withdraw(struct, currentInstruction[2]) === ERR_NOT_IN_RANGE)
-									creep.moveTo(struct);
+									this.creepActions.moveTo(this.memoryObject.creepName, [struct.pos.x, struct.pos.y, struct.pos.roomName]);
 
 								stop = true;
 							}
@@ -329,9 +330,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 							resourceList[indexOfResourceTypeInPool].amount - (creep.carryCapacity - carrySum) >= limit)
 						{
 							if(creep.pickup(resourceList[indexOfResourceTypeInPool]) === ERR_NOT_IN_RANGE)
-								creep.moveTo(resourceList[indexOfResourceTypeInPool]);
-
-							stop = true;
+								this.creepActions.moveTo(this.memoryObject.creepName, [resourceList[indexOfResourceTypeInPool].pos.x, resourceList[indexOfResourceTypeInPool].pos.y, resourceList[indexOfResourceTypeInPool].pos.roomName]);
 						}
 					}
 
@@ -390,7 +389,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 								resourceList[indexOfResourceTypeInPool].amount + carrySum >= creep.carryCapacity)
 							{
 								if(creep.pickup(resourceList[indexOfResourceTypeInPool]) === ERR_NOT_IN_RANGE)
-									creep.moveTo(resourceList[indexOfResourceTypeInPool]);
+									this.creepActions.moveTo(this.memoryObject.creepName, [resourceList[indexOfResourceTypeInPool].pos.x, resourceList[indexOfResourceTypeInPool].pos.y, resourceList[indexOfResourceTypeInPool].pos.roomName]);
 
 								stop = true;
 							}
@@ -401,7 +400,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 								if(stored - (creep.carryCapacity - carrySum) >= limit)
 								{
 									if(creep.withdraw(struct, currentInstruction[2]) === ERR_NOT_IN_RANGE)
-										creep.moveTo(struct);
+										this.creepActions.moveTo(this.memoryObject.creepName, [struct.pos.x, struct.pos.y, struct.pos.roomName]);
 
 									stop = true;
 								}
@@ -413,7 +412,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 								resourceList[indexOfResourceTypeInPool].amount - (creep.carryCapacity - carrySum) >= limit)
 							{
 								if(creep.pickup(resourceList[indexOfResourceTypeInPool]) === ERR_NOT_IN_RANGE)
-									creep.moveTo(resourceList[indexOfResourceTypeInPool]);
+									this.creepActions.moveTo(this.memoryObject.creepName, [resourceList[indexOfResourceTypeInPool].pos.x, resourceList[indexOfResourceTypeInPool].pos.y, resourceList[indexOfResourceTypeInPool].pos.roomName]);
 
 								stop = true;
 							}
@@ -476,7 +475,8 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					}
 
 					if(creep.build(sites[0]) !== OK)
-						creep.moveTo(sites[0].pos);
+						this.creepActions.moveTo(this.memoryObject.creepName, [sites[0].pos.x, sites[0].pos.y, sites[0].pos.roomName]);
+
 					break;
 
 				case CREEP_INSTRUCTION.GOTO_IF_STRUCTURE_AT:
@@ -548,7 +548,8 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 								others[0].suicide();
 					}
 
-					creep.moveTo(targetPos);
+					this.creepActions.moveTo(this.memoryObject.creepName, [targetPos.x, targetPos.y, targetPos.roomName]);
+
 					break;
 
 				case CREEP_INSTRUCTION.MINE_UNTIL_DEATH:
@@ -560,7 +561,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					source = this.screepsApi.getObjectById(currentInstruction[1]);
 
 					if(creep.harvest(source) === ERR_NOT_IN_RANGE)
-						creep.moveTo(source);
+						this.creepActions.moveTo(this.memoryObject.creepName, [source.pos.x, source.pos.y, source.pos.roomName]);
 
 					stop = true;
 					break;
@@ -590,7 +591,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					target = creep.pos.findClosestByPath(candidates);
 
 					if(creep.transfer(target, currentInstruction[1]) === ERR_NOT_IN_RANGE)
-						creep.moveTo(target);
+						this.creepActions.moveTo(this.memoryObject.creepName, [target.pos.x, target.pos.y, target.pos.roomName]);
 
 					break;
 
@@ -628,7 +629,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 								switch(creep.transfer(structures[index], currentInstruction[2]))
 								{
 									case ERR_NOT_IN_RANGE:
-										creep.moveTo(targetPos);
+										this.creepActions.moveTo(this.memoryObject.creepName, [targetPos.x, targetPos.y, targetPos.roomName]);
 										break;
 									case ERR_FULL:
 										stop = false;
@@ -654,7 +655,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 						creep.pos.y !== targetPos.y ||
 						creep.pos.roomName !== targetPos.roomName
 					)
-						creep.moveTo(targetPos);
+						this.creepActions.moveTo(this.memoryObject.creepName, [targetPos.x, targetPos.y, targetPos.roomName]);
 					else
 						creep.drop(currentInstruction[2]);
 
@@ -674,7 +675,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 					if(creep.pos.roomName !== targetPos.roomName)
 					{
-						creep.moveTo(targetPos);
+						this.creepActions.moveTo(this.memoryObject.creepName, [targetPos.x, targetPos.y, targetPos.roomName]);
 						stop = true;
 						break;
 					}
@@ -689,7 +690,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					target = targets[0];
 
 					if(creep.dismantle(target) !== OK)
-						creep.moveTo(target, {maxRooms: 4});
+						this.creepActions.moveTo(this.memoryObject.creepName, [target.pos.x, target.pos.y, target.pos.roomName]);
 
 					break;
 
@@ -711,7 +712,7 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					stop = true;
 
 					if(creep.repair(filteredStructs[0]) === ERR_NOT_IN_RANGE)
-						creep.moveTo(filteredStructs[0]);
+						this.creepActions.moveTo(this.memoryObject.creepName, [filteredStructs[0].pos.x, filteredStructs[0].pos.y, filteredStructs[0].pos.roomName]);
 
 					break;
 
@@ -761,12 +762,12 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 					if(typeof room === UNDEFINED)
 					{
 						pos = this.screepsApi.getRoomPosition(currentInstruction[1]);
-						creep.moveTo(pos);
+						this.creepActions.moveTo(this.memoryObject.creepName, [pos.x, pos.y, pos.roomName]);
 						break;
 					}
 
 					if(creep.claimController(room.controller) !== OK)
-						creep.moveTo(room.controller);
+						this.creepActions.moveTo(this.memoryObject.creepName, [room.controller.pos.x, room.controller.pos.y, room.controller.pos.roomName]);
 
 					break;
 
@@ -796,13 +797,13 @@ module.exports = class ActorProcedualCreep extends ActorWithMemory
 
 					if(creep.room.name === currentInstruction[1])
 					{
-						creep.moveTo(this.screepsApi.getRoomPosition([25, 25, roomPath[0]]));
+						this.creepActions.moveTo(this.memoryObject.creepName, [25, 25, roomPath[0]]);
 						break;
 					}
 
 					let exitDir = Game.map.findExit(creep.room, roomPath[0]);
 					let exit = creep.pos.findClosestByRange(exitDir);
-					creep.moveTo(exit, {maxRooms: 1});
+					this.creepActions.moveTo(this.memoryObject.creepName, [exit.x, exit.y, exit.roomName]);
 					break;
 
 				case CREEP_INSTRUCTION.WAIT_UNTIL_DEATH:

@@ -28,8 +28,8 @@ module.exports = class ActorRoomExplore extends ActorWithMemory
 
 	lateInitiate()
 	{
-		this._setupNextRoom();
-		this._requestCreep();
+		//this._setupNextRoom();
+		//this._requestCreep();
 	}
 
 	resetActor()

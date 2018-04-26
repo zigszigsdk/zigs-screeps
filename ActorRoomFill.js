@@ -3,6 +3,8 @@
 const FULL_FILLER_ENERGY_COST = 1000;
 const RECOVERY_FILLER_ENERGY_COST = 300;
 
+const PERMISSIONS = {INSIDE_FLOWER: "PermissionInsideFlower"};
+
 let ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorRoomFill extends ActorWithMemory
@@ -17,6 +19,7 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
 		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
+		this.roomNavigation = locator.getService(SERVICE_NAMES.ROOM_NAVIGATION);
 	}
 
 	initiateActor(parentId, roomName)
@@ -57,8 +60,15 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		for(let index in this.memoryObject.links)
 			parent.requestBuilding([STRUCTURE_LINK], this.memoryObject.links[index], PRIORITY_NAMES.BUILD.FLOWER_LINK);
 
+		let positionsInsideFlower = [];
+
 		for(let index in this.memoryObject.containers)
 		{
+			positionsInsideFlower.push(	{ x: this.memoryObject.containers[index][0]
+										, y: this.memoryObject.containers[index][1]
+										, roomName: this.memoryObject.containers[index][2]
+										});
+
 			parent.requestBuilding(	[STRUCTURE_CONTAINER],
 									this.memoryObject.containers[index],
 									PRIORITY_NAMES.BUILD.FLOWER_CONTAINER,
@@ -79,10 +89,20 @@ module.exports = class ActorRoomFill extends ActorWithMemory
 		}
 
 		for(let index in this.memoryObject.roads)
+		{
+			positionsInsideFlower.push(	{ x: this.memoryObject.roads[index][0]
+										, y: this.memoryObject.roads[index][1]
+										, roomName: this.memoryObject.roads[index][2]
+										});
+
 			parent.requestBuilding(	[STRUCTURE_ROAD],
 									this.memoryObject.roads[index],
 									PRIORITY_NAMES.BUILD.FLOWER_ROAD,
 									2);
+		}
+		this.roomNavigation.reservePositions(	this.memoryObject.roomName,
+												positionsInsideFlower,
+												PERMISSIONS.INSIDE_FLOWER);
 
 		this.requestFiller();
 

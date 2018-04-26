@@ -1,8 +1,12 @@
 "use strict";
 
-let MAX_SPAWN_ENERGY_NEEDED = 500;
+const MAX_SPAWN_ENERGY_NEEDED = 500;
 
-let ActorWithMemory = require('ActorWithMemory');
+const PERMISSIONS = { INSIDE_STORAGE_AREA: "PermissionInsideStorageArea"
+					};
+
+const ActorWithMemory = require('ActorWithMemory');
+
 module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 {
 	constructor(locator)
@@ -14,6 +18,7 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 		this.roomScoring = locator.getService(SERVICE_NAMES.ROOM_SCORING);
 		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
+		this.roomNavigation = locator.getService(SERVICE_NAMES.ROOM_NAVIGATION);
 	}
 
 	initiateActor(parentId, roomName)
@@ -39,12 +44,12 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 
 		let parent = this.actors.get(this.memoryObject.parentId);
 
-		const requestBuilding = function(posList, type, priorityName, removeType, minRoomLevel, separatePriorityNames)
+		const requestBuilding = function(posList, type, priorityName, removeType=false, minRoomLevel=0, separatePriorityNames=false)
 		{
 			if(removeType)
 				parent.removeAllBuildingRequestsWithType(type);
 
-			if(requestBuilding)
+			if(separatePriorityNames)
 				for(let index in posList)
 					parent.requestBuilding(	[type], posList[index], priorityName[index], minRoomLevel);
 			else
@@ -52,13 +57,27 @@ module.exports = class ActorRoomStorageKeeper extends ActorWithMemory
 					parent.requestBuilding(	[type], posList[index], priorityName, minRoomLevel);
 		};
 
-		requestBuilding(this.memoryObject.links, STRUCTURE_LINK, PRIORITY_NAMES.BUILD.STORAGE_LINK, false);
+		requestBuilding(this.memoryObject.links, STRUCTURE_LINK, PRIORITY_NAMES.BUILD.STORAGE_LINK);
 		requestBuilding(this.memoryObject.powerSpawns, STRUCTURE_POWER_SPAWN, PRIORITY_NAMES.BUILD.POWER_SPAWN, true);
 		requestBuilding(this.memoryObject.storages, STRUCTURE_STORAGE, PRIORITY_NAMES.BUILD.STORAGE, true);
 		requestBuilding(this.memoryObject.nukers, STRUCTURE_NUKER, PRIORITY_NAMES.BUILD.NUKER, true);
 		requestBuilding(this.memoryObject.terminals, STRUCTURE_TERMINAL, PRIORITY_NAMES.BUILD.TERMINAL, true);
-		requestBuilding(this.memoryObject.roads, STRUCTURE_ROAD, PRIORITY_NAMES.BUILD.STORAGE_ROAD, false, 2);
-		requestBuilding(this.memoryObject.labs, STRUCTURE_LAB, PRIORITY_NAMES.BUILD.LAB, true, true);
+		requestBuilding(this.memoryObject.roads, STRUCTURE_ROAD, PRIORITY_NAMES.BUILD.STORAGE_ROAD, false, 3);
+		requestBuilding(this.memoryObject.labs, STRUCTURE_LAB, PRIORITY_NAMES.BUILD.LAB, true, 0, true);
+
+		let bottleneckedLocations = [];
+		for(let index in this.memoryObject.roads)
+		{
+			bottleneckedLocations.push(	{ x: this.memoryObject.roads[index][0]
+										, y: this.memoryObject.roads[index][1]
+										, roomName: this.memoryObject.roads[index][2]
+										});
+		}
+
+		this.roomNavigation.reservePositions(	this.memoryObject.roomName,
+												bottleneckedLocations,
+												PERMISSIONS.INSIDE_STORAGE_AREA);
+
 
 		for(let index in RESOURCES_ALL)
 			parent.requestResource(

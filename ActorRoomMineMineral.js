@@ -3,6 +3,11 @@
 const MAX_ENERGY_NEEDED = 750;
 const ROLE_NAME = "mineralMiner";
 
+const PERMISSIONS = { MINER_PARKING: "MineralMinerParkingPermission"
+					, HAULER_PARKING: "MineralHaulerParkingPermission"};
+
+const MIN_ROOMLEVEL_FOR_MINERALMINING = 5;
+
 const ActorWithMemory = require('ActorWithMemory');
 
 module.exports = class ActorRoomMineMineral extends ActorWithMemory
@@ -17,6 +22,7 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 		this.events = locator.getService(SERVICE_NAMES.EVENTS);
 		this.screepsApi = locator.getService(SERVICE_NAMES.SCREEPS_API);
 		this.actors = locator.getService(SERVICE_NAMES.ACTORS);
+		this.roomNavigation = locator.getService(SERVICE_NAMES.ROOM_NAVIGATION);
 	}
 
 	initiateActor(parentId, roomName)
@@ -56,7 +62,25 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 				.setMin(0)
 				.setMinRoomLevel(6)
 				.setParking(this.memoryObject.mineral.parkingSpot)
+				.setNavPermissions(PERMISSIONS.HAULER_PARKING)
 				.fabricate());
+
+
+		const classContext = this;
+		const makeNavReservation = function(permission, at)
+		{
+			classContext.roomNavigation.reservePositions(
+				classContext.memoryObject.roomName
+			,	[at]
+			,	permission
+			,	MIN_ROOMLEVEL_FOR_MINERALMINING
+			);
+		};
+
+		const miningSpot = this.memoryObject.mineral.miningSpot;
+		makeNavReservation(PERMISSIONS.MINER_PARKING, {x: miningSpot[0], y:miningSpot[1], roomName: miningSpot[2]});
+		const parkingSpot = this.memoryObject.mineral.parkingSpot;
+		makeNavReservation(PERMISSIONS.HAULER_PARKING, {x: parkingSpot[0], y:parkingSpot[1], roomName: parkingSpot[2]});
 
 		this._update();
 	}
@@ -143,10 +167,12 @@ module.exports = class ActorRoomMineMineral extends ActorWithMemory
 		let mineralId = this.memoryObject.mineral.id;
 		let miningSpot = this.memoryObject.mineral.miningSpot;
 
+
+
 		let result = this.actors.create(ACTOR_NAMES.PROCEDUAL_CREEP,
 			(script)=>script.initiateActor(ROLE_NAME, {},
 				[ [CREEP_INSTRUCTION.SPAWN_UNTIL_SUCCESS, [spawnId], body] //0
-				, [CREEP_INSTRUCTION.MOVE_TO_POSITION, miningSpot] //1
+				, [CREEP_INSTRUCTION.MOVE_TO_POSITION, miningSpot, PERMISSIONS.MINER_PARKING] //1
 				, [CREEP_INSTRUCTION.MINE_UNTIL_DEATH, mineralId] //2
 				, [CREEP_INSTRUCTION.CALLBACK, this.actorId, "minerDied"] //3
 				, [CREEP_INSTRUCTION.DESTROY_SCRIPT] ])); //4

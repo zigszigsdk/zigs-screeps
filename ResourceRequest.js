@@ -19,6 +19,7 @@ module.exports = class ResourceRequest
 			, max: DEFAULT_CONTAINER_FULL
 			, minRoomLevel: 0
 			, parking: null
+			, navPermission: []
 			};
 	}
 
@@ -72,6 +73,12 @@ module.exports = class ResourceRequest
 	setParking(at)
 	{
 		this.data.parking = at;
+		return this;
+	}
+
+	setNavPermissions(permissions)
+	{
+		this.data.navPermission = isArray(permissions) ? permissions : [permissions];
 		return this;
 	}
 

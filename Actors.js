@@ -65,7 +65,14 @@ module.exports = class Actors
 		{
 			this.logger.startCpuLog("rewinding actor");
 			let actor = this.localCache.outdatedActors[actorId];
-			actor.rewindActor(Number(actorId));
+			try
+			{
+				actor.rewindActor(Number(actorId));
+			}
+			catch(e)
+			{
+				this.logger.error("Error rewinding actor: " + actorId, e);
+			}
 			this.localCache.actors[actorId] = actor;
 			this.logger.endCpuLog("rewinding actor");
 			return actor;
@@ -101,11 +108,28 @@ module.exports = class Actors
 		let ActorClass = this.localCache.classes[scriptName];
 		let actor;
 
-		actor = new ActorClass(this.locator);
+		try
+		{
+			actor = new ActorClass(this.locator);
+		}
+		catch(e)
+		{
+			this.logger.error("Error instantiating actor: " + scriptName, e);
+			this.logger.endCpuLog("instanciate actor script");
+			return;
+		}
 
 		this.logger.endCpuLog("instanciate actor script");
 
-		actor.rewindActor(Number(actorId));
+		try
+		{
+			actor.rewindActor(Number(actorId));
+		}
+		catch(e)
+		{
+			this.logger.error("Error rewinding actor: " + scriptName, e);
+			return;
+		}
 
 		this.localCache.actors[actorId] = actor;
 
@@ -116,7 +140,7 @@ module.exports = class Actors
 	{
 		if(!this.localCache.classes[scriptName])
 		{
-			try //insure that one failing actor can't take the core and thus all actors down.
+			try
 			{
 				this.localCache.classes[scriptName] = require(scriptName);
 			}
@@ -133,18 +157,42 @@ module.exports = class Actors
 
 		let actorId = this.memoryObject.actorIdCounter++;
 
+		try
+		{
+			actor = new ActorClass(this.locator);
+		}
+		catch(e)
+		{
+			this.logger.error("Error instantiating actor: " + scriptName, e);
+			return;
+		}
 
-		actor = new ActorClass(this.locator);
 
 		this.memoryObject.scriptNameFromId[actorId] = scriptName;
 		this.localCache.actors[actorId] = actor;
 
-		actor.rewindActor(Number(actorId));
+		try
+		{
+			actor.rewindActor(Number(actorId));
+		}
+		catch(e)
+		{
+			this.logger.error("Error rewinding actor: " + scriptName, e);
+			return;
+		}
 
-		if(initFunc === null || initFunc === undefined)
-			actor.initiateActor();
-		else
-			initFunc(actor);
+		try
+		{
+			if(initFunc === null || initFunc === undefined)
+				actor.initiateActor();
+			else
+				initFunc(actor);
+		}
+		catch(e)
+		{
+			this.logger.error("Error initiating actor: " + scriptName, e);
+			return;
+		}
 
 		return  { actor: actor
 				, id: actorId
@@ -155,7 +203,15 @@ module.exports = class Actors
 	{
 		let actor = this.getFromId(actorId);
 		if(actor)
-			actor.removeActor();
+			try
+			{
+				actor.removeActor();
+			}
+			catch(e)
+			{
+				this.logger.error("Error removing actor: " + actorId, e);
+				return;
+			}
 
 		delete this.localCache.actors[actorId];
 		delete this.localCache.outdatedActors[actorId];
@@ -192,7 +248,14 @@ module.exports = class Actors
 		if(isUndefinedOrNull(actor))
 			return;
 
-		actor.resetActor();
+		try
+		{
+			actor.resetActor();
+		}
+		catch(e)
+		{
+			this.logger.error("Error resetting actor: " + actorId, e);
+		}
 	}
 
 	resetAll()

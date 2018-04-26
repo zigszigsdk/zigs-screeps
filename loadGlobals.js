@@ -17,6 +17,9 @@ module.exports = function()
 		, EVENTS: "ServiceEvents"
 		, LOGGER: "ServiceLogger"
 		, MEMORY: "ServiceMemory"
+		, ROOM_NAVIGATION: "ServiceRoomNavigation"
+		, LOOKER: "ServiceLooker"
+		, GAME_OBJECT_FINDER: "ServiceGameObjectFinder"
 		};
 
 	global.ACTOR_NAMES =
@@ -40,6 +43,7 @@ module.exports = function()
 		, CREEP_ENERGY_MINER: "ActorCreepEnergyMiner"
 		, CREEP_FILLER: "ActorCreepFiller"
 		, ROOM_LINK: "ActorRoomLink"
+		, CREEP_UPGRADER: "ActorCreepUpgrader"
 		};
 
 	global.CLASS_NAMES =
