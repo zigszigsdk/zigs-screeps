@@ -28,8 +28,8 @@ module.exports = class ActorRoomUpgrade extends ActorWithMemory
 
 		for(let index in parkingSpots)
 		{
-			const ps = parkingSpots[index][0];
-			this.roomNavigation.reservePositions(	this.memoryObject.roomName,
+			const ps = parkingSpots[index];
+			this.roomNavigation.reservePositions(	roomName,
 													{x: ps[0], y: ps[1], roomName: ps[2]},
 													UPGRADER_PARKING_PREFIX + index);
 		}
