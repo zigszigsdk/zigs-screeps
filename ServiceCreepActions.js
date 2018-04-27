@@ -49,7 +49,7 @@ module.exports = class ServiceCreepActions extends Service
 			[from.x, from.y, from.roomName],
 			to,
 			navPermission,
-			terrainPreference
+			{terrainPreference: terrainPreference}
 		);
 	}
 
