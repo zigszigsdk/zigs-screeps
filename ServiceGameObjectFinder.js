@@ -62,6 +62,5 @@ module.exports = class ServiceGameObjectFinder extends Service
 			return null;
 
 		return fromRoomPosition.findClosestByPath(candPositions);
-
 	}
 };

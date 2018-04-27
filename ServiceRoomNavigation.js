@@ -16,7 +16,7 @@ const DELTA_TO_SCREEPS_DIRECTION_LOOKUP =	[ 	[ TOP_LEFT
 
 const ServiceWithMemory = require('ServiceWithMemory');
 
-module.exports = class ServiceMapStatus extends ServiceWithMemory
+module.exports = class ServiceRoomNavigation extends ServiceWithMemory
 {
 	constructor(locator)
 	{
@@ -31,6 +31,7 @@ module.exports = class ServiceMapStatus extends ServiceWithMemory
 		if(!this.memoryObject.reservations)
 			this.memoryObject.reservations = {};
 	}
+
 	reservePositions(roomName, positions, key, minRoomLevel=0)
 	{
 		if(isNullOrUndefined(this.memoryObject.reservations[roomName]))
@@ -52,7 +53,7 @@ module.exports = class ServiceMapStatus extends ServiceWithMemory
 			this.memoryObject.reservations[roomName] = undefined;
 	}
 
-	makePath(from, to, access=[], prefer=STRUCTURE_ROAD)
+	makePath(from, to, access=[], options={})
 	{
 		access = isArray(access) ? access : [access];
 
@@ -61,12 +62,14 @@ module.exports = class ServiceMapStatus extends ServiceWithMemory
 
 		let pathOptions;
 		let roadCost;
-
 		//intented effect:
 		//have those which can walk on plain/swamp without slowing down not clog up the roads.
 		//values are guesses and will in all likelyhood need to be tweaked based on
 		//live observation, and further clculations.
-		switch(prefer)
+
+		let terrainPreference = options.terrainPreference ? options.terrainPreference :  STRUCTURE_ROAD;
+
+		switch(terrainPreference)
 		{
 			case TERRAIN_SWAMP:
 				pathOptions =
@@ -90,7 +93,7 @@ module.exports = class ServiceMapStatus extends ServiceWithMemory
 				roadCost = 1;
 				break;
 			default:
-				throw new Error("unknown path preference: " + prefer);
+				throw new Error("unknown path preference: " + terrainPreference);
 		}
 
 		const screepsApi = this.screepsApi;
@@ -115,9 +118,10 @@ module.exports = class ServiceMapStatus extends ServiceWithMemory
 				}
 			});
 
-			room.find(FIND_CREEPS).forEach(function(creep) {
-				costs.set(creep.pos.x, creep.pos.y, 999);
-			});
+			if(options.ignoreCreep === false)
+				room.find(FIND_CREEPS).forEach(function(creep) {
+					costs.set(creep.pos.x, creep.pos.y, 0xff);
+				});
 
 			const roomLevel = screepsApi.getRoomLevel(roomName);
 
