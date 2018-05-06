@@ -87,43 +87,24 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 				) &&
 				request.pos[0] === at[0] && request.pos[1] === at[1] && request.pos[2] === at[2])
 				{
-					this.memoryObject.requests[index] = this._parseRequest(typeProgression, at, priority, minRoomLevel);
-					this.memoryObject.requests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]);
-					this.update();
+					this._replaceRequest(index, typeProgression, at, priority, minRoomLevel);
 					return;
 				}
 		}
 
-		for(let progressionIndex in typeProgression)
-		{
-			let existingStructure = this.screepsApi.getStructureAt(
-				[at[0], at[1], this.memoryObject.roomName],
-				typeProgression[progressionIndex]);
+		this._addRequest(typeProgression, at, priority, minRoomLevel);
+	}
 
-			if (isNullOrUndefined(existingStructure))
-				continue;
-
-			const parent = this.actors.get(this.memoryObject.parentId);
-			parent.buildingCompleted(at, typeProgression[progressionIndex]);
-
-			this.events.subscribe(EVENTS.STRUCTURE_DESTROYED + existingStructure.id,
-								this.actorId,
-								"onStructureDestroyed");
-			break;
-		}
-
-		let newRequest = this._parseRequest(typeProgression, at, priority, minRoomLevel);
-		this.memoryObject.requests.push(newRequest);
-
-		if(newRequest.completeness !== -1)
-		{
-			let parent = this.actors.get(this.memoryObject.parentId);
-			parent.buildingCompleted(at, typeProgression[newRequest.completeness]);
-		}
-
-		this.memoryObject.requests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]); //sort decending
-
+	_replaceRequest(index, typeProgression, at, priority, minRoomLevel)
+	{
+		this.memoryObject.requests[index] = _parseRequest(typeProgression, at, priority, minRoomLevel);
+		this._sort();
 		this.update();
+	}
+
+	_sort()
+	{
+		this.memoryObject.requests.sort((a, b) => PRIORITIES[b.priority] - PRIORITIES[a.priority]);
 	}
 
 	removeAllRequestsWithType(type)
@@ -143,22 +124,41 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		this.update();
 	}
 
+	_addRequest(typeProgression, at, priority, minRoomLevel)
+	{
+		this.memoryObject.requests.push(this._parseRequest(typeProgression, at, priority, minRoomLevel));
+		this._sort();
+		this.update();
+	}
+
 	_parseRequest(typeProgression, at, priority, minRoomLevel)
 	{
 		let rp = this.screepsApi.getRoomPosition(at);
 
 		let completeness = -1;
+		let structureId = null;
 
 		for(let index = typeProgression.length-1; index >= 0; index--)
 		{
-			if(rp.lookFor(	LOOK_STRUCTURES,
-							{filter: (x)=>x.structureType === typeProgression[index]}).length > 0)
+			structs = rp.lookFor(LOOK_STRUCTURES
+								, {filter: (x)=>x.structureType === typeProgression[index]})
+			if(structs.length > 0)
 			{
+				structureId = structs[0].id;
 				completeness = index;
 				break;
 			}
 		}
 
+		if(completeness !== -1)
+		{
+			const parent = this.actors.get(this.memoryObject.parentId);
+			parent.buildingCompleted(at, typeProgression[completeness]);
+
+			this.events.subscribew(EVENTS.STRUCTURE_DESTROYED + structureId,
+								this.actorId,
+								"onStructureDestroyed");
+		}
 		return 	{ typeProgression: typeProgression
 				, pos: at
 				, priority: priority
@@ -172,6 +172,7 @@ module.exports = class ActorRoomBuild extends ActorWithMemory
 		for(let index in this.memoryObject.energyLocations)
 		{
 			let existingRequest = this.memoryObject.energyLocations[index];
+
 
 			if(existingRequest.at[0] === energyRequest.at[0] &&
 				existingRequest.at[1] === energyRequest.at[1] &&
