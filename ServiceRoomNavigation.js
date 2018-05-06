@@ -118,6 +118,15 @@ module.exports = class ServiceRoomNavigation extends ServiceWithMemory
 				}
 			});
 
+			room.find(FIND_CONSTRUCTION_SITES).forEach(function(struct) {
+				if (struct.structureType === STRUCTURE_ROAD &&
+					struct.structureType !== STRUCTURE_CONTAINER &&
+					(struct.structureType !== STRUCTURE_RAMPART || !struct.my))
+				{
+					costs.set(struct.pos.x, struct.pos.y, 0xff);
+				}
+			});
+
 			if(options.ignoreCreep === false)
 				room.find(FIND_CREEPS).forEach(function(creep) {
 					costs.set(creep.pos.x, creep.pos.y, 0xff);
